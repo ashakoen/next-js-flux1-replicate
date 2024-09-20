@@ -2,7 +2,7 @@
 
 Flux.1 Image Generator is a web application that allows users to generate images using the Flux.1 AI models (dev and schnell versions) hosted on Replicate. This project is built with Next.js to provide a user-friendly interface for image generation.
 
-![flux-image-creator](https://github.com/user-attachments/assets/3b534738-09cc-4d61-a56d-b118762b5719)
+![flux-image-creator](public/flux-image-creator.png)
 
 ## Features
 
