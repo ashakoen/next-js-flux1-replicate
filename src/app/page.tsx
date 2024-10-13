@@ -403,7 +403,7 @@ export default function Component() {
           if (isPolling.current) {
             pollForResult(url);
           }
-        }, 3000);
+        }, 2000);
       }
     } catch (error: unknown) {
       if (error instanceof Error && error.name === 'AbortError') {
@@ -537,55 +537,59 @@ export default function Component() {
                           </div>
                         </div>
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-[800px]">
-                        <div className="w-full h-auto max-h-[80vh] max-w-full">
+                      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+                        <div className="w-full h-auto max-h-[60vh]">
                           <Image
                             src={image.url}
                             alt={`Generated image ${index + 1}`}
                             layout="responsive"
                             width={800}
                             height={800}
-                            className="rounded-lg max-h-[80vh] max-w-full object-contain"
+                            className="rounded-lg object-contain"
                           />
                         </div>
-                        <div className="mt-4 p-4 bg-gray-100 rounded-lg max-h-48 overflow-y-auto">
-                          <h3 className="text-lg font-semibold mb-2">Image Details</h3>
-                          <div className="space-y-2">
-                            <p className="text-sm">
-                              <span className="font-medium">Prompt:</span> {image.prompt}
-                            </p>
-                            {image.model && (
-                              <p className="text-sm">
-                                <span className="font-medium">Model:</span> {image.model}
-                              </p>
-                            )}
-                            {image.version && (
-                              <p className="text-sm">
-                                <span className="font-medium">Version:</span> {image.version}
-                              </p>
-                            )}
-                            {image.go_fast !== undefined && (
-                              <p className="text-sm">
-                                <span className="font-medium">Go Fast:</span> {image.go_fast ? 'Yes' : 'No'}
-                              </p>
-                            )}
-                            {image.guidance_scale !== undefined && (
-                              <p className="text-sm">
-                                <span className="font-medium">Guidance Scale:</span> {image.guidance_scale}
-                              </p>
-                            )}
-                            {image.num_inference_steps !== undefined && (
-                              <p className="text-sm">
-                                <span className="font-medium">Inference Steps:</span> {image.num_inference_steps}
-                              </p>
-                            )}
-                            {image.lora_scale !== undefined && (
-                              <p className="text-sm">
-                                <span className="font-medium">LoRA Scale:</span> {image.lora_scale}
-                              </p>
-                            )}
-                          </div>
-                        </div>
+                        <Accordion type="single" collapsible className="w-full mt-4">
+                          <AccordionItem value="details" className="border-0">
+                            <AccordionTrigger className="py-4 px-6 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-0">
+                              <h3 className="text-base font-semibold">Image Details</h3>
+                            </AccordionTrigger>
+                            <AccordionContent className="bg-gray-50 p-6 rounded-lg mt-2 border border-gray-200">
+							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="md:col-span-2 space-y-2">
+                                  <p className="text-sm"><span className="font-medium">Prompt:</span> {image.prompt}</p>
+                                  {image.model && <p className="text-sm"><span className="font-medium">Model:</span> {image.model}</p>}
+                                  {image.version && (
+                                    <p className="text-sm">
+                                      <span className="font-medium">Version:</span>
+                                      <span className="block mt-1 text-xs bg-gray-200 p-1 rounded overflow-x-auto">
+                                        {image.version}
+                                      </span>
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="md:col-span-1 space-y-2">
+                                  {image.go_fast !== undefined && (
+                                    <p className="text-sm">
+                                      <span className="font-medium">Go Fast:</span>
+                                      <span className={`ml-2 px-2 py-1 rounded ${image.go_fast ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                        {image.go_fast ? 'Yes' : 'No'}
+                                      </span>
+                                    </p>
+                                  )}
+                                  {image.guidance_scale !== undefined && (
+                                    <p className="text-sm"><span className="font-medium">Guidance Scale:</span> {image.guidance_scale}</p>
+                                  )}
+                                  {image.num_inference_steps !== undefined && (
+                                    <p className="text-sm"><span className="font-medium">Inference Steps:</span> {image.num_inference_steps}</p>
+                                  )}
+                                  {image.lora_scale !== undefined && (
+                                    <p className="text-sm"><span className="font-medium">LoRA Scale:</span> {image.lora_scale}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
                       </DialogContent>
                     </Dialog>
                     <Button
