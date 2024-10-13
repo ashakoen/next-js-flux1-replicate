@@ -14,7 +14,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Download, AlertCircle, Star, Trash2, Moon, Sun } from 'lucide-react';
+//import { Loader2, Download, AlertCircle, Star, Trash2, Moon, Sun } from 'lucide-react';
+import { Loader2, Download, AlertCircle, Star, Trash2, Moon, Sun, Terminal, X } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
@@ -51,6 +52,12 @@ type GeneratedImage = {
   num_inference_steps?: number;
   lora_scale?: number;
 };
+
+type LogEntry = {
+	timestamp: string;
+	message: string;
+	status: 'starting' | 'processing' | 'succeeded' | 'failed';
+  };
 
 const initialFormData: FormData = {
   seed: 0,
@@ -94,7 +101,19 @@ export default function Component() {
   const [cancelUrl, setCancelUrl] = useState<string | null>(null);
   const isPolling = useRef(true);
 
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [showLogs, setShowLogs] = useState(false);
+  const logEndRef = useRef<HTMLDivElement>(null);
+  const logContainerRef = useRef<HTMLDivElement>(null);
+  const shouldScrollRef = useRef(false);
+
   const abortController = useRef<AbortController | null>(null);
+
+  const scrollToBottom = useCallback(() => {
+	if (logContainerRef.current) {
+	  logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+	}
+  }, []);
 
   useEffect(() => {
     setFilteredImages(
@@ -160,6 +179,19 @@ export default function Component() {
       }));
     }
   }, []);
+
+  useEffect(() => {
+    if (logEndRef.current) {
+      logEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [logs]);
+
+  useEffect(() => {
+	if (shouldScrollRef.current) {
+	  scrollToBottom();
+	  shouldScrollRef.current = false;
+	}
+  }, [logs, scrollToBottom]);
 
   const handleNumOutputsChange = (value: number) => {
     setFormData((prev) => ({
@@ -351,6 +383,7 @@ export default function Component() {
     }
   };
 
+
   const pollForResult = async (url: string) => {
     if (!isPolling.current) return;
 
@@ -369,10 +402,16 @@ export default function Component() {
 
       const pollData = await pollResponse.json();
 
+      addLogEntry({
+        timestamp: new Date().toISOString(),
+        message: pollData.logs || '',
+        status: pollData.status
+      });
+
       if (pollData.status === 'canceled') {
-        
         console.log('Generation was canceled.');
         stopStatuses();
+        addCompletionMessage('Image generation canceled.');
         return;
       }
 
@@ -395,9 +434,11 @@ export default function Component() {
         });
 
         stopStatuses();
+        addCompletionMessage('Image generation complete!');
       } else if (pollData.status === 'failed') {
         console.error('Prediction failed');
         stopStatuses();
+        addCompletionMessage('Image generation failed.');
       } else if (['processing', 'starting'].includes(pollData.status)) {
         setTimeout(() => {
           if (isPolling.current) {
@@ -412,9 +453,23 @@ export default function Component() {
         console.error('Polling error:', error);
         setShowApiKeyAlert(true);
         stopStatuses();
+        addCompletionMessage('Error occurred during image generation.');
       }
     }
   };
+
+  const addLogEntry = useCallback((entry: LogEntry) => {
+	setLogs(prevLogs => [...prevLogs, entry]);
+	shouldScrollRef.current = true;
+  }, []);
+
+  const addCompletionMessage = useCallback((message: string) => {
+    addLogEntry({
+      timestamp: new Date().toISOString(),
+      message: message,
+      status: 'succeeded'
+    });
+  }, [addLogEntry]);
 
   const stopStatuses = () => {
     setIsLoading(false);
@@ -492,22 +547,58 @@ export default function Component() {
     }
   };
 
+  const clearLogs = () => {
+    setLogs([]);
+  };
+
+  const LoggingModal = () => (
+    <div className={`fixed bottom-16 left-4 w-[32rem] h-80 bg-gray-900 text-green-400 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out ${showLogs ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'}`}>
+      <div className="flex justify-between items-center p-2 bg-gray-800">
+        <h3 className="text-sm font-semibold">Generation Logs</h3>
+        <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearLogs}
+            className="text-gray-400 hover:text-white"
+          >
+            Clear Logs
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowLogs(false)}
+            className="text-gray-400 hover:text-white"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      <div ref={logContainerRef} className="p-4 h-64 overflow-y-auto font-mono text-xs">
+        {logs.map((log, index) => (
+          <div key={index} className="mb-2">
+            <span className="text-gray-500">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
+            <span className={`ml-2 ${
+              log.status === 'succeeded' ? 'text-green-500' : 
+              log.status === 'processing' ? 'text-yellow-500' : 
+              log.status === 'failed' ? 'text-red-500' : 
+              'text-blue-500'
+            }`}>
+              {log.status.toUpperCase()}:
+            </span>
+            <pre className="whitespace-pre-wrap break-words">{log.message}</pre>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <>
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto p-4 pb-20">
         <Card className="w-full mx-auto mb-8 mt-8">
           <CardHeader className="relative">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col space-y-1.5">
-                <CardTitle>Your Creations</CardTitle>
-                <CardDescription>View, download, or manage your generated images</CardDescription>
-              </div>
-              {isGenerating && (
-                <div className="absolute top-1/2 right-8 transform -translate-y-1/2">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                </div>
-              )}
-            </div>
+            {/* ... (keep the existing CardHeader content) */}
           </CardHeader>
           <CardContent>
             <div className="mb-4">
@@ -537,59 +628,62 @@ export default function Component() {
                           </div>
                         </div>
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-                        <div className="w-full h-auto max-h-[60vh]">
-                          <Image
-                            src={image.url}
-                            alt={`Generated image ${index + 1}`}
-                            layout="responsive"
-                            width={800}
-                            height={800}
-                            className="rounded-lg object-contain"
-                          />
+                      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto p-0">
+                        <div className="flex flex-col h-full">
+                          <div className="relative w-full h-0 pb-[75%] overflow-hidden">
+                            <Image
+                              src={image.url}
+                              alt={`Generated image ${index + 1}`}
+                              layout="fill"
+                              objectFit="contain"
+                              className="rounded-t-lg"
+                            />
+                          </div>
+                          <div className="p-6 bg-white dark:bg-gray-800">
+                            <Accordion type="single" collapsible className="w-full">
+                              <AccordionItem value="details" className="border-0">
+                                <AccordionTrigger className="py-4 px-6 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-0">
+                                  <h3 className="text-base font-semibold">Image Details</h3>
+                                </AccordionTrigger>
+                                <AccordionContent className="bg-gray-50 p-6 rounded-lg mt-2 border border-gray-200">
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="md:col-span-2 space-y-2">
+                                      <p className="text-sm"><span className="font-medium">Prompt:</span> {image.prompt}</p>
+                                      {image.model && <p className="text-sm"><span className="font-medium">Model:</span> {image.model}</p>}
+                                      {image.version && (
+                                        <p className="text-sm">
+                                          <span className="font-medium">Version:</span>
+                                          <span className="block mt-1 text-xs bg-gray-200 p-1 rounded overflow-x-auto">
+                                            {image.version}
+                                          </span>
+                                        </p>
+                                      )}
+                                    </div>
+                                    <div className="md:col-span-1 space-y-2">
+                                      {image.go_fast !== undefined && (
+                                        <p className="text-sm">
+                                          <span className="font-medium">Go Fast:</span>
+                                          <span className={`ml-2 px-2 py-1 rounded ${image.go_fast ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                            {image.go_fast ? 'Yes' : 'No'}
+                                          </span>
+                                        </p>
+                                      )}
+                                      {image.guidance_scale !== undefined && (
+                                        <p className="text-sm"><span className="font-medium">Guidance Scale:</span> {image.guidance_scale}</p>
+                                      )}
+                                      {image.num_inference_steps !== undefined && (
+                                        <p className="text-sm"><span className="font-medium">Inference Steps:</span> {image.num_inference_steps}</p>
+                                      )}
+                                      {image.lora_scale !== undefined && (
+                                        <p className="text-sm"><span className="font-medium">LoRA Scale:</span> {image.lora_scale}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </AccordionContent>
+                              </AccordionItem>
+                            </Accordion>
+                          </div>
                         </div>
-                        <Accordion type="single" collapsible className="w-full mt-4">
-                          <AccordionItem value="details" className="border-0">
-                            <AccordionTrigger className="py-4 px-6 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-0">
-                              <h3 className="text-base font-semibold">Image Details</h3>
-                            </AccordionTrigger>
-                            <AccordionContent className="bg-gray-50 p-6 rounded-lg mt-2 border border-gray-200">
-							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="md:col-span-2 space-y-2">
-                                  <p className="text-sm"><span className="font-medium">Prompt:</span> {image.prompt}</p>
-                                  {image.model && <p className="text-sm"><span className="font-medium">Model:</span> {image.model}</p>}
-                                  {image.version && (
-                                    <p className="text-sm">
-                                      <span className="font-medium">Version:</span>
-                                      <span className="block mt-1 text-xs bg-gray-200 p-1 rounded overflow-x-auto">
-                                        {image.version}
-                                      </span>
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="md:col-span-1 space-y-2">
-                                  {image.go_fast !== undefined && (
-                                    <p className="text-sm">
-                                      <span className="font-medium">Go Fast:</span>
-                                      <span className={`ml-2 px-2 py-1 rounded ${image.go_fast ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                        {image.go_fast ? 'Yes' : 'No'}
-                                      </span>
-                                    </p>
-                                  )}
-                                  {image.guidance_scale !== undefined && (
-                                    <p className="text-sm"><span className="font-medium">Guidance Scale:</span> {image.guidance_scale}</p>
-                                  )}
-                                  {image.num_inference_steps !== undefined && (
-                                    <p className="text-sm"><span className="font-medium">Inference Steps:</span> {image.num_inference_steps}</p>
-                                  )}
-                                  {image.lora_scale !== undefined && (
-                                    <p className="text-sm"><span className="font-medium">LoRA Scale:</span> {image.lora_scale}</p>
-                                  )}
-                                </div>
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        </Accordion>
                       </DialogContent>
                     </Dialog>
                     <Button
@@ -1122,6 +1216,19 @@ export default function Component() {
             </Drawer>
           </div>
         </div>
+
+        <div className="fixed bottom-4 left-4 z-50 flex flex-col items-start space-y-2">
+          <LoggingModal />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowLogs(!showLogs)}
+          >
+            <Terminal className="mr-2 h-4 w-4" />
+            {showLogs ? 'Hide Logs' : 'Show Logs'}
+          </Button>
+        </div>
+
       </div>
     </>
   );
