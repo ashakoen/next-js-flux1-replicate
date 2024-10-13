@@ -44,6 +44,12 @@ type FormData = {
 type GeneratedImage = {
   url: string;
   prompt: string;
+  model?: string;
+  version?: string;
+  go_fast?: boolean;
+  guidance_scale?: number;
+  num_inference_steps?: number;
+  lora_scale?: number;
 };
 
 const initialFormData: FormData = {
@@ -364,20 +370,32 @@ export default function Component() {
       const pollData = await pollResponse.json();
 
       if (pollData.status === 'canceled') {
+        
         console.log('Generation was canceled.');
         stopStatuses();
         return;
       }
 
       if (pollData.status === 'succeeded') {
-        setGeneratedImages((prev) => [
-          ...prev,
-          ...pollData.output.map((outputUrl: string) => ({ url: outputUrl, prompt: pollData.input.prompt })),
-        ]);
-        stopStatuses();
-      } else if (pollData.status === 
+        const newImages = pollData.output.map((outputUrl: string) => ({
+          url: outputUrl,
+          prompt: pollData.input.prompt,
+          model: pollData.model,
+          version: pollData.version,
+          go_fast: pollData.input.go_fast,
+          guidance_scale: pollData.input.guidance_scale,
+          num_inference_steps: pollData.input.num_inference_steps,
+          lora_scale: pollData.input.lora_scale,
+        }));
 
- 'failed') {
+        setGeneratedImages((prev) => {
+          const updatedImages = [...prev, ...newImages];
+          localStorage.setItem('generatedImages', JSON.stringify(updatedImages));
+          return updatedImages;
+        });
+
+        stopStatuses();
+      } else if (pollData.status === 'failed') {
         console.error('Prediction failed');
         stopStatuses();
       } else if (['processing', 'starting'].includes(pollData.status)) {
@@ -530,14 +548,43 @@ export default function Component() {
                             className="rounded-lg max-h-[80vh] max-w-full object-contain"
                           />
                         </div>
-                        <div className="mt-4 p-4 bg-gray-100 rounded-lg max-h-32 overflow-y-auto">
-                          <p
-                            className="text-xs text-gray-500 cursor-pointer"
-                            onClick={() => navigator.clipboard.writeText(image.prompt)}
-                            title="Click to copy"
-                          >
-                            Prompt: {image.prompt}
-                          </p>
+                        <div className="mt-4 p-4 bg-gray-100 rounded-lg max-h-48 overflow-y-auto">
+                          <h3 className="text-lg font-semibold mb-2">Image Details</h3>
+                          <div className="space-y-2">
+                            <p className="text-sm">
+                              <span className="font-medium">Prompt:</span> {image.prompt}
+                            </p>
+                            {image.model && (
+                              <p className="text-sm">
+                                <span className="font-medium">Model:</span> {image.model}
+                              </p>
+                            )}
+                            {image.version && (
+                              <p className="text-sm">
+                                <span className="font-medium">Version:</span> {image.version}
+                              </p>
+                            )}
+                            {image.go_fast !== undefined && (
+                              <p className="text-sm">
+                                <span className="font-medium">Go Fast:</span> {image.go_fast ? 'Yes' : 'No'}
+                              </p>
+                            )}
+                            {image.guidance_scale !== undefined && (
+                              <p className="text-sm">
+                                <span className="font-medium">Guidance Scale:</span> {image.guidance_scale}
+                              </p>
+                            )}
+                            {image.num_inference_steps !== undefined && (
+                              <p className="text-sm">
+                                <span className="font-medium">Inference Steps:</span> {image.num_inference_steps}
+                              </p>
+                            )}
+                            {image.lora_scale !== undefined && (
+                              <p className="text-sm">
+                                <span className="font-medium">LoRA Scale:</span> {image.lora_scale}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </DialogContent>
                     </Dialog>
