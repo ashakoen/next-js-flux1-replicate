@@ -59,6 +59,37 @@ type LogEntry = {
 	status: 'starting' | 'processing' | 'succeeded' | 'failed';
   };
 
+  type TelemetryData = {
+	requestId: string
+	requestStartTime: string // ISO 8601 format
+	responseTime: number
+	totalDuration: number
+	statusChanges: { status: string; timestamp: string }[] // ISO 8601 format
+	modelLoadTime?: number
+	pollingSteps: number
+	generationParameters: FormData
+	outputImageSizes: number[]
+	clientInfo: {
+	  userAgent: string
+	  language: string
+	  screenSize: string
+	  timezone: string
+	}
+	timeOfDay: string
+	dayOfWeek: string
+	errors: string[]
+	cancelledByUser: boolean
+	replicateId: string
+	replicateModel: string
+	replicateVersion: string
+	replicateCreatedAt: string
+	replicateStartedAt: string
+	replicateCompletedAt: string
+	replicatePredictTime: number
+	cancelledAt?: string
+	cancelledId?: string
+  }
+
 const initialFormData: FormData = {
   seed: 0,
   model: 'dev',
@@ -108,6 +139,28 @@ export default function Component() {
   const shouldScrollRef = useRef(false);
 
   const abortController = useRef<AbortController | null>(null);
+  const [telemetryData, setTelemetryData] = useState<TelemetryData | null>(null)
+
+  const getClientInfo = () => {
+    return {
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      screenSize: `${window.screen.width}x${window.screen.height}`,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    }
+  }
+
+  const getCurrentUTCTimestamp = () => {
+    return new Date().toISOString()
+  }
+
+  const getLocalTimeOfDay = () => {
+    return new Date().toLocaleTimeString()
+  }
+
+  const getLocalDayOfWeek = () => {
+    return new Date().toLocaleDateString('en-US', { weekday: 'long' })
+  }
 
   const scrollToBottom = useCallback(() => {
 	if (logContainerRef.current) {
@@ -354,7 +407,33 @@ export default function Component() {
     setIsLoading(true);
     setShowApiKeyAlert(false);
 
+    const newTelemetryData: TelemetryData = {
+		requestId: `request-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+		requestStartTime: getCurrentUTCTimestamp(),
+		responseTime: 0,
+		totalDuration: 0,
+		statusChanges: [],
+		pollingSteps: 0,
+		generationParameters: { ...formData },
+		outputImageSizes: [],
+		clientInfo: getClientInfo(),
+		timeOfDay: getLocalTimeOfDay(),
+		dayOfWeek: getLocalDayOfWeek(),
+		errors: [],
+		cancelledByUser: false,
+		replicateId: '',
+		replicateModel: '',
+		replicateVersion: '',
+		replicateCreatedAt: '',
+		replicateStartedAt: '',
+		replicateCompletedAt: '',
+		replicatePredictTime: 0
+	  }
+  
+	setTelemetryData(newTelemetryData)
+
     try {
+	  const startTime = Date.now()
       const initialResponse = await fetch('/api/replicate', {
         method: 'POST',
         headers: {
@@ -371,21 +450,35 @@ export default function Component() {
       }
 
       const initialData = await initialResponse.json();
+	  const endTime = Date.now()
       const getUrl = initialData.urls.get;
       setCancelUrl(initialData.urls.cancel);
 
-      pollForResult(getUrl);
+      newTelemetryData.responseTime = endTime - startTime
+      newTelemetryData.statusChanges.push({ 
+        status: initialData.status, 
+        timestamp: getCurrentUTCTimestamp()
+      })
+
+      pollForResult(getUrl, newTelemetryData)
+
+      //pollForResult(getUrl);
 
     } catch (error) {
       console.error('There was a problem with the request:', error);
       setShowApiKeyAlert(true);
       stopStatuses();
+      newTelemetryData.errors.push(error instanceof Error ? error.message : 'Unknown error occurred')
+      finalizeTelemetryData(newTelemetryData)
     }
   };
 
 
-  const pollForResult = async (url: string) => {
-    if (!isPolling.current) return;
+
+  const pollForResult = async (url: string, currentTelemetryData: TelemetryData) => {
+    if (!isPolling.current) return
+
+    currentTelemetryData.pollingSteps++
 
     try {
       const pollResponse = await fetch('/api/replicate', {
@@ -398,65 +491,142 @@ export default function Component() {
           getUrl: url,
         }),
         signal: abortController.current?.signal,
-      });
+      })
 
-      const pollData = await pollResponse.json();
+      if (!pollResponse.ok) {
+        throw new Error(`HTTP error! status: ${pollResponse.status}`)
+      }
+
+      const pollData = await pollResponse.json()
 
       addLogEntry({
         timestamp: new Date().toISOString(),
         message: pollData.logs || '',
         status: pollData.status
-      });
+      })
+
+      // Only add a new status change if it's different from the last one
+      const lastStatus = currentTelemetryData.statusChanges[currentTelemetryData.statusChanges.length - 1]
+      if (!lastStatus || lastStatus.status !== pollData.status) {
+        currentTelemetryData.statusChanges.push({ 
+          status: pollData.status, 
+          timestamp: new Date(pollData.completed_at || pollData.created_at).toISOString()
+        })
+      }
 
       if (pollData.status === 'canceled') {
-        console.log('Generation was canceled.');
-        stopStatuses();
-        addCompletionMessage('Image generation canceled.');
-        return;
+        console.log('Generation was canceled.')
+        stopStatuses()
+        currentTelemetryData.cancelledByUser = true
+        currentTelemetryData.cancelledAt = pollData.completed_at
+        currentTelemetryData.cancelledId = pollData.id
+        addCompletionMessage('Image generation canceled.')
+        finalizeTelemetryData(currentTelemetryData)
+        return
       }
 
       if (pollData.status === 'succeeded') {
-        const newImages = pollData.output.map((outputUrl: string) => ({
-          url: outputUrl,
-          prompt: pollData.input.prompt,
-          model: pollData.model,
-          version: pollData.version,
-          go_fast: pollData.input.go_fast,
-          guidance_scale: pollData.input.guidance_scale,
-          num_inference_steps: pollData.input.num_inference_steps,
-          lora_scale: pollData.input.lora_scale,
-        }));
+        // Update telemetry with Replicate metrics
+        currentTelemetryData.replicateId = pollData.id
+        currentTelemetryData.replicateModel = pollData.model
+        currentTelemetryData.replicateVersion = pollData.version
+        currentTelemetryData.replicateCreatedAt = pollData.created_at
+        currentTelemetryData.replicateStartedAt = pollData.started_at
+        currentTelemetryData.replicateCompletedAt = pollData.completed_at
+        currentTelemetryData.replicatePredictTime = pollData.metrics?.predict_time || 0
+
+        const newImages = pollData.output.map((outputUrl: string) => {
+          // Fetch image size
+          fetch(outputUrl).then(response => {
+            const size = parseInt(response.headers.get('content-length') || '0')
+            currentTelemetryData.outputImageSizes.push(size)
+          })
+          return {
+            url: outputUrl,
+            prompt: pollData.input.prompt,
+            model: pollData.model,
+            version: pollData.version,
+            go_fast: pollData.input.go_fast,
+            guidance_scale: pollData.input.guidance_scale,
+            num_inference_steps: pollData.input.num_inference_steps,
+            lora_scale: pollData.input.lora_scale,
+          }
+        })
 
         setGeneratedImages((prev) => {
-          const updatedImages = [...prev, ...newImages];
-          localStorage.setItem('generatedImages', JSON.stringify(updatedImages));
-          return updatedImages;
-        });
+          const updatedImages = [...prev, ...newImages]
+          localStorage.setItem('generatedImages', JSON.stringify(updatedImages))
+          return updatedImages
+        })
 
-        stopStatuses();
-        addCompletionMessage('Image generation complete!');
+        stopStatuses()
+        finalizeTelemetryData(currentTelemetryData)
+		addCompletionMessage('Image generation complete.')
       } else if (pollData.status === 'failed') {
-        console.error('Prediction failed');
-        stopStatuses();
-        addCompletionMessage('Image generation failed.');
+        console.error('Prediction failed')
+        stopStatuses()
+        currentTelemetryData.errors.push('Prediction failed')
+		addCompletionMessage('Image generation failed.')
+        finalizeTelemetryData(currentTelemetryData)
       } else if (['processing', 'starting'].includes(pollData.status)) {
+        if (pollData.logs && pollData.logs.includes('Loaded LoRAs in')) {
+          const loadTimeMatch = pollData.logs.match(/Loaded LoRAs in (\d+\.\d+)s/)
+          if (loadTimeMatch) {
+            currentTelemetryData.modelLoadTime = parseFloat(loadTimeMatch[1])
+          }
+        }
+
+        setTelemetryData({...currentTelemetryData})
+
         setTimeout(() => {
           if (isPolling.current) {
-            pollForResult(url);
+            pollForResult(url, currentTelemetryData)
           }
-        }, 2000);
+        }, 2000)
       }
     } catch (error: unknown) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        console.log('Fetch aborted:', error);
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          console.log('Fetch aborted:', error)
+          currentTelemetryData.cancelledByUser = true
+        } else {
+          console.error('Polling error:', error)
+          setShowApiKeyAlert(true)
+          currentTelemetryData.errors.push(error.message)
+        }
       } else {
-        console.error('Polling error:', error);
-        setShowApiKeyAlert(true);
-        stopStatuses();
-        addCompletionMessage('Error occurred during image generation.');
+        console.error('Unknown error occurred during polling')
+        currentTelemetryData.errors.push('Unknown error occurred during polling')
       }
+      stopStatuses()
+	  addCompletionMessage('Error occurred during image generation.')
+      finalizeTelemetryData(currentTelemetryData)
+	  
     }
-  };
+  }
+
+  const finalizeTelemetryData = async (finalTelemetryData: TelemetryData) => {
+    const endTime = Date.now()
+    const startTime = new Date(finalTelemetryData.requestStartTime).getTime()
+    finalTelemetryData.totalDuration = endTime - startTime
+    setTelemetryData(finalTelemetryData)
+
+    try {
+      const response = await fetch('/api/telemetry', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(finalTelemetryData),
+      })
+
+      if (!response.ok) {
+        console.error('Failed to send telemetry data')
+      }
+    } catch (error) {
+      console.error('Error sending telemetry data:', error)
+    }
+  }
 
   const addLogEntry = useCallback((entry: LogEntry) => {
 	setLogs(prevLogs => [...prevLogs, entry]);
@@ -470,6 +640,9 @@ export default function Component() {
       status: 'succeeded'
     });
   }, [addLogEntry]);
+
+
+
 
   const stopStatuses = () => {
     setIsLoading(false);
@@ -515,11 +688,11 @@ export default function Component() {
   };
 
   const handleCancel = async () => {
-    isPolling.current = false;
+    isPolling.current = false
 
     try {
       if (abortController.current) {
-        abortController.current.abort();
+        abortController.current.abort()
       }
 
       if (cancelUrl) {
@@ -529,23 +702,27 @@ export default function Component() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ apiKey, cancelUrl }),
-        });
+        })
 
         if (response.ok) {
-          console.log('Generation canceled successfully');
+          console.log('Generation canceled successfully')
+          if (telemetryData) {
+            telemetryData.cancelledByUser = true
+            finalizeTelemetryData(telemetryData)
+          }
         } else {
-          console.error('Failed to cancel generation');
+          console.error('Failed to cancel generation')
         }
       }
 
-      setIsLoading(false);
-      setIsGenerating(false);
-      setCancelUrl(null);
+      setIsLoading(false)
+      setIsGenerating(false)
+      setCancelUrl(null)
 
     } catch (error) {
-      console.error('Cancel request failed:', error);
+      console.error('Cancel request failed:', error)
     }
-  };
+  }
 
   const clearLogs = () => {
     setLogs([]);
@@ -1042,6 +1219,11 @@ export default function Component() {
                 </form>
               </CardContent>
             </Card>
+
+
+
+
+
           </div>
           <div className="lg:col-span-1">
             <Drawer>
