@@ -642,10 +642,10 @@ export default function Component() {
                           <div className="p-6 bg-white dark:bg-gray-800">
                             <Accordion type="single" collapsible className="w-full">
                               <AccordionItem value="details" className="border-0">
-                                <AccordionTrigger className="py-4 px-6 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-0">
+                                <AccordionTrigger className="py-4 px-6 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors focus:outline-none focus:ring-0">
                                   <h3 className="text-base font-semibold">Image Details</h3>
                                 </AccordionTrigger>
-                                <AccordionContent className="bg-gray-50 p-6 rounded-lg mt-2 border border-gray-200">
+                                <AccordionContent className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg mt-2 border border-gray-200 dark:border-gray-600">
                                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div className="md:col-span-2 space-y-2">
                                       <p className="text-sm"><span className="font-medium">Prompt:</span> {image.prompt}</p>
@@ -653,7 +653,7 @@ export default function Component() {
                                       {image.version && (
                                         <p className="text-sm">
                                           <span className="font-medium">Version:</span>
-                                          <span className="block mt-1 text-xs bg-gray-200 p-1 rounded overflow-x-auto">
+                                          <span className="block mt-1 text-xs bg-gray-200 dark:bg-gray-600 p-1 rounded overflow-x-auto">
                                             {image.version}
                                           </span>
                                         </p>
@@ -663,7 +663,7 @@ export default function Component() {
                                       {image.go_fast !== undefined && (
                                         <p className="text-sm">
                                           <span className="font-medium">Go Fast:</span>
-                                          <span className={`ml-2 px-2 py-1 rounded ${image.go_fast ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                          <span className={`ml-2 px-2 py-1 rounded ${image.go_fast ? 'bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100' : 'bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-100'}`}>
                                             {image.go_fast ? 'Yes' : 'No'}
                                           </span>
                                         </p>
