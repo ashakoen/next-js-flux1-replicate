@@ -296,7 +296,7 @@ export function GeneratedImagesCard({
                                         <span className="text-lg">🐰</span> Your canvas is empty for now...
                                     </p>
                                     <p className="text-xs text-primary/70 italic">
-                                        Let's paint some dreams together! <span className="text-lg">🌈</span>
+                                        Let&apos;s paint some dreams together! <span className="text-lg">🌈</span>
                                     </p>
                                 </motion.div>
                             </>
