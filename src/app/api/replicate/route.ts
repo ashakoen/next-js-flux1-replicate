@@ -53,6 +53,15 @@ export async function POST(req: Request): Promise<Response> {
 	  if (!response.ok) {
 		console.error('Error from Replicate API:', data);
 	  }
+
+    // Extract seed if this is a GET request and status is succeeded
+    if (method === 'GET' && data.status === 'succeeded' && data.logs) {
+		const seedMatch = data.logs.match(/Using seed: (\d+)/);
+		if (seedMatch) {
+		  const extractedSeed = parseInt(seedMatch[1], 10);
+		  return new Response(JSON.stringify({ ...data, extractedSeed }), { status: response.status });
+		}
+	  }
   
 	  return new Response(JSON.stringify(data), { status: response.status });
   

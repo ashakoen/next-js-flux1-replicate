@@ -166,6 +166,14 @@ export function GeneratedImagesCard({
                                                                                 </span>
                                                                             </p>
                                                                         )}
+                                                                        {image.seed !== undefined && (
+                                                                            <p className="text-sm">
+                                                                                <span className="font-medium">Seed:</span>
+                                                                                <span className="ml-2 font-mono bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded text-xs">
+                                                                                    {image.seed}
+                                                                                </span>
+                                                                            </p>
+                                                                        )}
                                                                     </div>
                                                                     <div className="md:col-span-1 space-y-2">
                                                                         {image.go_fast !== undefined && (

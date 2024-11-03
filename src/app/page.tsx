@@ -486,6 +486,7 @@ export default function Component() {
 
 			if (pollData.status === 'succeeded') {
 				// Update telemetry with Replicate metrics
+				const seed = pollData.extractedSeed || pollData.input.seed || 0;
 				currentTelemetryData.replicateId = pollData.id
 				currentTelemetryData.replicateModel = pollData.model
 				currentTelemetryData.replicateVersion = pollData.version
@@ -493,6 +494,7 @@ export default function Component() {
 				currentTelemetryData.replicateStartedAt = pollData.started_at
 				currentTelemetryData.replicateCompletedAt = pollData.completed_at
 				currentTelemetryData.replicatePredictTime = pollData.metrics?.predict_time || 0
+				currentTelemetryData.generationParameters.seed = seed; 
 
 				const newImages = pollData.output.map((outputUrl: string) => {
 					// Fetch image size
@@ -509,6 +511,7 @@ export default function Component() {
 						guidance_scale: pollData.input.guidance_scale,
 						num_inference_steps: pollData.input.num_inference_steps,
 						lora_scale: pollData.input.lora_scale,
+						seed,
 						timestamp: new Date().toISOString()
 					}
 				})

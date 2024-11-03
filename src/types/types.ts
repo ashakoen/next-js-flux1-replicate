@@ -29,4 +29,5 @@ export type GeneratedImage = {
     num_inference_steps?: number;
     lora_scale?: number;
     timestamp?: string; 
+    seed?: number;
 };

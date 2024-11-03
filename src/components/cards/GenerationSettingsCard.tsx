@@ -155,7 +155,7 @@ export function GenerationSettingsCard({
                         </div>
 
 						</TabsContent>
-						<TabsContent value="advanced" className="mt-4 h-[calc(100vh-24rem)] overflow-y-auto scrollbar-hide">
+						<TabsContent value="advanced" className="mt-4 h-[calc(100vh-24rem)] overflow-y-auto scrollbar-hide overscroll-none touch-pan-y">
 							<div className="space-y-4 pb-12 px-2">
 								<div className="pt-4">
 									<h6 className="text-md font-medium">Image Settings</h6>
@@ -243,7 +243,7 @@ export function GenerationSettingsCard({
 									</div>
 								)}
 								<div className="pt-4">
-									<h6 className="text-md font-medium">Model Settings</h6>
+									<h6 className="text-md font-medium">Base Model Settings</h6>
 								</div>
 								<div>
 									<Label htmlFor="model">FLUX.1 Base Model</Label>
@@ -290,6 +290,9 @@ export function GenerationSettingsCard({
 										onValueChange={(value) => handleSliderChange('num_inference_steps', value)}
 										className="custom-slider"
 									/>
+								</div>
+								<div className="pt-4">
+									<h6 className="text-md font-medium">Fine-tuned Model Settings</h6>
 								</div>
 								<div>
 									<TooltipProvider>
