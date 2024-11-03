@@ -37,7 +37,7 @@ export default function ServerLogModal({ logs, showLogs, setShowLogs, clearLogs 
   }, [logs]);
 
   return (
-    <div className={`fixed bottom-16 left-4 w-[32rem] h-80 bg-gray-900 text-green-400 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out ${showLogs ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'}`}>
+    <div className={`fixed bottom-16 left-4 w-[calc(100vw-2rem)] sm:w-[32rem] h-80 bg-gray-900 text-green-400 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out ${showLogs ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'}`}>
       <div className="flex justify-between items-center p-2 bg-gray-800">
         <h3 className="text-sm font-semibold">Generation Logs</h3>
         <div className="flex space-x-2">
