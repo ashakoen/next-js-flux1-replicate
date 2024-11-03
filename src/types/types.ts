@@ -30,4 +30,5 @@ export type GeneratedImage = {
     lora_scale?: number;
     timestamp?: string; 
     seed?: number;
+    isImg2Img: boolean;
 };

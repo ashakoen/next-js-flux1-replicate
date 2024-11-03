@@ -174,6 +174,15 @@ export function GeneratedImagesCard({
                                                                                 </span>
                                                                             </p>
                                                                         )}
+                                                                        {image.isImg2Img !== undefined && (
+                                                                            <p className="text-sm">
+                                                                                <span className="font-medium">Image to Image:</span>
+                                                                                <span className={`ml-2 px-2 py-1 rounded ${image.isImg2Img ? 'bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100'}`}>
+                                                                                    {image.isImg2Img ? 'Yes' : 'No'}
+                                                                                </span>
+                                                                            </p>
+                                                                        )}
+                
                                                                     </div>
                                                                     <div className="md:col-span-1 space-y-2">
                                                                         {image.go_fast !== undefined && (

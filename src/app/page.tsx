@@ -8,6 +8,7 @@ import { SettingsDrawer } from '@/components/SettingsDrawer';
 import ServerLogModal from '../components/modals/serverLogModal';
 import { FormData, GeneratedImage } from '@/types/types';
 import { GeneratedImagesCard } from "@/components/cards/GeneratedImagesCard";
+import { ImageUploadCard } from "@/components/cards/ImageUploadCard";
 
 
 
@@ -25,7 +26,9 @@ type TelemetryData = {
 	statusChanges: { status: string; timestamp: string }[] // ISO 8601 format
 	modelLoadTime?: number
 	pollingSteps: number
-	generationParameters: FormData
+    generationParameters: FormData & {
+        hasInputImage: boolean
+    }
 	outputImageSizes: number[]
 	clientInfo: {
 		userAgent: string
@@ -95,6 +98,7 @@ export default function Component() {
 
 	const abortController = useRef<AbortController | null>(null);
 	const [telemetryData, setTelemetryData] = useState<TelemetryData | null>(null)
+	const [selectedImage, setSelectedImage] = useState<{ url: string; file: File | null } | null>(null);
 
 	const getClientInfo = () => {
 		return {
@@ -302,6 +306,18 @@ export default function Component() {
 		localStorage.setItem('replicateApiKey', newApiKey);
 	};
 
+	const handleImageSelect = (imageData: { url: string; file: File | null }) => {
+		setSelectedImage(imageData);
+	};
+	
+	// Add this function to handle clearing the image
+	const handleClearImage = () => {
+		if (selectedImage?.url) {
+			URL.revokeObjectURL(selectedImage.url);
+		}
+		setSelectedImage(null);
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
@@ -317,12 +333,25 @@ export default function Component() {
 		isPolling.current = true;
 		abortController.current = new AbortController();
 
+		let replicateParams;
+
 		const [loraName, loraVersion] = formData.privateLoraName.split(':');
 
 		console.log('LoRA Name:', loraName);
 		console.log('LoRA Version:', loraVersion);
 
-		let replicateParams;
+		let imageData: string | undefined;
+		
+		if (selectedImage?.file) {
+			const reader = new FileReader();
+			const base64Promise = new Promise<string | ArrayBuffer | null>((resolve) => {
+				reader.onload = () => resolve(reader.result);
+				reader.readAsDataURL(selectedImage.file!); // '!' tells TypeScript we know file exists
+			});
+			const base64Data = await base64Promise;
+			imageData = base64Data as string;
+		}
+
 		if (loraName && loraVersion) {
 			replicateParams = {
 				version: loraVersion,
@@ -341,6 +370,7 @@ export default function Component() {
 					...(formData.extra_lora ? { extra_lora: formData.extra_lora, extra_lora_scale: formData.extra_lora_scale } : {}),
 					...(formData.seed !== 0 ? { seed: formData.seed } : {}),
 					go_fast: formData.go_fast,
+					...(selectedImage?.file ? { image: imageData } : {}),
 				}
 			};
 		} else {
@@ -357,6 +387,7 @@ export default function Component() {
 					...(formData.extra_lora ? { extra_lora: formData.extra_lora, extra_lora_scale: formData.extra_lora_scale } : {}),
 					...(formData.seed !== 0 ? { seed: formData.seed } : {}),
 					go_fast: formData.go_fast,
+					...(selectedImage?.file ? { image: imageData } : {}),
 				},
 				model: formData.model,
 			};
@@ -375,7 +406,10 @@ export default function Component() {
 			totalDuration: 0,
 			statusChanges: [],
 			pollingSteps: 0,
-			generationParameters: { ...formData },
+			generationParameters: { 
+				...formData,
+				hasInputImage: !!selectedImage // Add this line to indicate if an input image was used
+			},
 			outputImageSizes: [],
 			clientInfo: getClientInfo(),
 			timeOfDay: getLocalTimeOfDay(),
@@ -512,12 +546,14 @@ export default function Component() {
 						num_inference_steps: pollData.input.num_inference_steps,
 						lora_scale: pollData.input.lora_scale,
 						seed,
-						timestamp: new Date().toISOString()
+						timestamp: new Date().toISOString(),
+						isImg2Img: !!selectedImage
 					}
 				})
 
 				setGeneratedImages((prev) => {
 					const updatedImages = [...prev, ...newImages]
+					console.log('Saving images with img2img data:', updatedImages)  // Add this line
 					localStorage.setItem('generatedImages', JSON.stringify(updatedImages))
 					return updatedImages
 				})
@@ -718,7 +754,11 @@ export default function Component() {
 								showApiKeyAlert={showApiKeyAlert}
 								handleApiKeyChange={handleApiKeyChange} 
 							/>
-
+        <ImageUploadCard
+            onImageSelect={handleImageSelect}
+            selectedImage={selectedImage}
+            onClearImage={handleClearImage}
+        />
 						</div>
 					</div>
 

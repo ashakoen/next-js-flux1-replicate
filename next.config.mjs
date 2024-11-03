@@ -3,10 +3,13 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'replicate.delivery',
+        protocol: "https",
+        hostname: "replicate.delivery",
       },
-      // Add other domains if needed
+      {
+        protocol: "https",
+        hostname: "*.replicate.delivery",
+      }
     ],
     unoptimized: true,
   },
