@@ -251,6 +251,11 @@ export default function Component() {
 				prevFormat: prev.output_format
 			});
 		
+			// Guard against empty output_format
+			if (name === 'output_format' && !value) {
+				value = prev.model === 'recraftv3' ? 'webp' : 'png';
+			}
+		
 			const updatedFormData = { 
 				...prev, 
 				[name]: value,
@@ -271,10 +276,10 @@ export default function Component() {
 							output_format: 'png'  // Always set png when switching to non-recraftv3 models
 						})
 				}),
-				// Handle output format changes for recraftv3
-				...(name === 'output_format' && prev.model === 'recraftv3' && {
-					style: value === 'svg' ? 'any' : prev.style
-				})
+           // Handle output format changes for recraftv3
+		   ...(name === 'output_format' && prev.model === 'recraftv3' && {
+			style: value === 'svg' ? 'any' : 'any'  // Always set to 'any' when switching formats
+		})
 			};
 		
 			console.log('Updated formData:', updatedFormData);
