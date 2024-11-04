@@ -11,8 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { FormData } from '@/types/types';
+import { FormData, Recraftv3Size, Recraftv3Style } from '@/types/types';
 import { ApiSettingsModal } from "@/components/modals/ApiSettingsModal";
+import { useEffect } from 'react';
 
 interface GenerationSettingsCardProps {
 	formData: FormData;
@@ -56,7 +57,51 @@ export function GenerationSettingsCard({
     handleApiKeyChange
 }: GenerationSettingsCardProps) {
 
+	const isRecraftModel = (model: string) => {
+		return model.includes('recraftv3');
+	};
+	const isRecraftv3 = isRecraftModel(formData.model);
+	const isSvgFormat = formData.output_format === 'svg';
 	const validAspectRatios = ["1:1", "16:9", "21:9", "2:3", "3:2", "4:5", "5:4", "9:16", "9:21", "custom"];
+
+	useEffect(() => {
+		console.log('formData changed:', {
+			model: formData.model,
+			outputFormat: formData.output_format,
+			isRecraftModel: isRecraftModel(formData.model),
+			isRecraftv3: isRecraftModel(formData.model)
+		});
+	}, [formData]); // Now we only need formData as a dependency
+
+	console.log('Current model:', formData.model);
+	console.log('isRecraftModel result:', isRecraftModel(formData.model));
+	console.log('isRecraftv3 value:', isRecraftv3);
+	console.log('Output format:', formData.output_format);
+
+    const recraftv3Sizes: Recraftv3Size[] = [
+        "1024x1024", "1365x1024", "1024x1365", "1536x1024", "1024x1536",
+        "1820x1024", "1024x1820", "1024x2048", "2048x1024", "1434x1024",
+        "1024x1434", "1024x1280", "1280x1024", "1707x1024", "1024x1707"
+    ];
+
+	const recraftv3SvgStyles = [
+		"any",
+		"engraving",
+		"line_art",
+		"line_circuit",
+		"linocut"
+	];
+
+    const recraftv3Styles: Recraftv3Style[] = [
+        "any", "realistic_image", "digital_illustration", "digital_illustration/pixel_art",
+        "digital_illustration/hand_drawn", "digital_illustration/grain",
+        "digital_illustration/infantile_sketch", "digital_illustration/2d_art_poster",
+        "digital_illustration/handmade_3d", "digital_illustration/hand_drawn_outline",
+        "digital_illustration/engraving_color", "digital_illustration/2d_art_poster_2",
+        "realistic_image/b_and_w", "realistic_image/hard_flash", "realistic_image/hdr",
+        "realistic_image/natural_light", "realistic_image/studio_portrait",
+        "realistic_image/enterprise", "realistic_image/motion_blur"
+	];
 
 	return (
 		<Card className="w-full max-h-[calc(100vh-10rem)] relative">
@@ -92,24 +137,27 @@ export function GenerationSettingsCard({
 										className="min-h-[100px]"
 									/>
 								</div>
-								<div className="flex items-center space-x-2">
-									<Switch
-										id="go_fast"
-										checked={formData.go_fast}
-										onCheckedChange={(checked) => handleSwitchChange('go_fast', checked)}
-									/>
-									<Label htmlFor="go_fast">Go Fast</Label>
-									<TooltipProvider>
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<AlertCircle className="h-4 w-4 text-gray-500" />
-											</TooltipTrigger>
-											<TooltipContent>
-												<p>Enable for faster generation at the cost of some quality</p>
-											</TooltipContent>
-										</Tooltip>
-									</TooltipProvider>
-								</div>
+								{!isRecraftv3 && (
+									<div className="flex items-center space-x-2">
+										<Switch
+											id="go_fast"
+											checked={formData.go_fast}
+											onCheckedChange={(checked) => handleSwitchChange('go_fast', checked)}
+										/>
+										<Label htmlFor="go_fast">Go Fast</Label>
+										<TooltipProvider>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<AlertCircle className="h-4 w-4 text-gray-500" />
+												</TooltipTrigger>
+												<TooltipContent>
+													<p>Enable for faster generation at the cost of some quality</p>
+												</TooltipContent>
+											</Tooltip>
+										</TooltipProvider>
+									</div>
+								)}
+								{!isRecraftv3 && (
 								<div>
 									<Label>Number of Outputs</Label>
 									<div className="flex space-x-2">
@@ -128,6 +176,7 @@ export function GenerationSettingsCard({
 										))}
 									</div>
 								</div>
+								)}
 							</div>
 
 							<div className="flex w-full pt-8 pb-10">
@@ -157,22 +206,101 @@ export function GenerationSettingsCard({
 						</TabsContent>
 						<TabsContent value="advanced" className="mt-4 h-[calc(100vh-24rem)] overflow-y-auto scrollbar-hide overscroll-none touch-pan-y">
 							<div className="space-y-4 pb-12 px-2">
+
+
+
 								<div className="pt-4">
-									<h6 className="text-md font-medium">Image Settings</h6>
+									<h6 className="text-md font-medium">Base Model Settings</h6>
 								</div>
 								<div>
-									<Label htmlFor="output_format">Output Format</Label>
-									<Select name="output_format" value={formData.output_format} onValueChange={(value) => handleSelectChange('output_format', value)}>
+									<Label htmlFor="model">Base Model</Label>
+									<Select name="model" value={formData.model} onValueChange={(value) => handleSelectChange('model', value)}>
 										<SelectTrigger>
-											<SelectValue placeholder="Select output format" />
+											<SelectValue placeholder="Select a model" />
 										</SelectTrigger>
 										<SelectContent>
-											<SelectItem value="webp">WebP</SelectItem>
-											<SelectItem value="jpg">JPG</SelectItem>
-											<SelectItem value="png">PNG</SelectItem>
+											<SelectItem value="dev">Dev</SelectItem>
+											<SelectItem value="schnell">Schnell</SelectItem>
+											<SelectItem value="recraftv3">Recraft v3</SelectItem>
 										</SelectContent>
 									</Select>
 								</div>
+
+
+                                {!isRecraftv3 && (
+                                    <>
+								<div>
+									<Label htmlFor="seed">Seed</Label>
+									<Input
+										id="seed"
+										name="seed"
+										type="number"
+										value={formData.seed}
+										onChange={handleInputChange}
+									/>
+								</div>
+								<div>
+									<Label htmlFor="guidance_scale">Guidance Scale: {formData.guidance_scale}</Label>
+									<Slider
+										id="guidance_scale"
+										min={0}
+										max={10}
+										step={0.1}
+										value={[formData.guidance_scale]}
+										onValueChange={(value) => handleSliderChange('guidance_scale', value)}
+										className="custom-slider"
+									/>
+								</div>
+								<div>
+									<Label htmlFor="num_inference_steps">Inference Steps: {formData.num_inference_steps}</Label>
+									<Slider
+										id="num_inference_steps"
+										min={1}
+										max={formData.model === 'schnell' && !formData.privateLoraName ? 4 : 50}
+										step={1}
+										value={[formData.num_inference_steps]}
+										onValueChange={(value) => handleSliderChange('num_inference_steps', value)}
+										className="custom-slider"
+									/>
+								</div>
+								</>
+							)}
+
+								<div className="pt-4">
+									<h6 className="text-md font-medium">Image Settings</h6>
+								</div>
+
+
+                                <div>
+                                    <Label htmlFor="output_format">Output Format</Label>
+                                    <Select 
+                                        name="output_format" 
+                                        value={formData.output_format} 
+                                        onValueChange={(value) => handleSelectChange('output_format', value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select output format" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {isRecraftv3 ? (
+                                                <>
+                                                    <SelectItem value="webp">WebP</SelectItem>
+                                                    <SelectItem value="svg">SVG</SelectItem>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <SelectItem value="webp">WebP</SelectItem>
+                                                    <SelectItem value="jpg">JPG</SelectItem>
+                                                    <SelectItem value="png">PNG</SelectItem>
+                                                </>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {!isRecraftv3 && (
+                                    <>
+
 								<div>
 									<Label htmlFor="output_quality">Output Quality: {formData.output_quality}</Label>
 									<TooltipProvider>
@@ -199,6 +327,7 @@ export function GenerationSettingsCard({
 										</Tooltip>
 									</TooltipProvider>
 								</div>
+
 								<div>
 									<Label htmlFor="aspect_ratio">Aspect Ratio</Label>
 									<Select name="aspect_ratio" value={formData.aspect_ratio} onValueChange={(value) => handleSelectChange('aspect_ratio', value)}>
@@ -242,55 +371,65 @@ export function GenerationSettingsCard({
 										</div>
 									</div>
 								)}
-								<div className="pt-4">
-									<h6 className="text-md font-medium">Base Model Settings</h6>
-								</div>
-								<div>
-									<Label htmlFor="model">FLUX.1 Base Model</Label>
-									<Select name="model" value={formData.model} onValueChange={(value) => handleSelectChange('model', value)}>
-										<SelectTrigger>
-											<SelectValue placeholder="Select a model" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="dev">Dev</SelectItem>
-											<SelectItem value="schnell">Schnell</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-								<div>
-									<Label htmlFor="seed">Seed</Label>
-									<Input
-										id="seed"
-										name="seed"
-										type="number"
-										value={formData.seed}
-										onChange={handleInputChange}
-									/>
-								</div>
-								<div>
-									<Label htmlFor="guidance_scale">Guidance Scale: {formData.guidance_scale}</Label>
-									<Slider
-										id="guidance_scale"
-										min={0}
-										max={10}
-										step={0.1}
-										value={[formData.guidance_scale]}
-										onValueChange={(value) => handleSliderChange('guidance_scale', value)}
-										className="custom-slider"
-									/>
-								</div>
-								<div>
-									<Label htmlFor="num_inference_steps">Inference Steps: {formData.num_inference_steps}</Label>
-									<Slider
-										id="num_inference_steps"
-										min={1}
-										max={50}
-										step={1}
-										value={[formData.num_inference_steps]}
-										onValueChange={(value) => handleSliderChange('num_inference_steps', value)}
-										className="custom-slider"
-									/>
-								</div>
+								</>
+							)}
+
+
+
+                                {isRecraftv3 && (
+                                    <>
+                                        <div>
+                                            <Label htmlFor="recraftSize">Size</Label>
+                                            <Select 
+                                                name="recraftSize" 
+                                                value={`${formData.width}x${formData.height}`}
+                                                onValueChange={(value) => {
+                                                    const [width, height] = value.split('x').map(Number);
+                                                    handleSelectChange('width', width.toString());
+                                                    handleSelectChange('height', height.toString());
+                                                }}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select size" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {recraftv3Sizes.map((size) => (
+                                                        <SelectItem key={size} value={size}>{size}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="style">Style</Label>
+                                            <Select 
+                                                name="style" 
+                                                value={formData.style || 'any'}
+                                                onValueChange={(value) => handleSelectChange('style', value)}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select style" />
+                                                </SelectTrigger>
+												<SelectContent>
+													{isRecraftv3 && isSvgFormat ? (
+														recraftv3SvgStyles.map((style) => (
+															<SelectItem key={style} value={style}>
+																{style.replace(/_/g, ' ')}
+															</SelectItem>
+														))
+													) : (
+														recraftv3Styles.map((style) => (
+															<SelectItem key={style} value={style}>
+																{style.replace(/_/g, ' ')}
+															</SelectItem>
+														))
+													)}
+												</SelectContent>
+                                            </Select>
+                                        </div>
+                                    </>
+                                )}
+                                {!isRecraftv3 && (
+                                    <>
 								<div className="pt-4">
 									<h6 className="text-md font-medium">Fine-tuned Model Settings</h6>
 								</div>
@@ -350,6 +489,9 @@ export function GenerationSettingsCard({
 										className="custom-slider"
 									/>
 								</div>
+								<div className="pt-4">
+									<h6 className="text-md font-medium">Extra LoRA Settings</h6>
+								</div>
 								<div>
 									<Label htmlFor="extra_lora">Extra LoRA</Label>
 									<Input
@@ -380,6 +522,8 @@ export function GenerationSettingsCard({
 									/>
 									<Label htmlFor="disable_safety_checker">Disable Safety Checker</Label>
 								</div>
+								</>
+							)}
 							</div>
 						</TabsContent>
 					</Tabs>

@@ -15,24 +15,34 @@ interface ImageUploadCardProps {
     onImageSelect: (imageData: { url: string; file: File | null }) => void;
     selectedImage: { url: string; file: File | null } | null;
     onClearImage: () => void;
-    onError?: (error: string) => void; // Optional error callback
+    onError?: (error: string) => void;
+    disabled?: boolean; // Add this prop
 }
 
-export function ImageUploadCard({ onImageSelect, selectedImage, onClearImage, onError }: ImageUploadCardProps) {
+export function ImageUploadCard({ 
+    onImageSelect, 
+    selectedImage, 
+    onClearImage, 
+    onError,
+    disabled = false  // Add default value
+}: ImageUploadCardProps) {
     const [isDragging, setIsDragging] = useState(false);
 
     const handleDrag = (e: React.DragEvent) => {
+        if (disabled) return;
         e.preventDefault();
         e.stopPropagation();
     };
 
     const handleDragIn = (e: React.DragEvent) => {
+        if (disabled) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(true);
     };
 
     const handleDragOut = (e: React.DragEvent) => {
+        if (disabled) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
@@ -40,6 +50,7 @@ export function ImageUploadCard({ onImageSelect, selectedImage, onClearImage, on
 
     // Add validation function
     const validateImage = async (file: File): Promise<boolean> => {
+        if (disabled) return false;
         if (file.size > MAX_FILE_SIZE) {
             onError?.(`File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`);
             return false;
@@ -70,6 +81,7 @@ export function ImageUploadCard({ onImageSelect, selectedImage, onClearImage, on
     };
 
     const handleDrop = async (e: React.DragEvent) => {
+        if (disabled) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
@@ -84,6 +96,7 @@ export function ImageUploadCard({ onImageSelect, selectedImage, onClearImage, on
     };
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (disabled) return;
         const file = e.target.files?.[0];
         if (file) {
             const isValid = await validateImage(file);
@@ -99,7 +112,7 @@ export function ImageUploadCard({ onImageSelect, selectedImage, onClearImage, on
     };
 
     return (
-        <Card className="w-full mt-8">
+        <Card className={`w-full mt-8 ${disabled ? 'opacity-50' : ''}`}>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <ImageIcon className="w-5 h-5" />
@@ -109,13 +122,13 @@ export function ImageUploadCard({ onImageSelect, selectedImage, onClearImage, on
             <CardContent>
                 {!selectedImage ? (
                     <div
-                        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors
-                            ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 dark:border-gray-700'}
-                            hover:border-primary hover:bg-primary/5`}
-                        onDragEnter={handleDragIn}
-                        onDragLeave={handleDragOut}
-                        onDragOver={handleDrag}
-                        onDrop={handleDrop}
+                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors
+                        ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 dark:border-gray-700'}
+                        ${disabled ? 'pointer-events-none' : 'hover:border-primary hover:bg-primary/5'}`}
+                        onDragEnter={disabled ? undefined : handleDragIn}
+                        onDragLeave={disabled ? undefined : handleDragOut}
+                        onDragOver={disabled ? undefined : handleDrag}
+                        onDrop={disabled ? undefined : handleDrop}
                     >
                         <input
                             type="file"
@@ -123,10 +136,11 @@ export function ImageUploadCard({ onImageSelect, selectedImage, onClearImage, on
                             onChange={handleFileSelect}
                             className="hidden"
                             id="image-upload"
+                            disabled={disabled}
                         />
                         <label
                             htmlFor="image-upload"
-                            className="flex flex-col items-center gap-4 cursor-pointer"
+                            className={`flex flex-col items-center gap-4 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         >
                             <Upload className="w-8 h-8 text-gray-400" />
                             <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -156,6 +170,7 @@ export function ImageUploadCard({ onImageSelect, selectedImage, onClearImage, on
                             size="icon"
                             className="absolute top-2 right-2"
                             onClick={onClearImage}
+                            disabled={disabled}
                         >
                             <X className="w-4 h-4" />
                         </Button>

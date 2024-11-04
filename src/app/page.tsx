@@ -6,50 +6,15 @@ import { Terminal } from 'lucide-react';
 import { GenerationSettingsCard } from '@/components/cards/GenerationSettingsCard';
 import { SettingsDrawer } from '@/components/SettingsDrawer';
 import ServerLogModal from '../components/modals/serverLogModal';
-import { FormData, GeneratedImage } from '@/types/types';
+import { 
+    FormData, 
+    GeneratedImage, 
+    LogEntry, 
+    TelemetryData 
+} from '@/types/types';
 import { GeneratedImagesCard } from "@/components/cards/GeneratedImagesCard";
 import { ImageUploadCard } from "@/components/cards/ImageUploadCard";
 
-
-
-type LogEntry = {
-	timestamp: string;
-	message: string;
-	status: 'starting' | 'processing' | 'succeeded' | 'failed';
-};
-
-type TelemetryData = {
-	requestId: string
-	requestStartTime: string // ISO 8601 format
-	responseTime: number
-	totalDuration: number
-	statusChanges: { status: string; timestamp: string }[] // ISO 8601 format
-	modelLoadTime?: number
-	pollingSteps: number
-    generationParameters: FormData & {
-        hasInputImage: boolean
-    }
-	outputImageSizes: number[]
-	clientInfo: {
-		userAgent: string
-		language: string
-		screenSize: string
-		timezone: string
-	}
-	timeOfDay: string
-	dayOfWeek: string
-	errors: string[]
-	cancelledByUser: boolean
-	replicateId: string
-	replicateModel: string
-	replicateVersion: string
-	replicateCreatedAt: string
-	replicateStartedAt: string
-	replicateCompletedAt: string
-	replicatePredictTime: number
-	cancelledAt?: string
-	cancelledId?: string
-}
 
 const initialFormData: FormData = {
 	seed: 0,
@@ -70,6 +35,7 @@ const initialFormData: FormData = {
 	num_inference_steps: 28,
 	disable_safety_checker: false,
 	go_fast: true,
+	style: 'any'
 };
 
 export default function Component() {
@@ -278,9 +244,42 @@ export default function Component() {
 
 	const handleSelectChange = (name: string, value: string) => {
 		setFormData((prev) => {
-			const updatedFormData = { ...prev, [name]: value };
+			console.log('handleSelectChange:', {
+				name,
+				value,
+				prevModel: prev.model,
+				prevFormat: prev.output_format
+			});
+		
+			const updatedFormData = { 
+				...prev, 
+				[name]: value,
+				// Model-specific constraints
+				...(name === 'model' && {
+					...(value === 'schnell' && 
+						!prev.privateLoraName && 
+						prev.num_inference_steps > 4 
+							? { num_inference_steps: 4 } 
+							: {}),
+					...(value === 'recraftv3' 
+						? { 
+							num_outputs: 1,
+							output_format: 'webp',
+							style: 'any'
+						} 
+						: {
+							output_format: 'png'  // Always set png when switching to non-recraftv3 models
+						})
+				}),
+				// Handle output format changes for recraftv3
+				...(name === 'output_format' && prev.model === 'recraftv3' && {
+					style: value === 'svg' ? 'any' : prev.style
+				})
+			};
+		
+			console.log('Updated formData:', updatedFormData);
 			localStorage.setItem('replicateFormData', JSON.stringify(updatedFormData));
-			return updatedFormData;
+			return updatedFormData as FormData;
 		});
 	};
 
@@ -352,7 +351,20 @@ export default function Component() {
 			imageData = base64Data as string;
 		}
 
-		if (loraName && loraVersion) {
+		if (formData.model === 'recraftv3') {
+			replicateParams = {
+				input: {
+					prompt: formData.prompt,
+					width: formData.width,
+					height: formData.height,
+					style: formData.style || 'any',
+					output_format: formData.output_format,  // Add this line
+					...(selectedImage?.file ? { image: imageData } : {})
+				},
+				model: formData.model
+			};
+		
+		} else if (loraName && loraVersion) {
 			replicateParams = {
 				version: loraVersion,
 				input: {
@@ -530,7 +542,9 @@ export default function Component() {
 				currentTelemetryData.replicatePredictTime = pollData.metrics?.predict_time || 0
 				currentTelemetryData.generationParameters.seed = seed; 
 
-				const newImages = pollData.output.map((outputUrl: string) => {
+				const outputUrls = Array.isArray(pollData.output) ? pollData.output : [pollData.output];
+
+				const newImages = outputUrls.map((outputUrl: string) => {
 					// Fetch image size
 					fetch(outputUrl).then(response => {
 						const size = parseInt(response.headers.get('content-length') || '0')
@@ -541,11 +555,17 @@ export default function Component() {
 						prompt: pollData.input.prompt,
 						model: pollData.model,
 						version: pollData.version,
-						go_fast: pollData.input.go_fast,
-						guidance_scale: pollData.input.guidance_scale,
-						num_inference_steps: pollData.input.num_inference_steps,
-						lora_scale: pollData.input.lora_scale,
-						seed,
+						...(pollData.model !== 'recraftv3' ? {
+							go_fast: pollData.input.go_fast,
+							guidance_scale: pollData.input.guidance_scale,
+							num_inference_steps: pollData.input.num_inference_steps,
+							lora_scale: pollData.input.lora_scale,
+							seed: seed,
+						} : {
+							style: pollData.input.style,
+							width: pollData.input.width,
+							height: pollData.input.height
+						}),
 						timestamp: new Date().toISOString(),
 						isImg2Img: !!selectedImage
 					}
@@ -674,16 +694,39 @@ export default function Component() {
 	};
 
 	const downloadImage = async (imageUrl: string) => {
-		const response = await fetch(imageUrl);
-		const blob = await response.blob();
-		const url = window.URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.style.display = 'none';
-		a.href = url;
-		a.download = `generated-image-${Date.now()}.${formData.output_format}`;
-		document.body.appendChild(a);
-		a.click();
-		window.URL.revokeObjectURL(url);
+		try {
+			const response = await fetch('/api/download', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ imageUrl })
+			});
+			
+			if (!response.ok) throw new Error('Download failed');
+			
+			// Get the filename from the Content-Disposition header
+			const disposition = response.headers.get('Content-Disposition');
+			const filename = disposition?.split('filename=')[1] || 'generated-image.png';
+			
+			// Create blob from response
+			const blob = await response.blob();
+			const url = window.URL.createObjectURL(blob);
+			
+			// Trigger download
+			const a = document.createElement('a');
+			a.style.display = 'none';
+			a.href = url;
+			a.download = filename;
+			document.body.appendChild(a);
+			a.click();
+			
+			// Cleanup
+			window.URL.revokeObjectURL(url);
+			document.body.removeChild(a);
+		} catch (error) {
+			console.error('Failed to download image:', error);
+		}
 	};
 
 	const handleCancel = async () => {
@@ -727,6 +770,16 @@ export default function Component() {
 		setLogs([]);
 	};
 
+	const handleError = (error: string) => {
+		console.error(error);
+		// Optionally add error to logs
+		addLogEntry({
+			timestamp: new Date().toISOString(),
+			message: error,
+			status: 'error'
+		});
+	};
+
 
 	return (
 		<>
@@ -758,6 +811,8 @@ export default function Component() {
             onImageSelect={handleImageSelect}
             selectedImage={selectedImage}
             onClearImage={handleClearImage}
+			onError={handleError}
+			disabled={formData.model === 'recraftv3'}
         />
 						</div>
 					</div>
@@ -780,7 +835,10 @@ export default function Component() {
 				{/* Keep the logs button at the bottom */}
 				<div className="fixed bottom-4 left-4 z-50 flex flex-col items-start space-y-2">
 					<ServerLogModal
-						logs={logs}
+						logs={logs.map(log => ({
+							...log,
+							status: log.status === "error" ? "failed" : log.status
+						}))}
 						showLogs={showLogs}
 						setShowLogs={setShowLogs}
 						clearLogs={clearLogs}

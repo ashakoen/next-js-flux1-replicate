@@ -1,6 +1,11 @@
 export async function POST(req: Request): Promise<Response> {
 	try {
-	  const { apiKey, body, getUrl, cancelUrl, model } = await req.json();
+	  const { apiKey, body, getUrl, cancelUrl } = await req.json();
+
+	  const model = body?.model;
+
+	  console.log('Received model:', model);
+	  console.log('Received body:', body);
   
 	  if (!apiKey) {
 		console.error('Error: API key is missing');
@@ -22,20 +27,40 @@ export async function POST(req: Request): Promise<Response> {
 		fetchBody = '';
 	  } else if (!body.version) {
 		// No Private LoRA provided
-		if (model === 'schnell') {
-		  urlToFetch = 'https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions';
-		} else {
-		  urlToFetch = 'https://api.replicate.com/v1/models/black-forest-labs/flux-dev/predictions';
+		console.log('Processing model selection:', model);
+		switch (model) {
+			case 'schnell':
+				urlToFetch = 'https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions';
+				break;
+			case 'recraftv3':
+				// Check output format to determine which Recraft endpoint to use
+				urlToFetch = body.input?.output_format === 'svg' 
+					? 'https://api.replicate.com/v1/models/recraft-ai/recraft-v3-svg/predictions'
+					: 'https://api.replicate.com/v1/models/recraft-ai/recraft-v3/predictions';
+				break;
+			default: // 'dev'
+				urlToFetch = 'https://api.replicate.com/v1/models/black-forest-labs/flux-dev/predictions';
 		}
   
 		// Parse fetchBody to an object, remove the model property, and stringify it back
 		let fetchBodyObj = JSON.parse(fetchBody);
 		delete fetchBodyObj.model;
+
+		if (model === 'recraftv3') {
+			const { prompt, width, height, style, output_format } = fetchBodyObj.input;
+			fetchBodyObj.input = {
+				prompt,
+				size: `${width}x${height}`,
+				style: style || 'any'
+			};
+		}
+
 		fetchBody = JSON.stringify(fetchBodyObj);
   
 	  }
   
 	  console.log(`Fetching URL: ${urlToFetch} with method: ${method}`);
+	  console.log('Request body:', fetchBody);
   
 	  const response = await fetch(urlToFetch, {
 		method,
