@@ -322,8 +322,53 @@ export default function Component() {
 		setSelectedImage(null);
 	};
 
-	const handleSubmit = async (e: React.FormEvent) => {
+	const handleRegenerateWithSeed = async (newSeed: number) => {
+		setFormData(prev => ({
+			...prev,
+			seed: newSeed,
+			num_outputs: 1
+		}));
+		
+		handleSubmit(
+			{ preventDefault: () => {} } as React.FormEvent,
+			{ seed: newSeed, num_outputs: 1 }
+		);
+	};
+
+	const handleUseAsInput = async (imageUrl: string) => {
+		try {
+			// Fetch the image
+			const response = await fetch(imageUrl);
+			const blob = await response.blob();
+			
+			// Create a File object from the blob
+			const filename = imageUrl.split('/').pop() || 'image.png';
+			const file = new File([blob], filename, { type: blob.type });
+			
+			// Create object URL for preview
+			const objectUrl = URL.createObjectURL(blob);
+			
+			// Update the ImageUploadCard state
+			handleImageSelect({ url: objectUrl, file });
+			
+		} catch (error) {
+			console.error('Failed to use image as input:', error);
+			handleError('Failed to use image as input');
+		}
+	};
+
+	const handleSubmit = async (e: React.FormEvent, overrideData?: Partial<FormData>) => {
 		e.preventDefault();
+
+		console.log('Submitting with formData:', formData);
+		console.log('Override data:', overrideData);
+
+		const submissionData = {
+			...formData,
+			...overrideData
+		};
+	
+		console.log('Final submission data:', submissionData);
 
 		if (!apiKey) {
 			setShowApiKeyAlert(true);
@@ -339,7 +384,7 @@ export default function Component() {
 
 		let replicateParams;
 
-		const [loraName, loraVersion] = formData.privateLoraName.split(':');
+		const [loraName, loraVersion] = submissionData.privateLoraName.split(':');
 
 		console.log('LoRA Name:', loraName);
 		console.log('LoRA Version:', loraVersion);
@@ -833,6 +878,8 @@ export default function Component() {
 							clearGeneratedImages={clearGeneratedImages}
 							isGenerating={isGenerating}
 							numberOfOutputs={formData.num_outputs}
+							onRegenerateWithSeed={handleRegenerateWithSeed}
+							onUseAsInput={handleUseAsInput} 
 						/>
 					</div>
 				</div>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Image from 'next/image';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, RefreshCw, Upload } from 'lucide-react';
 import { GeneratedImage } from '@/types/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
@@ -19,6 +19,8 @@ interface GeneratedImagesCardProps {
     onDownloadImage: (imageUrl: string) => Promise<void>;
     onDeleteImage: (imageUrl: string) => void;
     clearGeneratedImages: () => void;
+    onRegenerateWithSeed: (newSeed: number, numberOfOutputs?: number) => void;
+    onUseAsInput: (imageUrl: string) => Promise<void>;
     isGenerating: boolean;
     numberOfOutputs: number;
 }
@@ -31,7 +33,9 @@ export function GeneratedImagesCard({
     onDeleteImage,
     clearGeneratedImages,
     isGenerating,
-    numberOfOutputs
+    numberOfOutputs,
+    onRegenerateWithSeed,
+    onUseAsInput
 }: GeneratedImagesCardProps) {
 
     const [isConfirming, setIsConfirming] = useState(false);
@@ -214,11 +218,42 @@ export function GeneratedImagesCard({
                                     <Button
                                         variant="secondary"
                                         size="icon"
+                                        className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                        onClick={async () => {
+                                            try {
+                                                await onUseAsInput(image.url);
+                                            } catch (error) {
+                                                console.error('Failed to use image as input:', error);
+                                            }
+                                        }}
+                                    >
+                                        <Upload className="h-4 w-4" />
+                                        <span className="sr-only">Use as input image</span>
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="icon"
                                         className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                                         onClick={() => onDownloadImage(image.url)}
                                     >
                                         <Download className="h-4 w-4" />
                                         <span className="sr-only">Download image</span>
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="icon"
+                                        className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                        onClick={() => {
+                                            const currentSeed = parseInt(image.seed?.toString() || '0');
+                                            const newSeed = currentSeed < 1000 ? currentSeed + 1 : currentSeed - 1;
+                                            // Force numberOfOutputs to 1 when regenerating with seed
+                                            onRegenerateWithSeed(newSeed, 1); // Modified to pass a second parameter
+                                        }}
+                                    >
+                                        <RefreshCw className="h-4 w-4" />
+                                        <span className="sr-only">
+                                            Regenerate with {parseInt(image.seed?.toString() || '0') < 1000 ? "increased" : "decreased"} seed
+                                        </span>
                                     </Button>
                                     <Button
                                         variant="destructive"
