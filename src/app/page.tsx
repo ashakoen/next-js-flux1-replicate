@@ -323,15 +323,20 @@ export default function Component() {
 	};
 
 	const handleRegenerateWithSeed = async (newSeed: number) => {
+		// Update the form state
 		setFormData(prev => ({
 			...prev,
 			seed: newSeed,
 			num_outputs: 1
 		}));
 		
+		// Submit with override data
 		handleSubmit(
 			{ preventDefault: () => {} } as React.FormEvent,
-			{ seed: newSeed, num_outputs: 1 }
+			{ 
+				seed: newSeed, 
+				num_outputs: 1 
+			}
 		);
 	};
 
@@ -401,57 +406,57 @@ export default function Component() {
 			imageData = base64Data as string;
 		}
 
-		if (formData.model === 'recraftv3') {
+		if (submissionData.model === 'recraftv3') {
 			replicateParams = {
 				input: {
-					prompt: formData.prompt,
-					width: formData.width,
-					height: formData.height,
-					style: formData.style || 'any',
-					output_format: formData.output_format,  // Add this line
+					prompt: submissionData.prompt,
+					width: submissionData.width,
+					height: submissionData.height,
+					style: submissionData.style || 'any',
+					output_format: submissionData.output_format,  // Add this line
 					...(selectedImage?.file ? { image: imageData } : {})
 				},
-				model: formData.model
+				model: submissionData.model
 			};
 		
 		} else if (loraName && loraVersion) {
 			replicateParams = {
 				version: loraVersion,
 				input: {
-					prompt: formData.prompt,
-					model: formData.model,
-					num_outputs: formData.num_outputs,
-					guidance_scale: formData.guidance_scale,
-					num_inference_steps: formData.num_inference_steps,
-					output_format: formData.output_format,
-					output_quality: formData.output_quality,
-					disable_safety_checker: formData.disable_safety_checker,
-					...(formData.aspect_ratio === 'custom' ? { width: formData.width, height: formData.height } : { aspect_ratio: formData.aspect_ratio }),
+					prompt: submissionData.prompt,
+					model: submissionData.model,
+					num_outputs: submissionData.num_outputs,
+					guidance_scale: submissionData.guidance_scale,
+					num_inference_steps: submissionData.num_inference_steps,
+					output_format: submissionData.output_format,
+					output_quality: submissionData.output_quality,
+					disable_safety_checker: submissionData.disable_safety_checker,
+					...(submissionData.aspect_ratio === 'custom' ? { width: submissionData.width, height: submissionData.height } : { aspect_ratio: submissionData.aspect_ratio }),
 					lora: loraName,
-					lora_scale: formData.lora_scale,
-					...(formData.extra_lora ? { extra_lora: formData.extra_lora, extra_lora_scale: formData.extra_lora_scale } : {}),
-					...(formData.seed !== 0 ? { seed: formData.seed } : {}),
-					go_fast: formData.go_fast,
+					lora_scale: submissionData.lora_scale,
+					...(submissionData.extra_lora ? { extra_lora: submissionData.extra_lora, extra_lora_scale: submissionData.extra_lora_scale } : {}),
+					...(submissionData.seed !== 0 ? { seed: submissionData.seed } : {}),
+					go_fast: submissionData.go_fast,
 					...(selectedImage?.file ? { image: imageData } : {}),
 				}
 			};
 		} else {
 			replicateParams = {
 				input: {
-					prompt: formData.prompt,
-					num_outputs: formData.num_outputs,
-					guidance_scale: formData.guidance_scale,
-					num_inference_steps: formData.num_inference_steps,
-					output_format: formData.output_format,
-					output_quality: formData.output_quality,
-					disable_safety_checker: formData.disable_safety_checker,
-					...(formData.aspect_ratio === 'custom' ? { width: formData.width, height: formData.height } : { aspect_ratio: formData.aspect_ratio }),
-					...(formData.extra_lora ? { extra_lora: formData.extra_lora, extra_lora_scale: formData.extra_lora_scale } : {}),
-					...(formData.seed !== 0 ? { seed: formData.seed } : {}),
-					go_fast: formData.go_fast,
+					prompt: submissionData.prompt,
+					num_outputs: submissionData.num_outputs,
+					guidance_scale: submissionData.guidance_scale,
+					num_inference_steps: submissionData.num_inference_steps,
+					output_format: submissionData.output_format,
+					output_quality: submissionData.output_quality,
+					disable_safety_checker: submissionData.disable_safety_checker,
+					...(submissionData.aspect_ratio === 'custom' ? { width: submissionData.width, height: submissionData.height } : { aspect_ratio: submissionData.aspect_ratio }),
+					...(submissionData.extra_lora ? { extra_lora: submissionData.extra_lora, extra_lora_scale: submissionData.extra_lora_scale } : {}),
+					...(submissionData.seed !== 0 ? { seed: submissionData.seed } : {}),
+					go_fast: submissionData.go_fast,
 					...(selectedImage?.file ? { image: imageData } : {}),
 				},
-				model: formData.model,
+				model: submissionData.model,
 			};
 		}
 
@@ -469,7 +474,7 @@ export default function Component() {
 			statusChanges: [],
 			pollingSteps: 0,
 			generationParameters: { 
-				...formData,
+				...submissionData,
 				hasInputImage: !!selectedImage // Add this line to indicate if an input image was used
 			},
 			outputImageSizes: [],

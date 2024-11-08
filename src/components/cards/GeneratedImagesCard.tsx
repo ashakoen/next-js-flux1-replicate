@@ -246,10 +246,9 @@ export function GeneratedImagesCard({
                                         onClick={() => {
                                             const currentSeed = parseInt(image.seed?.toString() || '0');
                                             const newSeed = currentSeed < 1000 ? currentSeed + 1 : currentSeed - 1;
-                                            // Force numberOfOutputs to 1 when regenerating with seed
-                                            onRegenerateWithSeed(newSeed, 1); // Modified to pass a second parameter
+                                            onRegenerateWithSeed(newSeed);
                                         }}
-                                    >
+                                    > 
                                         <RefreshCw className="h-4 w-4" />
                                         <span className="sr-only">
                                             Regenerate with {parseInt(image.seed?.toString() || '0') < 1000 ? "increased" : "decreased"} seed
