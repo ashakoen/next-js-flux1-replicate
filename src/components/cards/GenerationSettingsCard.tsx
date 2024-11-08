@@ -104,7 +104,7 @@ export function GenerationSettingsCard({
 	];
 
 	return (
-		<Card className="w-full max-h-[calc(100vh-10rem)] relative">
+		<Card className="w-full relative">
 			<div className="absolute -top-3 -right-2">
             <ApiSettingsModal
                 apiKey={apiKey}
@@ -116,7 +116,7 @@ export function GenerationSettingsCard({
 				<CardTitle>Generation Settings</CardTitle>
 				<CardDescription>Generate images using AI with the Replicate API</CardDescription>
 			</CardHeader>
-			<CardContent className="overflow-y-auto"> 
+			<CardContent className="h-[620px] overflow-y-auto">  
 			<form onSubmit={handleSubmit}>
 					<Tabs defaultValue="basic" className="w-full">
 						<TabsList className="grid w-full grid-cols-2">
@@ -177,6 +177,47 @@ export function GenerationSettingsCard({
 									</div>
 								</div>
 								)}
+
+{!isRecraftv3 && (
+    <>
+        <div>
+            <Label htmlFor="guidance_scale">Guidance Scale: {formData.guidance_scale}</Label>
+            <Slider
+                id="guidance_scale"
+                min={0}
+                max={10}
+                step={0.1}
+                value={[formData.guidance_scale]}
+                onValueChange={(value) => handleSliderChange('guidance_scale', value)}
+                className="custom-slider"
+            />
+        </div>
+        <div>
+            <Label htmlFor="num_inference_steps">Inference Steps: {formData.num_inference_steps}</Label>
+            <Slider
+                id="num_inference_steps"
+                min={1}
+                max={formData.model === 'schnell' && !formData.privateLoraName ? 4 : 50}
+                step={1}
+                value={[formData.num_inference_steps]}
+                onValueChange={(value) => handleSliderChange('num_inference_steps', value)}
+                className="custom-slider"
+            />
+        </div>
+        <div>
+            <Label htmlFor="seed">Seed</Label>
+            <Input
+                id="seed"
+                name="seed"
+                type="number"
+                value={formData.seed}
+                onChange={handleInputChange}
+            />
+        </div>
+    </>
+)}
+
+
 							</div>
 
 							<div className="flex w-full pt-8 pb-10">
@@ -204,7 +245,7 @@ export function GenerationSettingsCard({
                         </div>
 
 						</TabsContent>
-						<TabsContent value="advanced" className="mt-4 h-[calc(100vh-24rem)] overflow-y-auto scrollbar-hide overscroll-none touch-pan-y">
+						<TabsContent value="advanced" className="mt-4 overflow-y-auto scrollbar-hide overscroll-none touch-pan-y">
 							<div className="space-y-4 pb-12 px-2">
 
 
@@ -225,46 +266,6 @@ export function GenerationSettingsCard({
 										</SelectContent>
 									</Select>
 								</div>
-
-
-                                {!isRecraftv3 && (
-                                    <>
-								<div>
-									<Label htmlFor="seed">Seed</Label>
-									<Input
-										id="seed"
-										name="seed"
-										type="number"
-										value={formData.seed}
-										onChange={handleInputChange}
-									/>
-								</div>
-								<div>
-									<Label htmlFor="guidance_scale">Guidance Scale: {formData.guidance_scale}</Label>
-									<Slider
-										id="guidance_scale"
-										min={0}
-										max={10}
-										step={0.1}
-										value={[formData.guidance_scale]}
-										onValueChange={(value) => handleSliderChange('guidance_scale', value)}
-										className="custom-slider"
-									/>
-								</div>
-								<div>
-									<Label htmlFor="num_inference_steps">Inference Steps: {formData.num_inference_steps}</Label>
-									<Slider
-										id="num_inference_steps"
-										min={1}
-										max={formData.model === 'schnell' && !formData.privateLoraName ? 4 : 50}
-										step={1}
-										value={[formData.num_inference_steps]}
-										onValueChange={(value) => handleSliderChange('num_inference_steps', value)}
-										className="custom-slider"
-									/>
-								</div>
-								</>
-							)}
 
 								<div className="pt-4">
 									<h6 className="text-md font-medium">Image Settings</h6>

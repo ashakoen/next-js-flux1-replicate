@@ -145,7 +145,7 @@ export function ImageUploadCard({
                             <Upload className="w-6 h-6 text-gray-400" />
                             <div className="text-sm text-gray-600 dark:text-gray-400">
                                 <span className="font-semibold text-primary">Click to upload</span> or drag and drop
-                                <div className="mt-1">
+                                <div className="mt-2">
                                     PNG, JPG, WEBP (max. {MAX_FILE_SIZE / 1024 / 1024}MB)
                                 </div>
                                 <div className="mt-1">
