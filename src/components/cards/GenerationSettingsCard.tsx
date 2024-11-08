@@ -114,7 +114,7 @@ export function GenerationSettingsCard({
 			</div>
 			<CardHeader>
 				<CardTitle>Generation Settings</CardTitle>
-				<CardDescription>Generate images using FLUX.1 through the Replicate API</CardDescription>
+				<CardDescription>Generate images using AI with the Replicate API</CardDescription>
 			</CardHeader>
 			<CardContent className="overflow-y-auto"> 
 			<form onSubmit={handleSubmit}>
@@ -219,8 +219,8 @@ export function GenerationSettingsCard({
 											<SelectValue placeholder="Select a model" />
 										</SelectTrigger>
 										<SelectContent>
-											<SelectItem value="dev">Dev</SelectItem>
-											<SelectItem value="schnell">Schnell</SelectItem>
+											<SelectItem value="dev">FLUX.1 Dev</SelectItem>
+											<SelectItem value="schnell">FLUX.1 Schnell</SelectItem>
 											<SelectItem value="recraftv3">Recraft v3</SelectItem>
 										</SelectContent>
 									</Select>

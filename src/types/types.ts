@@ -32,6 +32,7 @@ export type GeneratedImage = {
     timestamp?: string; 
     seed?: number;
     isImg2Img: boolean;
+    privateLoraName?: string; 
 };
 
 export type LogEntry = {

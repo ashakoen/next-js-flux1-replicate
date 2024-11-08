@@ -142,10 +142,10 @@ export function ImageUploadCard({
                             htmlFor="image-upload"
                             className={`flex flex-col items-center gap-4 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         >
-                            <Upload className="w-8 h-8 text-gray-400" />
+                            <Upload className="w-6 h-6 text-gray-400" />
                             <div className="text-sm text-gray-600 dark:text-gray-400">
                                 <span className="font-semibold text-primary">Click to upload</span> or drag and drop
-                                <div className="mt-2">
+                                <div className="mt-1">
                                     PNG, JPG, WEBP (max. {MAX_FILE_SIZE / 1024 / 1024}MB)
                                 </div>
                                 <div className="mt-1">

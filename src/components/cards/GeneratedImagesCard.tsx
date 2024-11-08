@@ -1,7 +1,6 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -13,32 +12,45 @@ import { useState, useEffect } from 'react';
 import { WandSparkles } from 'lucide-react';
 
 interface GeneratedImagesCardProps {
-    searchTerm: string;
-    filteredImages: GeneratedImage[];
-    onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    images: GeneratedImage[];
     onDownloadImage: (imageUrl: string) => Promise<void>;
     onDeleteImage: (imageUrl: string) => void;
     clearGeneratedImages: () => void;
-    onRegenerateWithSeed: (newSeed: number, numberOfOutputs?: number) => void;
+    onRegenerateWithSeed: (newSeed: number, modelType?: 'dev' | 'schnell' | 'recraftv3') => void;
     onUseAsInput: (imageUrl: string) => Promise<void>;
     isGenerating: boolean;
     numberOfOutputs: number;
+    model: string;
 }
 
 export function GeneratedImagesCard({
-    searchTerm,
-    filteredImages,
-    onSearchChange,
+    images,
     onDownloadImage,
     onDeleteImage,
     clearGeneratedImages,
     isGenerating,
     numberOfOutputs,
     onRegenerateWithSeed,
-    onUseAsInput
+    onUseAsInput,
+    model
 }: GeneratedImagesCardProps) {
 
     const [isConfirming, setIsConfirming] = useState(false);
+    const isFluxModel = (model: string | undefined, privateLoraName?: string) => {
+        if (!model) return false;
+        
+        // If it's a direct FLUX model
+        if (model.includes('flux-dev') || model.includes('flux-schnell')) {
+            return true;
+        }
+        
+        // If the model looks like a private LoRA path (contains a slash but isn't recraft)
+        if (model.includes('/') && !model.includes('recraft')) {
+            return true;
+        }
+        
+        return false;
+    };
 
     useEffect(() => {
         let timeoutId: NodeJS.Timeout;
@@ -51,22 +63,13 @@ export function GeneratedImagesCard({
     }, [isConfirming]);
 
     return (
-        <Card className="w-full h-[calc(100vh-10rem)] mt-8 sm:mt-0">
+        <Card className="w-full h-[calc(100vh-12rem)] mt-8 sm:mt-0">
             <CardHeader className="relative">
-                <CardTitle>Your FLUX.1 Image Generations</CardTitle>
+                <CardTitle>Your Image Generations</CardTitle>
                 <CardDescription>Your generations will show up here. Have fun! </CardDescription>
             </CardHeader>
-            <div className="px-6 pb-10 border-b"> {/* New fixed section */}
-                <Input
-                    type="text"
-                    placeholder="Search images by prompt..."
-                    value={searchTerm}
-                    onChange={onSearchChange}
-                    className="w-full"
-                />
-            </div>
-            <CardContent className="overflow-y-auto pt-6 h-[calc(100%-16rem)]">
-                {filteredImages.length > 0 ? (
+            <CardContent className="overflow-y-auto pt-3 h-[calc(100%-12rem)]">
+                {images.length > 0 ? (
                     <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
                         <AnimatePresence mode="popLayout">
                             {/* Loading Placeholders */}
@@ -116,7 +119,10 @@ export function GeneratedImagesCard({
                                 </motion.div>
                             ))}
 
-                            {filteredImages.map((image, index) => (
+                            
+
+                            {[...images].reverse().map((image, index) => (
+                                
                                 <motion.div
                                     key={image.url}
                                     layout
@@ -126,6 +132,7 @@ export function GeneratedImagesCard({
                                     transition={{ duration: 0.2 }}
                                     className="relative group"
                                 >
+
                                     <Dialog>
                                         <DialogTrigger asChild>
                                             <div className="cursor-pointer">
@@ -215,21 +222,26 @@ export function GeneratedImagesCard({
                                             </div>
                                         </DialogContent>
                                     </Dialog>
-                                    <Button
-                                        variant="secondary"
-                                        size="icon"
-                                        className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                        onClick={async () => {
-                                            try {
-                                                await onUseAsInput(image.url);
-                                            } catch (error) {
-                                                console.error('Failed to use image as input:', error);
-                                            }
-                                        }}
-                                    >
-                                        <Upload className="h-4 w-4" />
-                                        <span className="sr-only">Use as input image</span>
-                                    </Button>
+
+
+                                    
+                                    {isFluxModel(image.model, image.privateLoraName) && (
+                                        <Button
+                                            variant="secondary"
+                                            size="icon"
+                                            className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                            onClick={async () => {
+                                                try {
+                                                    await onUseAsInput(image.url);
+                                                } catch (error) {
+                                                    console.error('Failed to use image as input:', error);
+                                                }
+                                            }}
+                                        >
+                                            <Upload className="h-4 w-4" />
+                                            <span className="sr-only">Use as input image</span>
+                                        </Button>
+                                    )}
                                     <Button
                                         variant="secondary"
                                         size="icon"
@@ -239,21 +251,25 @@ export function GeneratedImagesCard({
                                         <Download className="h-4 w-4" />
                                         <span className="sr-only">Download image</span>
                                     </Button>
-                                    <Button
-                                        variant="secondary"
-                                        size="icon"
-                                        className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                        onClick={() => {
-                                            const currentSeed = parseInt(image.seed?.toString() || '0');
-                                            const newSeed = currentSeed < 1000 ? currentSeed + 1 : currentSeed - 1;
-                                            onRegenerateWithSeed(newSeed);
-                                        }}
-                                    > 
-                                        <RefreshCw className="h-4 w-4" />
-                                        <span className="sr-only">
-                                            Regenerate with {parseInt(image.seed?.toString() || '0') < 1000 ? "increased" : "decreased"} seed
-                                        </span>
-                                    </Button>
+                                    {isFluxModel(image.model, image.privateLoraName) && (
+                                        <Button
+                                            variant="secondary"
+                                            size="icon"
+                                            className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                            onClick={() => {
+                                                const currentSeed = parseInt(image.seed?.toString() || '0');
+                                                const newSeed = currentSeed < 1000 ? currentSeed + 1 : currentSeed - 1;
+                                                // Use 'dev' if it's a private LoRA (contains a slash), otherwise use the original model
+                                                const modelType = image.model?.includes('/') ? 'dev' : image.model as 'dev' | 'schnell' | 'recraftv3';
+                                                onRegenerateWithSeed(newSeed, modelType);
+                                            }}
+                                        > 
+                                            <RefreshCw className="h-4 w-4" />
+                                            <span className="sr-only">
+                                                Regenerate with {parseInt(image.seed?.toString() || '0') < 1000 ? "increased" : "decreased"} seed
+                                            </span>
+                                        </Button>
+                                    )}
                                     <Button
                                         variant="destructive"
                                         size="icon"
@@ -355,7 +371,7 @@ export function GeneratedImagesCard({
                     </div>
                 )}
             </CardContent>
-            <CardFooter className="flex justify-end border-t pt-6">
+            <CardFooter className="flex justify-end border-t pt-4 mt-4">
                 <Button
                     className={`btn-theme ${isConfirming ? 'bg-red-600 hover:bg-red-700' : ''}`}
                     onClick={() => {
@@ -366,7 +382,7 @@ export function GeneratedImagesCard({
                             setIsConfirming(true);
                         }
                     }}
-                    disabled={filteredImages.length === 0}
+                    disabled={images.length === 0}
                 >
                     {isConfirming ? 'Are you sure?' : 'Clear Generated Images'}
                 </Button>

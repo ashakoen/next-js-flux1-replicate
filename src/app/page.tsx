@@ -48,9 +48,7 @@ export default function Component() {
 	const [apiKey, setApiKey] = useState('');
 	const [showApiKeyAlert, setShowApiKeyAlert] = useState(false);
 	const [favoritePrompts, setFavoritePrompts] = useState<string[]>([]);
-	const [searchTerm, setSearchTerm] = useState('');
 	const [selectedLoraModel, setSelectedLoraModel] = useState<string | null>(null);
-	const [filteredImages, setFilteredImages] = useState<GeneratedImage[]>([]);
 	const [isGenerating, setIsGenerating] = useState(false);
 	const [isInitialLoad, setIsInitialLoad] = useState(true);
 	const [cancelUrl, setCancelUrl] = useState<string | null>(null);
@@ -92,24 +90,6 @@ export default function Component() {
 			logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
 		}
 	}, []);
-
-	useEffect(() => {
-		setFilteredImages(
-			generatedImages
-				.filter((image) => {
-					const normalizedPrompt = image.prompt.trim().toLowerCase();
-					const normalizedSearchTerm = searchTerm.trim().toLowerCase();
-					const regex = new RegExp(`\\b${normalizedSearchTerm}\\b`, 'i');
-					const isMatch = regex.test(normalizedPrompt);
-					return isMatch;
-				})
-				.sort((a, b) => {
-					const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-					const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-					return timeB - timeA;
-				})
-		);
-	}, [generatedImages, searchTerm]);
 
 	useEffect(() => {
 		const savedApiKey = localStorage.getItem('replicateApiKey');
@@ -322,12 +302,13 @@ export default function Component() {
 		setSelectedImage(null);
 	};
 
-	const handleRegenerateWithSeed = async (newSeed: number) => {
+	const handleRegenerateWithSeed = async (newSeed: number, modelType?: 'dev' | 'schnell' | 'recraftv3') => {
 		// Update the form state
 		setFormData(prev => ({
 			...prev,
 			seed: newSeed,
-			num_outputs: 1
+			num_outputs: 1,
+			...(modelType && { model: modelType }) // modelType is now properly typed
 		}));
 		
 		// Submit with override data
@@ -335,7 +316,8 @@ export default function Component() {
 			{ preventDefault: () => {} } as React.FormEvent,
 			{ 
 				seed: newSeed, 
-				num_outputs: 1 
+				num_outputs: 1,
+				...(modelType && { model: modelType })
 			}
 		);
 	};
@@ -875,9 +857,7 @@ export default function Component() {
 					{/* Generated Images Card - Right 2/3 */}
 					<div className="xl:col-span-2">
 						<GeneratedImagesCard
-							searchTerm={searchTerm}
-							filteredImages={filteredImages}
-							onSearchChange={(e) => setSearchTerm(e.target.value)}
+							images={generatedImages}
 							onDownloadImage={downloadImage}
 							onDeleteImage={handleDeleteImage}
 							clearGeneratedImages={clearGeneratedImages}
@@ -885,6 +865,7 @@ export default function Component() {
 							numberOfOutputs={formData.num_outputs}
 							onRegenerateWithSeed={handleRegenerateWithSeed}
 							onUseAsInput={handleUseAsInput} 
+							model={formData.model} 
 						/>
 					</div>
 				</div>
