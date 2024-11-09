@@ -16,15 +16,15 @@ interface ImageUploadCardProps {
     selectedImage: { url: string; file: File | null } | null;
     onClearImage: () => void;
     onError?: (error: string) => void;
-    disabled?: boolean; // Add this prop
+    disabled?: boolean;
 }
 
-export function ImageUploadCard({ 
-    onImageSelect, 
-    selectedImage, 
-    onClearImage, 
+export function ImageUploadCard({
+    onImageSelect,
+    selectedImage,
+    onClearImage,
     onError,
-    disabled = false  // Add default value
+    disabled = false
 }: ImageUploadCardProps) {
     const [isDragging, setIsDragging] = useState(false);
 
@@ -48,7 +48,6 @@ export function ImageUploadCard({
         setIsDragging(false);
     };
 
-    // Add validation function
     const validateImage = async (file: File): Promise<boolean> => {
         if (disabled) return false;
         if (file.size > MAX_FILE_SIZE) {
@@ -112,7 +111,7 @@ export function ImageUploadCard({
     };
 
     return (
-        <Card className={`w-full mt-8 ${disabled ? 'opacity-50' : ''}`}>
+        <Card className={`w-[310px] ${disabled ? 'opacity-50' : ''}`}>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <ImageIcon className="w-5 h-5" />
@@ -122,13 +121,13 @@ export function ImageUploadCard({
             <CardContent>
                 {!selectedImage ? (
                     <div
-                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors
+                        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors
                         ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 dark:border-gray-700'}
                         ${disabled ? 'pointer-events-none' : 'hover:border-primary hover:bg-primary/5'}`}
-                        onDragEnter={disabled ? undefined : handleDragIn}
-                        onDragLeave={disabled ? undefined : handleDragOut}
-                        onDragOver={disabled ? undefined : handleDrag}
-                        onDrop={disabled ? undefined : handleDrop}
+                        onDragEnter={handleDragIn}
+                        onDragLeave={handleDragOut}
+                        onDragOver={handleDrag}
+                        onDrop={handleDrop}
                     >
                         <input
                             type="file"
@@ -143,7 +142,7 @@ export function ImageUploadCard({
                             className={`flex flex-col items-center gap-4 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                         >
                             <Upload className="w-6 h-6 text-gray-400" />
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
                                 <span className="font-semibold text-primary">Click to upload</span> or drag and drop
                                 <div className="mt-2">
                                     PNG, JPG, WEBP (max. {MAX_FILE_SIZE / 1024 / 1024}MB)

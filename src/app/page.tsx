@@ -6,11 +6,11 @@ import { Terminal } from 'lucide-react';
 import { GenerationSettingsCard } from '@/components/cards/GenerationSettingsCard';
 import { SettingsDrawer } from '@/components/SettingsDrawer';
 import ServerLogModal from '../components/modals/serverLogModal';
-import { 
-    FormData, 
-    GeneratedImage, 
-    LogEntry, 
-    TelemetryData 
+import {
+	FormData,
+	GeneratedImage,
+	LogEntry,
+	TelemetryData
 } from '@/types/types';
 import { GeneratedImagesCard } from "@/components/cards/GeneratedImagesCard";
 import { ImageUploadCard } from "@/components/cards/ImageUploadCard";
@@ -230,38 +230,38 @@ export default function Component() {
 				prevModel: prev.model,
 				prevFormat: prev.output_format
 			});
-		
+
 			// Guard against empty output_format
 			if (name === 'output_format' && !value) {
 				value = prev.model === 'recraftv3' ? 'webp' : 'png';
 			}
-		
-			const updatedFormData = { 
-				...prev, 
+
+			const updatedFormData = {
+				...prev,
 				[name]: value,
 				// Model-specific constraints
 				...(name === 'model' && {
-					...(value === 'schnell' && 
-						!prev.privateLoraName && 
-						prev.num_inference_steps > 4 
-							? { num_inference_steps: 4 } 
-							: {}),
-					...(value === 'recraftv3' 
-						? { 
+					...(value === 'schnell' &&
+						!prev.privateLoraName &&
+						prev.num_inference_steps > 4
+						? { num_inference_steps: 4 }
+						: {}),
+					...(value === 'recraftv3'
+						? {
 							num_outputs: 1,
 							output_format: 'webp',
 							style: 'any'
-						} 
+						}
 						: {
 							output_format: 'png'  // Always set png when switching to non-recraftv3 models
 						})
 				}),
-           // Handle output format changes for recraftv3
-		   ...(name === 'output_format' && prev.model === 'recraftv3' && {
-			style: value === 'svg' ? 'any' : 'any'  // Always set to 'any' when switching formats
-		})
+				// Handle output format changes for recraftv3
+				...(name === 'output_format' && prev.model === 'recraftv3' && {
+					style: value === 'svg' ? 'any' : 'any'  // Always set to 'any' when switching formats
+				})
 			};
-		
+
 			console.log('Updated formData:', updatedFormData);
 			localStorage.setItem('replicateFormData', JSON.stringify(updatedFormData));
 			return updatedFormData as FormData;
@@ -293,7 +293,7 @@ export default function Component() {
 	const handleImageSelect = (imageData: { url: string; file: File | null }) => {
 		setSelectedImage(imageData);
 	};
-	
+
 	// Add this function to handle clearing the image
 	const handleClearImage = () => {
 		if (selectedImage?.url) {
@@ -310,12 +310,12 @@ export default function Component() {
 			num_outputs: 1,
 			...(modelType && { model: modelType }) // modelType is now properly typed
 		}));
-		
+
 		// Submit with override data
 		handleSubmit(
-			{ preventDefault: () => {} } as React.FormEvent,
-			{ 
-				seed: newSeed, 
+			{ preventDefault: () => { } } as React.FormEvent,
+			{
+				seed: newSeed,
 				num_outputs: 1,
 				...(modelType && { model: modelType })
 			}
@@ -327,17 +327,17 @@ export default function Component() {
 			// Fetch the image
 			const response = await fetch(imageUrl);
 			const blob = await response.blob();
-			
+
 			// Create a File object from the blob
 			const filename = imageUrl.split('/').pop() || 'image.png';
 			const file = new File([blob], filename, { type: blob.type });
-			
+
 			// Create object URL for preview
 			const objectUrl = URL.createObjectURL(blob);
-			
+
 			// Update the ImageUploadCard state
 			handleImageSelect({ url: objectUrl, file });
-			
+
 		} catch (error) {
 			console.error('Failed to use image as input:', error);
 			handleError('Failed to use image as input');
@@ -354,7 +354,7 @@ export default function Component() {
 			...formData,
 			...overrideData
 		};
-	
+
 		console.log('Final submission data:', submissionData);
 
 		if (!apiKey) {
@@ -377,7 +377,7 @@ export default function Component() {
 		console.log('LoRA Version:', loraVersion);
 
 		let imageData: string | undefined;
-		
+
 		if (selectedImage?.file) {
 			const reader = new FileReader();
 			const base64Promise = new Promise<string | ArrayBuffer | null>((resolve) => {
@@ -400,7 +400,7 @@ export default function Component() {
 				},
 				model: submissionData.model
 			};
-		
+
 		} else if (loraName && loraVersion) {
 			replicateParams = {
 				version: loraVersion,
@@ -455,7 +455,7 @@ export default function Component() {
 			totalDuration: 0,
 			statusChanges: [],
 			pollingSteps: 0,
-			generationParameters: { 
+			generationParameters: {
 				...submissionData,
 				hasInputImage: !!selectedImage // Add this line to indicate if an input image was used
 			},
@@ -577,7 +577,7 @@ export default function Component() {
 				currentTelemetryData.replicateStartedAt = pollData.started_at
 				currentTelemetryData.replicateCompletedAt = pollData.completed_at
 				currentTelemetryData.replicatePredictTime = pollData.metrics?.predict_time || 0
-				currentTelemetryData.generationParameters.seed = seed; 
+				currentTelemetryData.generationParameters.seed = seed;
 
 				const outputUrls = Array.isArray(pollData.output) ? pollData.output : [pollData.output];
 
@@ -739,17 +739,17 @@ export default function Component() {
 				},
 				body: JSON.stringify({ imageUrl })
 			});
-			
+
 			if (!response.ok) throw new Error('Download failed');
-			
+
 			// Get the filename from the Content-Disposition header
 			const disposition = response.headers.get('Content-Disposition');
 			const filename = disposition?.split('filename=')[1] || 'generated-image.png';
-			
+
 			// Create blob from response
 			const blob = await response.blob();
 			const url = window.URL.createObjectURL(blob);
-			
+
 			// Trigger download
 			const a = document.createElement('a');
 			a.style.display = 'none';
@@ -757,7 +757,7 @@ export default function Component() {
 			a.download = filename;
 			document.body.appendChild(a);
 			a.click();
-			
+
 			// Cleanup
 			window.URL.revokeObjectURL(url);
 			document.body.removeChild(a);
@@ -820,42 +820,44 @@ export default function Component() {
 
 	return (
 		<>
-			<div className="container mx-auto p-4 pt-10 pb-20 min-h-screen max-h-screen overflow-y-auto">
-				<div className="grid grid-cols-1 xl:grid-cols-3 gap-4 xl:gap-8">
-					<div className="xl:col-span-1">
-						<div className="sticky top-0">
-							<GenerationSettingsCard
-								formData={formData}
-								isLoading={isLoading}
-								isGenerating={isGenerating}
-								cancelUrl={cancelUrl}
-								validatedLoraModels={validatedLoraModels}
-								isValidatingLora={isValidatingLora}
-								loraValidationError={loraValidationError}
-								handleInputChange={handleInputChange}
-								handleBlur={handleBlur}
-								handleSelectChange={handleSelectChange}
-								handleSwitchChange={handleSwitchChange}
-								handleSliderChange={handleSliderChange}
-								handleNumOutputsChange={handleNumOutputsChange}
-								handleSubmit={handleSubmit}
-								handleCancel={handleCancel}
-								apiKey={apiKey}             
-								showApiKeyAlert={showApiKeyAlert}
-								handleApiKeyChange={handleApiKeyChange} 
-							/>
-        <ImageUploadCard
-            onImageSelect={handleImageSelect}
-            selectedImage={selectedImage}
-            onClearImage={handleClearImage}
-			onError={handleError}
-			disabled={formData.model === 'recraftv3'}
-        />
-						</div>
+			<div className="container mx-auto px-2 pt-10 pb-20 min-h-screen max-h-screen overflow-y-auto">
+				<div className="flex flex-col xl:flex-row gap-6">
+					<div className="w-full xl:w-[310px]">
+						<ImageUploadCard
+							onImageSelect={handleImageSelect}
+							selectedImage={selectedImage}
+							onClearImage={handleClearImage}
+							onError={handleError}
+							disabled={formData.model === 'recraftv3'}
+						/>
+					</div>
+					<div className="w-full xl:w-[400px]">
+						<GenerationSettingsCard
+							formData={formData}
+							isLoading={isLoading}
+							isGenerating={isGenerating}
+							cancelUrl={cancelUrl}
+							validatedLoraModels={validatedLoraModels}
+							isValidatingLora={isValidatingLora}
+							loraValidationError={loraValidationError}
+							handleInputChange={handleInputChange}
+							handleBlur={handleBlur}
+							handleSelectChange={handleSelectChange}
+							handleSwitchChange={handleSwitchChange}
+							handleSliderChange={handleSliderChange}
+							handleNumOutputsChange={handleNumOutputsChange}
+							handleSubmit={handleSubmit}
+							handleCancel={handleCancel}
+							apiKey={apiKey}
+							showApiKeyAlert={showApiKeyAlert}
+							handleApiKeyChange={handleApiKeyChange}
+						/>
 					</div>
 
+
 					{/* Generated Images Card - Right 2/3 */}
-					<div className="xl:col-span-2">
+					<div className="w-full xl:flex-1">
+
 						<GeneratedImagesCard
 							images={generatedImages}
 							onDownloadImage={downloadImage}
@@ -864,9 +866,10 @@ export default function Component() {
 							isGenerating={isGenerating}
 							numberOfOutputs={formData.num_outputs}
 							onRegenerateWithSeed={handleRegenerateWithSeed}
-							onUseAsInput={handleUseAsInput} 
-							model={formData.model} 
+							onUseAsInput={handleUseAsInput}
+							model={formData.model}
 						/>
+
 					</div>
 				</div>
 
@@ -892,18 +895,18 @@ export default function Component() {
 				</div>
 
 				<div className="fixed bottom-4 right-4 z-50">
-                <SettingsDrawer
-                    validatedLoraModels={validatedLoraModels}
-                    selectedLoraModel={selectedLoraModel}
-                    favoritePrompts={favoritePrompts}
-                    handleDeleteFavoritePrompt={handleDeleteFavoritePrompt}
-                    handleSavePrompt={handleSavePrompt}
-                    clearValidatedModels={clearValidatedModels}
-                    setFormData={setFormData}
-                    setSelectedLoraModel={setSelectedLoraModel}
-                    formData={formData}
-                />
-            </div>
+					<SettingsDrawer
+						validatedLoraModels={validatedLoraModels}
+						selectedLoraModel={selectedLoraModel}
+						favoritePrompts={favoritePrompts}
+						handleDeleteFavoritePrompt={handleDeleteFavoritePrompt}
+						handleSavePrompt={handleSavePrompt}
+						clearValidatedModels={clearValidatedModels}
+						setFormData={setFormData}
+						setSelectedLoraModel={setSelectedLoraModel}
+						formData={formData}
+					/>
+				</div>
 
 			</div>
 		</>

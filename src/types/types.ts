@@ -29,10 +29,10 @@ export type GeneratedImage = {
     guidance_scale?: number;
     num_inference_steps?: number;
     lora_scale?: number;
-    timestamp?: string; 
+    timestamp?: string;
     seed?: number;
     isImg2Img: boolean;
-    privateLoraName?: string; 
+    privateLoraName?: string;
 };
 
 export type LogEntry = {
@@ -75,30 +75,30 @@ export type TelemetryData = {
     cancelledId?: string;
 };
 
-export type Recraftv3Size = 
-    | "1024x1024" | "1365x1024" | "1024x1365" 
-    | "1536x1024" | "1024x1536" | "1820x1024" 
-    | "1024x1820" | "1024x2048" | "2048x1024" 
-    | "1434x1024" | "1024x1434" | "1024x1280" 
+export type Recraftv3Size =
+    | "1024x1024" | "1365x1024" | "1024x1365"
+    | "1536x1024" | "1024x1536" | "1820x1024"
+    | "1024x1820" | "1024x2048" | "2048x1024"
+    | "1434x1024" | "1024x1434" | "1024x1280"
     | "1280x1024" | "1707x1024" | "1024x1707";
 
-export type Recraftv3Style = 
-    | "any" 
-    | "realistic_image" 
-    | "digital_illustration" 
+export type Recraftv3Style =
+    | "any"
+    | "realistic_image"
+    | "digital_illustration"
     | "digital_illustration/pixel_art"
-    | "digital_illustration/hand_drawn" 
-    | "digital_illustration/grain" 
+    | "digital_illustration/hand_drawn"
+    | "digital_illustration/grain"
     | "digital_illustration/infantile_sketch"
-    | "digital_illustration/2d_art_poster" 
-    | "digital_illustration/handmade_3d" 
+    | "digital_illustration/2d_art_poster"
+    | "digital_illustration/handmade_3d"
     | "digital_illustration/hand_drawn_outline"
-    | "digital_illustration/engraving_color" 
-    | "digital_illustration/2d_art_poster_2" 
-    | "realistic_image/b_and_w" 
-    | "realistic_image/hard_flash" 
+    | "digital_illustration/engraving_color"
+    | "digital_illustration/2d_art_poster_2"
+    | "realistic_image/b_and_w"
+    | "realistic_image/hard_flash"
     | "realistic_image/hdr"
-    | "realistic_image/natural_light" 
-    | "realistic_image/studio_portrait" 
+    | "realistic_image/natural_light"
+    | "realistic_image/studio_portrait"
     | "realistic_image/enterprise"
     | "realistic_image/motion_blur";

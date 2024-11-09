@@ -38,19 +38,40 @@ export function GeneratedImagesCard({
     const [isConfirming, setIsConfirming] = useState(false);
     const isFluxModel = (model: string | undefined, privateLoraName?: string) => {
         if (!model) return false;
-        
+
         // If it's a direct FLUX model
         if (model.includes('flux-dev') || model.includes('flux-schnell')) {
             return true;
         }
-        
+
         // If the model looks like a private LoRA path (contains a slash but isn't recraft)
         if (model.includes('/') && !model.includes('recraft')) {
             return true;
         }
-        
+
         return false;
     };
+
+// For determining if image can be used as input (includes Recraft)
+const canUseAsInput = (model: string | undefined, privateLoraName?: string) => {
+    if (!model) return false;
+
+    // Allow for FLUX models, private LoRAs, and Recraft
+    return model.includes('flux-dev') || 
+           model.includes('flux-schnell') || 
+           model.includes('recraft') || 
+           model.includes('/');
+};
+
+// For determining if image can be regenerated (excludes Recraft)
+const canRegenerate = (model: string | undefined, privateLoraName?: string) => {
+    if (!model) return false;
+
+    // Only allow for FLUX models and private LoRAs, but not Recraft
+    return (model.includes('flux-dev') || 
+            model.includes('flux-schnell') || 
+            (model.includes('/') && !model.includes('recraft')));
+};
 
     useEffect(() => {
         let timeoutId: NodeJS.Timeout;
@@ -63,14 +84,14 @@ export function GeneratedImagesCard({
     }, [isConfirming]);
 
     return (
-        <Card className="w-full h-[calc(100vh-12rem)] mt-8 sm:mt-0">
+        <Card className="w-[calc(100%-2rem)] h-[calc(100vh-12rem)] mt-8 sm:mt-0">
             <CardHeader className="relative">
                 <CardTitle>Your Image Generations</CardTitle>
                 <CardDescription>Your generations will show up here. Have fun! </CardDescription>
             </CardHeader>
             <CardContent className="overflow-y-auto pt-3 h-[calc(100%-12rem)]">
                 {images.length > 0 ? (
-                    <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
                         <AnimatePresence mode="popLayout">
                             {/* Loading Placeholders */}
                             {isGenerating && Array.from({ length: numberOfOutputs }).map((_, index) => (
@@ -81,7 +102,7 @@ export function GeneratedImagesCard({
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.9 }}
                                     transition={{ duration: 0.2 }}
-                                    className="relative group"
+                                    className="relative group max-w-[180px] mx-auto w-full"
                                 >
                                     <div className="cursor-pointer">
                                         <div className="relative w-full pb-[100%] bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-lg overflow-hidden">
@@ -97,7 +118,7 @@ export function GeneratedImagesCard({
                                                         ease: "easeInOut"
                                                     }}
                                                 >
- 
+
                                                     <motion.div
                                                         animate={{
                                                             opacity: [0, 1, 0],
@@ -108,9 +129,9 @@ export function GeneratedImagesCard({
                                                             repeat: Infinity,
                                                         }}
                                                     >
-                                                                                                           <span className="text-3xl">
-                                                        <WandSparkles className="w-8 h-8" stroke="#cccccc" />
-                                                    </span>
+                                                        <span className="text-3xl">
+                                                            <WandSparkles className="w-8 h-8" stroke="#cccccc" />
+                                                        </span>
                                                     </motion.div>
                                                 </motion.div>
                                             </div>
@@ -119,10 +140,10 @@ export function GeneratedImagesCard({
                                 </motion.div>
                             ))}
 
-                            
+
 
                             {[...images].reverse().map((image, index) => (
-                                
+
                                 <motion.div
                                     key={image.url}
                                     layout
@@ -130,7 +151,7 @@ export function GeneratedImagesCard({
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.9 }}
                                     transition={{ duration: 0.2 }}
-                                    className="relative group"
+                                    className="relative group max-w-[180px] mx-auto w-full"
                                 >
 
                                     <Dialog>
@@ -147,85 +168,169 @@ export function GeneratedImagesCard({
                                                 </div>
                                             </div>
                                         </DialogTrigger>
-                                        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-                                            <div className="flex flex-col h-full py-6">
-                                                <div className="relative w-full h-0 pb-[75%] overflow-hidden mb-6">
-                                                    <Image
-                                                        src={image.url}
-                                                        alt={`Generated image ${index + 1}`}
-                                                        layout="fill"
-                                                        objectFit="contain"
-                                                        className="rounded-lg"
-                                                    />
-                                                </div>
-                                                <div className="p-6 bg-white dark:bg-gray-800">
-                                                    <Accordion type="single" collapsible className="w-full">
-                                                        <AccordionItem value="details" className="border-0">
-                                                            <AccordionTrigger className="py-4 px-6 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors focus:outline-none focus:ring-0">
-                                                                <h3 className="text-base font-semibold">Image Details</h3>
-                                                            </AccordionTrigger>
-                                                            <AccordionContent className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg mt-2 border border-gray-200 dark:border-gray-600">
-                                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                                    <div className="md:col-span-2 space-y-2">
-                                                                        <p className="text-sm"><span className="font-medium">Prompt:</span> {image.prompt}</p>
-                                                                        {image.model && <p className="text-sm"><span className="font-medium">Model:</span> {image.model}</p>}
-                                                                        {image.version && (
-                                                                            <p className="text-sm">
-                                                                                <span className="font-medium">Version:</span>
-                                                                                <span className="block mt-1 text-xs bg-gray-200 dark:bg-gray-600 p-1 rounded overflow-x-auto">
-                                                                                    {image.version}
-                                                                                </span>
-                                                                            </p>
-                                                                        )}
-                                                                        {image.seed !== undefined && (
-                                                                            <p className="text-sm">
-                                                                                <span className="font-medium">Seed:</span>
-                                                                                <span className="ml-2 font-mono bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded text-xs">
-                                                                                    {image.seed}
-                                                                                </span>
-                                                                            </p>
-                                                                        )}
-                                                                        {image.isImg2Img !== undefined && (
-                                                                            <p className="text-sm">
-                                                                                <span className="font-medium">Image to Image:</span>
-                                                                                <span className={`ml-2 px-2 py-1 rounded ${image.isImg2Img ? 'bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100'}`}>
-                                                                                    {image.isImg2Img ? 'Yes' : 'No'}
-                                                                                </span>
-                                                                            </p>
-                                                                        )}
-                
-                                                                    </div>
-                                                                    <div className="md:col-span-1 space-y-2">
-                                                                        {image.go_fast !== undefined && (
-                                                                            <p className="text-sm">
-                                                                                <span className="font-medium">Go Fast:</span>
-                                                                                <span className={`ml-2 px-2 py-1 rounded ${image.go_fast ? 'bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100' : 'bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-100'}`}>
-                                                                                    {image.go_fast ? 'Yes' : 'No'}
-                                                                                </span>
-                                                                            </p>
-                                                                        )}
-                                                                        {image.guidance_scale !== undefined && (
-                                                                            <p className="text-sm"><span className="font-medium">Guidance Scale:</span> {image.guidance_scale}</p>
-                                                                        )}
-                                                                        {image.num_inference_steps !== undefined && (
-                                                                            <p className="text-sm"><span className="font-medium">Inference Steps:</span> {image.num_inference_steps}</p>
-                                                                        )}
-                                                                        {image.lora_scale !== undefined && (
-                                                                            <p className="text-sm"><span className="font-medium">LoRA Scale:</span> {image.lora_scale}</p>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </AccordionContent>
-                                                        </AccordionItem>
-                                                    </Accordion>
-                                                </div>
-                                            </div>
-                                        </DialogContent>
+                                        <DialogContent className="sm:max-w-[1000px] h-[600px] p-0 overflow-hidden"> {/* Increased max-width */}
+    <div className="flex h-full max-h-[80vh]">
+        {/* Left side - Image */}
+        <div className="relative bg-black/5 dark:bg-white/5 flex-1">{/* Changed to flex-[2] for better ratio */}
+            <div className="relative w-full h-full">
+                <Image
+                    src={image.url}
+                    alt={`Generated image ${index + 1}`}
+                    layout="fill"
+                    objectFit="contain"
+                    className="rounded-l-lg"
+                    priority
+                />
+            </div>
+        </div>
+
+        {/* Right side - Details */}
+        <div className="w-[340px] flex flex-col bg-white dark:bg-gray-800 p-6 overflow-y-auto overflow-x-hidden">  {/* Adjusted width constraints */}
+        <div className="mb-4">  {/* Removed the custom close button */}
+                <h2 className="text-lg font-semibold">Image Details</h2>
+            </div>
+            
+            {/* Main Details */}
+            <div className="space-y-6 w-full"> {/* Reduced spacing */}
+                {/* Prompt Section */}
+                <div className="space-y-1.5">
+            <h3 className="text-sm font-medium text-gray-400">Prompt</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300">{image.prompt}</p>
+        </div>
+
+                {/* Model & Seed */}
+                <div className="grid grid-cols-2 gap-3">
+                    {image.model && (
+                        <div>
+                            <h3 className="text-sm font-medium text-gray-400">Model</h3>
+                            <p className="text-sm mt-0.5 break-words">{image.model}</p>
+                        </div>
+                    )}
+                    {image.seed !== undefined && (
+                        <div>
+                            <h3 className="text-sm font-medium text-gray-400">Seed</h3>
+                            <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded mt-0.5 inline-block">
+                                {image.seed}
+                            </code>
+                        </div>
+                    )}
+                </div>
+
+                {/* Generation Settings */}
+                <div className="grid grid-cols-2 gap-3">
+                    {image.guidance_scale !== undefined && (
+                        <div>
+                            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Guidance Scale</h3>
+                            <p className="text-sm mt-0.5">{image.guidance_scale}</p>
+                        </div>
+                    )}
+                    {image.num_inference_steps !== undefined && (
+                        <div>
+                            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Inference Steps</h3>
+                            <p className="text-sm mt-0.5">{image.num_inference_steps}</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Status Indicators */}
+                <div className="flex gap-4">
+                    {image.go_fast !== undefined && (
+                        <div className="flex items-center gap-1.5">
+                            <div className={`w-2 h-2 rounded-full ${image.go_fast ? 'bg-green-500' : 'bg-gray-300'}`} />
+                            <span className="text-sm">Go Fast</span>
+                        </div>
+                    )}
+                    {image.isImg2Img !== undefined && (
+                        <div className="flex items-center gap-1.5">
+                            <div className={`w-2 h-2 rounded-full ${image.isImg2Img ? 'bg-blue-500' : 'bg-gray-300'}`} />
+                            <span className="text-sm">Image to Image</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Version */}
+                {image.version && (
+                    <div>
+                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Version</h3>
+                        <code className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded mt-1 block overflow-x-auto">
+                            {image.version}
+                        </code>
+                    </div>
+                )}
+
+                {/* Additional Fields */}
+                {image.lora_scale !== undefined && (
+                    <div>
+                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">LoRA Scale</h3>
+                        <p className="text-sm mt-0.5">{image.lora_scale}</p>
+                    </div>
+                )}
+                {image.privateLoraName && (
+                    <div>
+                        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Private LoRA</h3>
+                        <p className="text-sm mt-0.5">{image.privateLoraName}</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-auto pt-4 flex flex-col gap-2"> {/* Reduced gap and padding */}
+                {canUseAsInput(image.model, image.privateLoraName) && (
+                    <Button 
+                        className="flex-1"
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                            try {
+                                await onUseAsInput(image.url);
+                            } catch (error) {
+                                console.error('Failed to use image as input:', error);
+                            }
+                        }}
+                    >
+                        <Upload className="w-3 h-3 mr-1" />
+                        Use as Input
+                    </Button>
+                )}
+                <Button 
+                    className="flex-1"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onDownloadImage(image.url)}
+                >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download
+                </Button>
+                {canRegenerate(image.model, image.privateLoraName) && (
+                    <Button 
+                        className="flex-1"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                            const currentSeed = parseInt(image.seed?.toString() || '0');
+                            const newSeed = currentSeed < 1000 ? currentSeed + 1 : currentSeed - 1;
+                            const isSchnell = image.model?.includes('schnell');
+                            const modelType = isSchnell 
+                                ? 'schnell'
+                                : (image.model?.includes('/') 
+                                    ? 'dev' 
+                                    : image.model) as 'dev' | 'schnell' | 'recraftv3';
+                            onRegenerateWithSeed(newSeed, modelType);
+                        }}
+                    >
+                        <RefreshCw className="w-3 h-3 mr-1" />
+                        Regenerate
+                    </Button>
+                )}
+            </div>
+        </div>
+    </div>
+</DialogContent>
                                     </Dialog>
 
 
-                                    
-                                    {isFluxModel(image.model, image.privateLoraName) && (
+
+                                    {canUseAsInput(image.model, image.privateLoraName) && (
                                         <Button
                                             variant="secondary"
                                             size="icon"
@@ -251,7 +356,7 @@ export function GeneratedImagesCard({
                                         <Download className="h-4 w-4" />
                                         <span className="sr-only">Download image</span>
                                     </Button>
-                                    {isFluxModel(image.model, image.privateLoraName) && (
+                                    {canRegenerate(image.model, image.privateLoraName) && (
                                         <Button
                                             variant="secondary"
                                             size="icon"
@@ -259,11 +364,20 @@ export function GeneratedImagesCard({
                                             onClick={() => {
                                                 const currentSeed = parseInt(image.seed?.toString() || '0');
                                                 const newSeed = currentSeed < 1000 ? currentSeed + 1 : currentSeed - 1;
-                                                // Use 'dev' if it's a private LoRA (contains a slash), otherwise use the original model
-                                                const modelType = image.model?.includes('/') ? 'dev' : image.model as 'dev' | 'schnell' | 'recraftv3';
+                                                
+                                                // First check if it's a schnell model
+                                                const isSchnell = image.model?.includes('schnell');
+                                                
+                                                // Then determine the model type
+                                                const modelType = isSchnell 
+                                                    ? 'schnell'
+                                                    : (image.model?.includes('/') 
+                                                        ? 'dev' 
+                                                        : image.model) as 'dev' | 'schnell' | 'recraftv3';
+                                                        
                                                 onRegenerateWithSeed(newSeed, modelType);
                                             }}
-                                        > 
+                                        >
                                             <RefreshCw className="h-4 w-4" />
                                             <span className="sr-only">
                                                 Regenerate with {parseInt(image.seed?.toString() || '0') < 1000 ? "increased" : "decreased"} seed
