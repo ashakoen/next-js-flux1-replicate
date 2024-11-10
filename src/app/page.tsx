@@ -820,9 +820,9 @@ export default function Component() {
 
 	return (
 		<>
-			<div className="container mx-auto px-2 pt-10 pb-20 min-h-screen max-h-screen overflow-y-auto">
-				<div className="flex flex-col xl:flex-row gap-6">
-					<div className="w-full xl:w-[310px]">
+<div className="container mx-auto px-2 pt-10 pb-20">
+<div className="flex flex-col xl:flex-row gap-6">
+        <div className="flex flex-col gap-6 xl:w-[320px]"> {/* Fixed width for left column */}
 						<ImageUploadCard
 							onImageSelect={handleImageSelect}
 							selectedImage={selectedImage}
@@ -831,7 +831,7 @@ export default function Component() {
 							disabled={formData.model === 'recraftv3'}
 						/>
 					</div>
-					<div className="w-full xl:w-[400px]">
+					<div className="flex flex-col gap-6 xl:w-[600px]">
 						<GenerationSettingsCard
 							formData={formData}
 							isLoading={isLoading}
@@ -856,7 +856,7 @@ export default function Component() {
 
 
 					{/* Generated Images Card - Right 2/3 */}
-					<div className="w-full xl:flex-1">
+					<div className="flex flex-col gap-6 xl:w-[880px]">   {/* Added minimum width */}
 
 						<GeneratedImagesCard
 							images={generatedImages}

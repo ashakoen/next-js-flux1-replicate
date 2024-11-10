@@ -105,7 +105,7 @@ export function GenerationSettingsCard({
 
 	return (
 		<Card className="w-full relative">
-			<div className="absolute -top-3 -right-2">
+			<div className="absolute -top-5 -right-5">
 				<ApiSettingsModal
 					apiKey={apiKey}
 					showApiKeyAlert={showApiKeyAlert}

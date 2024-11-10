@@ -84,14 +84,15 @@ const canRegenerate = (model: string | undefined, privateLoraName?: string) => {
     }, [isConfirming]);
 
     return (
-        <Card className="w-[calc(100%-2rem)] h-[calc(100vh-12rem)] mt-8 sm:mt-0">
+        <Card className="h-full flex flex-col">
             <CardHeader className="relative">
                 <CardTitle>Your Image Generations</CardTitle>
                 <CardDescription>Your generations will show up here. Have fun! </CardDescription>
             </CardHeader>
-            <CardContent className="overflow-y-auto pt-3 h-[calc(100%-12rem)]">
+            <CardContent className="h-[560px] overflow-y-auto"> 
                 {images.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+                    <div className="h-full overflow-y-auto"> 
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-8 p-2"> 
                         <AnimatePresence mode="popLayout">
                             {/* Loading Placeholders */}
                             {isGenerating && Array.from({ length: numberOfOutputs }).map((_, index) => (
@@ -102,7 +103,7 @@ const canRegenerate = (model: string | undefined, privateLoraName?: string) => {
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.9 }}
                                     transition={{ duration: 0.2 }}
-                                    className="relative group max-w-[180px] mx-auto w-full"
+                                    className="relative group aspect-square w-full"
                                 >
                                     <div className="cursor-pointer">
                                         <div className="relative w-full pb-[100%] bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-lg overflow-hidden">
@@ -151,7 +152,7 @@ const canRegenerate = (model: string | undefined, privateLoraName?: string) => {
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.9 }}
                                     transition={{ duration: 0.2 }}
-                                    className="relative group max-w-[180px] mx-auto w-full"
+                                    className="relative group aspect-square w-full "
                                 >
 
                                     <Dialog>
@@ -397,6 +398,7 @@ const canRegenerate = (model: string | undefined, privateLoraName?: string) => {
                             ))}
                         </AnimatePresence>
                     </div>
+                    </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center pt-10 space-y-4">
                         {isGenerating ? (
@@ -485,7 +487,7 @@ const canRegenerate = (model: string | undefined, privateLoraName?: string) => {
                     </div>
                 )}
             </CardContent>
-            <CardFooter className="flex justify-end border-t pt-4 mt-4">
+            <CardFooter className="border-t pt-4"> 
                 <Button
                     className={`btn-theme ${isConfirming ? 'bg-red-600 hover:bg-red-700' : ''}`}
                     onClick={() => {

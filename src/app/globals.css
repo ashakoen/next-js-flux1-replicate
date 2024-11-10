@@ -63,7 +63,7 @@
 @layer components {
   @layer components {
     .main-layout {
-      @apply container mx-0 px-4 lg:px-8;  /* Changed mx-auto to mx-0 */
+      @apply container mx-0 px-4 lg:px-4;  /* Changed mx-auto to mx-0 */
       @apply w-full lg:w-[95%] xl:w-[90%] 2xl:w-[85%];  /* Changed max-w to w */
       @apply lg:ml-[2rem] xl:ml-[4rem] 2xl:ml-[0rem];  /* Use fixed margins instead of percentages */
     }
@@ -85,11 +85,11 @@
   .custom-slider {
     -webkit-appearance: none;
     width: 100%;
-    height: 8px;
+    height: 10px;
     background: linear-gradient(to right, hsl(222.2, 47.4%, 11.2%), hsl(210, 40%, 98%));
     border-radius: 4px;
     outline: none;
-    opacity: 0.7;
+    opacity: 0.5;
     transition: opacity 0.2s;
   }
 
