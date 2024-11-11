@@ -1,3 +1,5 @@
+import React from 'react';
+
 export type FormData = {
     seed: number;
     model: 'dev' | 'schnell' | 'recraftv3' | 'recraftv3-svg';
@@ -18,6 +20,7 @@ export type FormData = {
     disable_safety_checker: boolean;
     go_fast: boolean;
     style?: string;
+    maskDataUrl?: string;
 };
 
 export type GeneratedImage = {
@@ -102,3 +105,57 @@ export type Recraftv3Style =
     | "realistic_image/studio_portrait"
     | "realistic_image/enterprise"
     | "realistic_image/motion_blur";
+
+    export interface CanvasDrawProps {
+        onChange?: (canvas: CanvasDraw) => void;
+        loadTimeOffset?: number;
+        lazyRadius?: number;
+        brushRadius?: number;
+        brushColor?: string;
+        catenaryColor?: string;
+        gridColor?: string;
+        backgroundColor?: string;
+        hideGrid?: boolean;
+        canvasWidth?: number;
+        canvasHeight?: number;
+        disabled?: boolean;
+        imgSrc?: string;
+        saveData?: string;
+        immediateLoading?: boolean;
+        hideInterface?: boolean;
+        enablePanAndZoom?: boolean;
+        mouseZoomFactor?: number;
+        zoomExtents?: { min: number; max: number };
+        className?: string;
+    }
+    
+    // Add this class declaration for CanvasDraw
+    export declare class CanvasDraw extends React.Component<CanvasDrawProps> {
+        clear(): void;
+        undo(): void;
+        getSaveData(): string;
+        getDataURL(): string;
+        loadSaveData(saveData: string, immediate?: boolean): void;
+        container: HTMLDivElement | null;
+    }
+
+    export interface ReactSketchCanvasRef {
+        exportImage: (imageType: 'png' | 'jpeg') => Promise<string>;
+        exportSvg: () => Promise<string>;
+        clearCanvas: () => void;
+        undo: () => void;
+        redo: () => void;
+        resetCanvas: () => void;
+    }
+
+    export interface ReactSketchCanvasProps {
+        width?: string;
+        height?: string;
+        strokeWidth?: number;
+        strokeColor?: string;
+        canvasColor?: string;
+        backgroundImage?: string;
+        exportWithBackgroundImage?: boolean;
+        preserveBackgroundImageAspectRatio?: string;
+        className?: string;
+    }

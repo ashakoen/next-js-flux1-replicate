@@ -14,6 +14,11 @@ import {
 } from '@/types/types';
 import { GeneratedImagesCard } from "@/components/cards/GeneratedImagesCard";
 import { ImageUploadCard } from "@/components/cards/ImageUploadCard";
+import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas';
+import { DrawingCard } from '@/components/cards/DrawingCard';
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+
 
 
 const initialFormData: FormData = {
@@ -63,6 +68,9 @@ export default function Component() {
 	const abortController = useRef<AbortController | null>(null);
 	const [telemetryData, setTelemetryData] = useState<TelemetryData | null>(null)
 	const [selectedImage, setSelectedImage] = useState<{ url: string; file: File | null } | null>(null);
+	const [maskDataUrl, setMaskDataUrl] = useState<string | null>(null);
+	const [isInpaintingEnabled, setIsInpaintingEnabled] = useState(false);
+
 
 	const getClientInfo = () => {
 		return {
@@ -344,6 +352,14 @@ export default function Component() {
 		}
 	};
 
+	const handleMaskGenerated = (maskDataUrl: string) => {
+		setMaskDataUrl(maskDataUrl);
+		setFormData(prev => ({
+			...prev,
+			maskDataUrl
+		}));
+	};
+
 	const handleSubmit = async (e: React.FormEvent, overrideData?: Partial<FormData>) => {
 		e.preventDefault();
 
@@ -419,7 +435,12 @@ export default function Component() {
 					...(submissionData.extra_lora ? { extra_lora: submissionData.extra_lora, extra_lora_scale: submissionData.extra_lora_scale } : {}),
 					...(submissionData.seed !== 0 ? { seed: submissionData.seed } : {}),
 					go_fast: submissionData.go_fast,
-					...(selectedImage?.file ? { image: imageData } : {}),
+					...(selectedImage?.file && maskDataUrl ? {
+						image: imageData,
+						mask: maskDataUrl
+					} : selectedImage?.file ? {
+						image: imageData
+					} : {})
 				}
 			};
 		} else {
@@ -436,13 +457,25 @@ export default function Component() {
 					...(submissionData.extra_lora ? { extra_lora: submissionData.extra_lora, extra_lora_scale: submissionData.extra_lora_scale } : {}),
 					...(submissionData.seed !== 0 ? { seed: submissionData.seed } : {}),
 					go_fast: submissionData.go_fast,
-					...(selectedImage?.file ? { image: imageData } : {}),
+					...(selectedImage?.file && maskDataUrl ? {
+						image: imageData,
+						mask: maskDataUrl
+					} : selectedImage?.file ? {
+						image: imageData
+					} : {})
 				},
 				model: submissionData.model,
 			};
 		}
 
 		console.log('Replicate Params:', replicateParams);
+		if (selectedImage?.file && maskDataUrl) {
+			console.log('Sending inpainting request with:', {
+				imageSize: imageData.length,
+				maskSize: maskDataUrl.length,
+				maskPreview: maskDataUrl.substring(0, 100) + '...'
+			});
+		}
 
 		setIsGenerating(true);
 		setIsLoading(true);
@@ -820,9 +853,9 @@ export default function Component() {
 
 	return (
 		<>
-<div className="container mx-auto px-2 pt-10 pb-20">
-<div className="flex flex-col xl:flex-row gap-6">
-        <div className="flex flex-col gap-6 xl:w-[320px]"> {/* Fixed width for left column */}
+			<div className="container mx-auto px-2 pt-10 pb-20">
+				<div className="flex flex-col xl:flex-row gap-6">
+					<div className="flex flex-col gap-6 xl:w-[320px]"> {/* Fixed width for left column */}
 						<ImageUploadCard
 							onImageSelect={handleImageSelect}
 							selectedImage={selectedImage}
@@ -830,6 +863,25 @@ export default function Component() {
 							onError={handleError}
 							disabled={formData.model === 'recraftv3'}
 						/>
+                    {selectedImage && (
+                        <>
+                            <div className="flex items-center space-x-2">
+                                <Switch
+                                    id="inpainting-mode"
+                                    checked={isInpaintingEnabled}
+                                    onCheckedChange={setIsInpaintingEnabled}
+                                />
+                                <Label htmlFor="inpainting-mode">Enable Inpainting</Label>
+                            </div>
+                            <DrawingCard
+                                sourceImage={selectedImage}
+                                onMaskGenerated={handleMaskGenerated}
+                                disabled={!selectedImage || formData.model === 'recraftv3'}
+                                width={320}
+                                isInpaintingEnabled={isInpaintingEnabled}
+                            />
+                        </>
+                    )}
 					</div>
 					<div className="flex flex-col gap-6 xl:w-[600px]">
 						<GenerationSettingsCard

@@ -28,6 +28,11 @@ export async function POST(req: Request): Promise<Response> {
 	  } else if (!body.version) {
 		// No Private LoRA provided
 		console.log('Processing model selection:', model);
+// Inside the else if (!body.version) block, before the switch statement
+console.log('Processing request with image/mask:', {
+    hasImage: !!body.input?.image,
+    hasMask: !!body.input?.mask
+});
 		switch (model) {
 			case 'schnell':
 				urlToFetch = 'https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions';
