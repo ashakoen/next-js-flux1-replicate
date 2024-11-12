@@ -104,7 +104,7 @@ export function GenerationSettingsCard({
 	];
 
 	return (
-		<Card className="w-full relative">
+		<Card className="w-full max-w-[400px] md:max-w-[500px] lg:max-w-[500px] relative">
 			<div className="absolute -top-5 -right-5">
 				<ApiSettingsModal
 					apiKey={apiKey}
@@ -116,7 +116,7 @@ export function GenerationSettingsCard({
 				<CardTitle>Generation Settings</CardTitle>
 				<CardDescription>Generate images using AI with the Replicate API</CardDescription>
 			</CardHeader>
-			<CardContent className="h-[620px] overflow-y-auto">
+			<CardContent className="h-[660px] overflow-y-auto">
 				<form onSubmit={handleSubmit}>
 					<Tabs defaultValue="basic" className="w-full">
 						<TabsList className="grid w-full grid-cols-2">

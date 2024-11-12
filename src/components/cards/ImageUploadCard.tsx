@@ -111,7 +111,7 @@ export function ImageUploadCard({
     };
 
     return (
-        <Card className={`w-[310px] ${disabled ? 'opacity-50' : ''}`}>
+        <Card className={`w-[370px] ${disabled ? 'opacity-50' : ''}`}>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <ImageIcon className="w-5 h-5" />

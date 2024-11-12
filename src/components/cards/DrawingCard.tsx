@@ -19,7 +19,7 @@ export function DrawingCard({
     sourceImage,
     onMaskGenerated,
     disabled = false,
-    width = 310,
+    width = 370,
     isInpaintingEnabled = false
 }: DrawingCardProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -40,7 +40,7 @@ export function DrawingCard({
         // Clear and initialize canvas
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         // Save initial state
         const initialState = ctx.getImageData(0, 0, canvas.width, canvas.height);
         setHistory([initialState]);
@@ -65,14 +65,14 @@ export function DrawingCard({
     const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
         if (disabled) return;
         setIsDrawing(true);
-        
+
         const canvas = canvasRef.current;
         if (!canvas) return;
 
         const rect = canvas.getBoundingClientRect();
         const x = ('touches' in e) ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
         const y = ('touches' in e) ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
-        
+
         lastPos.current = { x, y };
         draw(x, y);
     };
@@ -97,7 +97,7 @@ export function DrawingCard({
         if (isDrawing) {
             setIsDrawing(false);
             lastPos.current = null;
-            
+
             // Save state to history
             const canvas = canvasRef.current;
             const ctx = canvas?.getContext('2d');
@@ -110,20 +110,20 @@ export function DrawingCard({
 
     const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
         if (!isDrawing || disabled) return;
-        
+
         const canvas = canvasRef.current;
         if (!canvas) return;
 
         const rect = canvas.getBoundingClientRect();
         const x = ('touches' in e) ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
         const y = ('touches' in e) ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
-        
+
         draw(x, y);
     };
 
     const handleUndo = () => {
         if (history.length <= 1) return;
-        
+
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
         if (!ctx || !canvas) return;
@@ -141,7 +141,7 @@ export function DrawingCard({
 
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         // Reset history
         const newState = ctx.getImageData(0, 0, canvas.width, canvas.height);
         setHistory([newState]);
@@ -150,25 +150,25 @@ export function DrawingCard({
     const handleSave = () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        
+
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-    
+
         // Create a new canvas for the final mask
         const maskCanvas = document.createElement('canvas');
         maskCanvas.width = canvas.width;
         maskCanvas.height = canvas.height;
         const maskCtx = maskCanvas.getContext('2d');
         if (!maskCtx) return;
-    
+
         // Fill the mask canvas with black first (areas to preserve)
         maskCtx.fillStyle = 'black';
         maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-    
+
         // Get the current drawing
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
-    
+
         // Create mask image data where drawn areas (black pixels) become white (areas to inpaint)
         const maskImageData = maskCtx.createImageData(canvas.width, canvas.height);
         for (let i = 0; i < data.length; i += 4) {
@@ -187,23 +187,23 @@ export function DrawingCard({
                 maskImageData.data[i + 3] = 255; // A
             }
         }
-    
-    // DEBUG: Display the mask
-    const debugCanvas = document.createElement('canvas');
-    debugCanvas.width = maskCanvas.width;
-    debugCanvas.height = maskCanvas.height;
-    const debugCtx = debugCanvas.getContext('2d');
-    if (debugCtx) {
-        debugCtx.drawImage(maskCanvas, 0, 0);
-        console.log('Mask Preview:', debugCanvas.toDataURL());
-    }
-    
-    const maskDataUrl = maskCanvas.toDataURL('image/png');
-    console.log('Mask Data:', {
-        size: maskDataUrl.length,
-        preview: maskDataUrl.substring(0, 100) + '...',
-        dimensions: `${maskCanvas.width}x${maskCanvas.height}`
-    });
+
+        // DEBUG: Display the mask
+        const debugCanvas = document.createElement('canvas');
+        debugCanvas.width = maskCanvas.width;
+        debugCanvas.height = maskCanvas.height;
+        const debugCtx = debugCanvas.getContext('2d');
+        if (debugCtx) {
+            debugCtx.drawImage(maskCanvas, 0, 0);
+            console.log('Mask Preview:', debugCanvas.toDataURL());
+        }
+
+        const maskDataUrl = maskCanvas.toDataURL('image/png');
+        console.log('Mask Data:', {
+            size: maskDataUrl.length,
+            preview: maskDataUrl.substring(0, 100) + '...',
+            dimensions: `${maskCanvas.width}x${maskCanvas.height}`
+        });
         onMaskGenerated(maskDataUrl);
     };
 
@@ -280,8 +280,8 @@ export function DrawingCard({
                                 </div>
                             </div>
                             <div className="relative rounded-lg border border-gray-200 dark:border-gray-800">
-                                <div 
-                                    className="absolute inset-0 z-0" 
+                                <div
+                                    className="absolute inset-0 z-0"
                                     style={{
                                         backgroundImage: `url(${sourceImage.url})`,
                                         backgroundSize: 'contain',

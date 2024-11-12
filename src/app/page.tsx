@@ -471,7 +471,7 @@ export default function Component() {
 		console.log('Replicate Params:', replicateParams);
 		if (selectedImage?.file && maskDataUrl) {
 			console.log('Sending inpainting request with:', {
-				imageSize: imageData.length,
+				imageSize: imageData ? imageData.length : 0,  // Add null check here
 				maskSize: maskDataUrl.length,
 				maskPreview: maskDataUrl.substring(0, 100) + '...'
 			});
@@ -855,7 +855,7 @@ export default function Component() {
 		<>
 			<div className="container mx-auto px-2 pt-10 pb-20">
 				<div className="flex flex-col xl:flex-row gap-6">
-					<div className="flex flex-col gap-6 xl:w-[320px]"> {/* Fixed width for left column */}
+					<div className="flex flex-col gap-6 xl:w-[380px]"> {/* Fixed width for left column */}
 						<ImageUploadCard
 							onImageSelect={handleImageSelect}
 							selectedImage={selectedImage}
@@ -863,27 +863,27 @@ export default function Component() {
 							onError={handleError}
 							disabled={formData.model === 'recraftv3'}
 						/>
-                    {selectedImage && (
-                        <>
-                            <div className="flex items-center space-x-2">
-                                <Switch
-                                    id="inpainting-mode"
-                                    checked={isInpaintingEnabled}
-                                    onCheckedChange={setIsInpaintingEnabled}
-                                />
-                                <Label htmlFor="inpainting-mode">Enable Inpainting</Label>
-                            </div>
-                            <DrawingCard
-                                sourceImage={selectedImage}
-                                onMaskGenerated={handleMaskGenerated}
-                                disabled={!selectedImage || formData.model === 'recraftv3'}
-                                width={320}
-                                isInpaintingEnabled={isInpaintingEnabled}
-                            />
-                        </>
-                    )}
+						{selectedImage && (
+							<>
+								<div className="flex items-center space-x-2 ">
+									<Switch
+										id="inpainting-mode"
+										checked={isInpaintingEnabled}
+										onCheckedChange={setIsInpaintingEnabled}
+									/>
+									<Label htmlFor="inpainting-mode">Enable Inpainting</Label>
+								</div>
+								<DrawingCard
+									sourceImage={selectedImage}
+									onMaskGenerated={handleMaskGenerated}
+									disabled={!selectedImage || formData.model === 'recraftv3'}
+									width={370}
+									isInpaintingEnabled={isInpaintingEnabled}
+								/>
+							</>
+						)}
 					</div>
-					<div className="flex flex-col gap-6 xl:w-[600px]">
+					<div className="flex flex-col gap-6 xl:w-[500px]">
 						<GenerationSettingsCard
 							formData={formData}
 							isLoading={isLoading}
