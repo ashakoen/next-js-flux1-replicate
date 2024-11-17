@@ -40,7 +40,8 @@ const initialFormData: FormData = {
 	num_inference_steps: 28,
 	disable_safety_checker: false,
 	go_fast: true,
-	style: 'any'
+	style: 'any',
+	prompt_strength: 0.8,
 };
 
 export default function Component() {
@@ -368,7 +369,8 @@ export default function Component() {
 
 		const submissionData = {
 			...formData,
-			...overrideData
+			...overrideData,
+			...(selectedImage && { prompt_strength: formData.prompt_strength }),
 		};
 
 		console.log('Final submission data:', submissionData);
@@ -437,9 +439,11 @@ export default function Component() {
 					go_fast: submissionData.go_fast,
 					...(selectedImage?.file && maskDataUrl ? {
 						image: imageData,
-						mask: maskDataUrl
+						mask: maskDataUrl,
+						prompt_strength: formData.prompt_strength
 					} : selectedImage?.file ? {
-						image: imageData
+						image: imageData,
+						prompt_strength: formData.prompt_strength
 					} : {})
 				}
 			};
@@ -459,9 +463,11 @@ export default function Component() {
 					go_fast: submissionData.go_fast,
 					...(selectedImage?.file && maskDataUrl ? {
 						image: imageData,
-						mask: maskDataUrl
+						mask: maskDataUrl,
+						prompt_strength: formData.prompt_strength
 					} : selectedImage?.file ? {
-						image: imageData
+						image: imageData,
+						prompt_strength: formData.prompt_strength
 					} : {})
 				},
 				model: submissionData.model,
@@ -903,6 +909,7 @@ export default function Component() {
 							apiKey={apiKey}
 							showApiKeyAlert={showApiKeyAlert}
 							handleApiKeyChange={handleApiKeyChange}
+							hasSourceImage={!!selectedImage}
 						/>
 					</div>
 

@@ -33,11 +33,13 @@ interface GenerationSettingsCardProps {
 	handleCancel: () => void;
 	apiKey: string;
 	showApiKeyAlert: boolean;
+	hasSourceImage: boolean;
 	handleApiKeyChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export function GenerationSettingsCard({
 	formData,
+	hasSourceImage,
 	isLoading,
 	isGenerating,
 	cancelUrl,
@@ -137,6 +139,33 @@ export function GenerationSettingsCard({
 										className="min-h-[100px]"
 									/>
 								</div>
+                                {hasSourceImage && (
+                                    <div>
+                                        <Label htmlFor="prompt_strength">
+                                            Prompt Strength: {formData.prompt_strength}
+                                        </Label>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <div>
+                                                        <Slider
+                                                            id="prompt_strength"
+                                                            min={0}
+                                                            max={1}
+                                                            step={0.01}
+                                                            value={[formData.prompt_strength || 0.8]}
+                                                            onValueChange={(value) => handleSliderChange('prompt_strength', value)}
+                                                            className="custom-slider"
+                                                        />
+                                                    </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Controls how much to transform the source image. Lower values preserve more of the original image.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
+                                )}
 								{!isRecraftv3 && (
 									<div className="flex items-center space-x-2">
 										<Switch

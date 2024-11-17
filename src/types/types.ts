@@ -21,6 +21,7 @@ export type FormData = {
     go_fast: boolean;
     style?: string;
     maskDataUrl?: string;
+    prompt_strength?: number;
 };
 
 export type GeneratedImage = {
