@@ -104,7 +104,7 @@ export function GenerationSettingsCard({
 	];
 
 	return (
-		<Card className="w-full max-w-[400px] md:max-w-[500px] lg:max-w-[500px] relative">
+		<Card className="flex flex-col w-full h-full xl:h-[65vh]">
 			<div className="absolute -top-5 -right-5">
 				<ApiSettingsModal
 					apiKey={apiKey}

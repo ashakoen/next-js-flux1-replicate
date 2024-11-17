@@ -63,9 +63,19 @@
 @layer components {
   @layer components {
     .main-layout {
-      @apply container mx-0 px-4 lg:px-4;  /* Changed mx-auto to mx-0 */
-      @apply w-full lg:w-[95%] xl:w-[90%] 2xl:w-[85%];  /* Changed max-w to w */
-      @apply lg:ml-[2rem] xl:ml-[4rem] 2xl:ml-[0rem];  /* Use fixed margins instead of percentages */
+      @apply flex flex-col xl:flex-row gap-6 w-full h-full;
+    }
+    
+    .left-column {
+      @apply flex flex-col w-full xl:w-1/6;
+    }
+    
+    .middle-column {
+      @apply flex flex-col w-full xl:w-1/4;
+    }
+    
+    .right-column {
+      @apply flex flex-col w-full xl:flex-1  flex-grow;
     }
   }
 

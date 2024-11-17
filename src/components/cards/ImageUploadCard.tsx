@@ -111,71 +111,71 @@ export function ImageUploadCard({
     };
 
     return (
-        <Card className={`w-[370px] ${disabled ? 'opacity-50' : ''}`}>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <ImageIcon className="w-5 h-5" />
-                    Input Image
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                {!selectedImage ? (
-                    <div
-                        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors
-                        ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 dark:border-gray-700'}
-                        ${disabled ? 'pointer-events-none' : 'hover:border-primary hover:bg-primary/5'}`}
-                        onDragEnter={handleDragIn}
-                        onDragLeave={handleDragOut}
-                        onDragOver={handleDrag}
-                        onDrop={handleDrop}
-                    >
-                        <input
-                            type="file"
-                            accept={ACCEPTED_IMAGE_TYPES.join(',')}
-                            onChange={handleFileSelect}
-                            className="hidden"
-                            id="image-upload"
-                            disabled={disabled}
-                        />
-                        <label
-                            htmlFor="image-upload"
-                            className={`flex flex-col items-center gap-4 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                        >
-                            <Upload className="w-6 h-6 text-gray-400" />
-                            <div className="text-xs text-gray-600 dark:text-gray-400">
-                                <span className="font-semibold text-primary">Click to upload</span> or drag and drop
-                                <div className="mt-2">
-                                    PNG, JPG, WEBP (max. {MAX_FILE_SIZE / 1024 / 1024}MB)
-                                </div>
-                                <div className="mt-1">
-                                    Max dimensions: {MAX_DIMENSIONS}x{MAX_DIMENSIONS}
-                                </div>
-                            </div>
-                        </label>
-                    </div>
-                ) : (
-                    <div className="relative">
-                        <div className="relative w-full aspect-square">
-                            <Image
-                                src={selectedImage.url}
-                                alt="Selected image"
-                                layout="fill"
-                                objectFit="contain"
-                                className="rounded-lg"
-                            />
-                        </div>
-                        <Button
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2"
-                            onClick={onClearImage}
-                            disabled={disabled}
-                        >
-                            <X className="w-4 h-4" />
-                        </Button>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+<Card className={`flex flex-col w-full h-[35vh] xl:h-[35vh] relative ${disabled ? 'opacity-50' : ''}`}>
+<Button
+    variant="destructive"
+    size="icon"
+    className={`absolute top-3 right-3 z-10 ${!selectedImage ? 'opacity-50 cursor-not-allowed' : ''}`}
+    onClick={onClearImage}
+    disabled={disabled || !selectedImage}
+  >
+    <X className="w-4 h-4" />
+  </Button>
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2 text-sm">
+      <ImageIcon className="w-5 h-5" />
+      Input Image
+    </CardTitle>
+  </CardHeader>
+  <CardContent className="flex-1 overflow-hidden">
+    {!selectedImage ? (
+      <div
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors h-full
+        ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 dark:border-gray-700'}
+        ${disabled ? 'pointer-events-none' : 'hover:border-primary hover:bg-primary/5'}`}
+        onDragEnter={handleDragIn}
+        onDragLeave={handleDragOut}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+      >
+        <input
+          type="file"
+          accept={ACCEPTED_IMAGE_TYPES.join(',')}
+          onChange={handleFileSelect}
+          className="hidden"
+          id="image-upload"
+          disabled={disabled}
+        />
+        <label
+          htmlFor="image-upload"
+          className={`flex flex-col items-center gap-4 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+        >
+          <Upload className="w-6 h-6 text-gray-400" />
+          <div className="text-xs text-gray-600 dark:text-gray-400">
+            <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+            <div className="mt-2">
+              PNG, JPG, WEBP (max. {MAX_FILE_SIZE / 1024 / 1024}MB)
+            </div>
+            <div className="mt-1">
+              Max dimensions: {MAX_DIMENSIONS}x{MAX_DIMENSIONS}
+            </div>
+          </div>
+        </label>
+      </div>
+    ) : (
+      <div className="relative h-full">
+        <div className="relative w-full h-full">
+          <Image
+            src={selectedImage.url}
+            alt="Selected image"
+            layout="fill"
+            objectFit="contain"
+            className="rounded-lg"
+          />
+        </div>
+      </div>
+    )}
+  </CardContent>
+</Card>
     );
 }

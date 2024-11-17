@@ -83,7 +83,7 @@ export function GeneratedImagesCard({
     }, [isConfirming]);
 
     return (
-        <Card className="flex flex-col" style={{ height: '760px' }}>
+        <Card className="flex flex-col w-full h-full">
             <CardHeader className="relative">
                 <CardTitle>Your Image Generations</CardTitle>
                 <CardDescription>Your generations will show up here. Have fun! </CardDescription>

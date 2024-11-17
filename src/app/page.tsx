@@ -853,9 +853,9 @@ export default function Component() {
 
 	return (
 		<>
-			<div className="container mx-auto px-2 pt-10 pb-20">
-				<div className="flex flex-col xl:flex-row gap-6">
-					<div className="flex flex-col gap-6 xl:w-[380px]"> {/* Fixed width for left column */}
+<div className="container mx-auto px-2 pt-10 pb-20 h-[calc(100vh-2rem)]">
+  <div className="main-layout">
+    <div className="left-column">
 						<ImageUploadCard
 							onImageSelect={handleImageSelect}
 							selectedImage={selectedImage}
@@ -865,14 +865,14 @@ export default function Component() {
 						/>
 						{selectedImage && (
 							<>
-								<div className="flex items-center space-x-2 ">
-									<Switch
-										id="inpainting-mode"
-										checked={isInpaintingEnabled}
-										onCheckedChange={setIsInpaintingEnabled}
-									/>
-									<Label htmlFor="inpainting-mode">Enable Inpainting</Label>
-								</div>
+<div className="flex items-center space-x-2 py-4">
+  <Switch
+    id="inpainting-mode"
+    checked={isInpaintingEnabled}
+    onCheckedChange={setIsInpaintingEnabled}
+  />
+  <Label htmlFor="inpainting-mode">Enable Inpainting</Label>
+</div>
 								<DrawingCard
 									sourceImage={selectedImage}
 									onMaskGenerated={handleMaskGenerated}
@@ -883,7 +883,7 @@ export default function Component() {
 							</>
 						)}
 					</div>
-					<div className="flex flex-col gap-6 xl:w-[500px]">
+					<div className="middle-column">
 						<GenerationSettingsCard
 							formData={formData}
 							isLoading={isLoading}
@@ -908,7 +908,7 @@ export default function Component() {
 
 
 					{/* Generated Images Card - Right 2/3 */}
-					<div className="flex flex-col gap-6 xl:w-[880px]">   {/* Added minimum width */}
+					<div className="right-column">
 
 						<GeneratedImagesCard
 							images={generatedImages}

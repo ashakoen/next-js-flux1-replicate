@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Brush, Eraser, Undo, Save, RotateCcw } from 'lucide-react';
+import { Brush, Undo, Save, RotateCcw } from 'lucide-react';
 import { Slider } from "@/components/ui/slider";
 import { Label } from '@/components/ui/label';
 
@@ -12,7 +12,7 @@ interface DrawingCardProps {
     onMaskGenerated: (maskDataUrl: string) => void;
     disabled?: boolean;
     width?: number;
-    isInpaintingEnabled?: boolean;  // Add this prop
+    isInpaintingEnabled?: boolean;
 }
 
 export function DrawingCard({
@@ -30,6 +30,7 @@ export function DrawingCard({
     const [history, setHistory] = useState<ImageData[]>([]);
     const lastPos = useRef<{ x: number; y: number } | null>(null);
 
+
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -37,15 +38,14 @@ export function DrawingCard({
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        // Clear and initialize canvas
-        ctx.fillStyle = 'white';
+        // Initialize with black (areas to preserve)
+        ctx.fillStyle = 'black';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // Save initial state
         const initialState = ctx.getImageData(0, 0, canvas.width, canvas.height);
         setHistory([initialState]);
     }, [sourceImage]);
-
 
     useEffect(() => {
         const updateCanvasSize = () => {
@@ -70,8 +70,20 @@ export function DrawingCard({
         if (!canvas) return;
 
         const rect = canvas.getBoundingClientRect();
-        const x = ('touches' in e) ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-        const y = ('touches' in e) ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        let clientX, clientY;
+        if ('touches' in e) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+
+        const x = (clientX - rect.left) * scaleX;
+        const y = (clientY - rect.top) * scaleY;
 
         lastPos.current = { x, y };
         draw(x, y);
@@ -85,7 +97,8 @@ export function DrawingCard({
         ctx.beginPath();
         ctx.moveTo(lastPos.current.x, lastPos.current.y);
         ctx.lineTo(x, y);
-        ctx.strokeStyle = tool === 'eraser' ? 'white' : 'black';
+        // Always draw in white (areas to inpaint)
+        ctx.strokeStyle = 'white';
         ctx.lineWidth = brushRadius;
         ctx.lineCap = 'round';
         ctx.stroke();
@@ -115,8 +128,20 @@ export function DrawingCard({
         if (!canvas) return;
 
         const rect = canvas.getBoundingClientRect();
-        const x = ('touches' in e) ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-        const y = ('touches' in e) ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        let clientX, clientY;
+        if ('touches' in e) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+
+        const x = (clientX - rect.left) * scaleX;
+        const y = (clientY - rect.top) * scaleY;
 
         draw(x, y);
     };
@@ -139,7 +164,7 @@ export function DrawingCard({
         const ctx = canvas?.getContext('2d');
         if (!ctx || !canvas) return;
 
-        ctx.fillStyle = 'white';
+        ctx.fillStyle = 'black';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // Reset history
@@ -151,123 +176,68 @@ export function DrawingCard({
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        // Create a new canvas for the final mask
-        const maskCanvas = document.createElement('canvas');
-        maskCanvas.width = canvas.width;
-        maskCanvas.height = canvas.height;
-        const maskCtx = maskCanvas.getContext('2d');
-        if (!maskCtx) return;
-
-        // Fill the mask canvas with black first (areas to preserve)
-        maskCtx.fillStyle = 'black';
-        maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-
-        // Get the current drawing
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-
-        // Create mask image data where drawn areas (black pixels) become white (areas to inpaint)
-        const maskImageData = maskCtx.createImageData(canvas.width, canvas.height);
-        for (let i = 0; i < data.length; i += 4) {
-            // If pixel is drawn (black in our drawing)
-            if (data[i] === 0 && data[i + 1] === 0 && data[i + 2] === 0) {
-                // Make it white in the mask (area to inpaint)
-                maskImageData.data[i] = 255;     // R
-                maskImageData.data[i + 1] = 255; // G
-                maskImageData.data[i + 2] = 255; // B
-                maskImageData.data[i + 3] = 255; // A
-            } else {
-                // Make it black in the mask (area to preserve)
-                maskImageData.data[i] = 0;     // R
-                maskImageData.data[i + 1] = 0; // G
-                maskImageData.data[i + 2] = 0; // B
-                maskImageData.data[i + 3] = 255; // A
-            }
-        }
-
-        // DEBUG: Display the mask
-        const debugCanvas = document.createElement('canvas');
-        debugCanvas.width = maskCanvas.width;
-        debugCanvas.height = maskCanvas.height;
-        const debugCtx = debugCanvas.getContext('2d');
-        if (debugCtx) {
-            debugCtx.drawImage(maskCanvas, 0, 0);
-            console.log('Mask Preview:', debugCanvas.toDataURL());
-        }
-
-        const maskDataUrl = maskCanvas.toDataURL('image/png');
-        console.log('Mask Data:', {
-            size: maskDataUrl.length,
-            preview: maskDataUrl.substring(0, 100) + '...',
-            dimensions: `${maskCanvas.width}x${maskCanvas.height}`
-        });
+        // Get both the original and final mask data
+        const maskDataUrl = canvas.toDataURL('image/png');
         onMaskGenerated(maskDataUrl);
     };
 
     return (
-        <Card className={`w-[${width}px] ${disabled ? 'opacity-50' : ''}`}>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+        <Card className={`flex flex-col w-full h-[40vh] ${disabled ? 'opacity-50' : ''}`}>
+            <CardHeader className="p-3">
+                <CardTitle className="flex items-center gap-2 text-sm">
                     <Brush className="w-5 h-5" />
                     Draw Mask
                 </CardTitle>
             </CardHeader>
-            <CardContent>
-                <div className="relative">
+            <CardContent className="flex-1 overflow-hidden p-2">
+                <div className="flex flex-col h-full">
                     {sourceImage ? (
                         <>
-                            <div className="mb-4 space-y-4">
-                                <div className="flex gap-2 justify-center">
+                            <div className="mb-2 space-y-2">
+                                <div className="flex gap-1 justify-center">
                                     <Button
                                         variant={tool === 'brush' ? 'default' : 'outline'}
-                                        size="icon"
+                                        size="sm"
                                         onClick={() => setTool('brush')}
                                         disabled={disabled}
                                         title="Brush"
+                                        className="h-7 w-7 p-0"
                                     >
-                                        <Brush className="w-4 h-4" />
+                                        <Brush className="w-3 h-3" />
                                     </Button>
-                                    <Button
-                                        variant={tool === 'eraser' ? 'default' : 'outline'}
-                                        size="icon"
-                                        onClick={() => setTool('eraser')}
-                                        disabled={disabled}
-                                        title="Eraser"
-                                    >
-                                        <Eraser className="w-4 h-4" />
-                                    </Button>
+                                    {/* Removed Eraser Button */}
                                     <Button
                                         variant="outline"
-                                        size="icon"
+                                        size="sm"
                                         onClick={handleUndo}
                                         disabled={disabled || history.length <= 1}
                                         title="Undo"
+                                        className="h-7 w-7 p-0"
                                     >
-                                        <Undo className="w-4 h-4" />
+                                        <Undo className="w-3 h-3" />
                                     </Button>
                                     <Button
                                         variant="outline"
-                                        size="icon"
+                                        size="sm"
                                         onClick={handleClear}
                                         disabled={disabled}
                                         title="Clear"
+                                        className="h-7 w-7 p-0"
                                     >
-                                        <RotateCcw className="w-4 h-4" />
+                                        <RotateCcw className="w-3 h-3" />
                                     </Button>
                                     <Button
                                         variant="default"
-                                        size="icon"
+                                        size="sm"
                                         onClick={handleSave}
                                         disabled={disabled}
                                         title="Save Mask"
+                                        className="h-7 w-7 p-0"
                                     >
-                                        <Save className="w-4 h-4" />
+                                        <Save className="w-3 h-3" />
                                     </Button>
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-1">
                                     <Label className="text-xs text-gray-500">Brush Size</Label>
                                     <Slider
                                         min={1}
@@ -276,10 +246,11 @@ export function DrawingCard({
                                         value={[brushRadius]}
                                         onValueChange={(value) => setBrushRadius(value[0])}
                                         disabled={disabled}
+                                        className="py-0"
                                     />
                                 </div>
                             </div>
-                            <div className="relative rounded-lg border border-gray-200 dark:border-gray-800">
+                            <div className="relative flex-1 rounded-lg border border-gray-200 dark:border-gray-800">
                                 <div
                                     className="absolute inset-0 z-0"
                                     style={{
@@ -293,7 +264,7 @@ export function DrawingCard({
                                     ref={canvasRef}
                                     width={canvasSize.width}
                                     height={canvasSize.height}
-                                    className="relative z-10"
+                                    className="relative z-10 w-full h-full"
                                     style={{ opacity: 0.7 }}
                                     onMouseDown={startDrawing}
                                     onMouseMove={handleMouseMove}
@@ -306,7 +277,7 @@ export function DrawingCard({
                             </div>
                         </>
                     ) : (
-                        <div className="h-[278px] flex items-center justify-center text-sm text-gray-500 border-2 border-dashed rounded-lg">
+                        <div className="flex-1 flex items-center justify-center text-sm text-gray-500 border-2 border-dashed rounded-lg">
                             Upload an image to start drawing
                         </div>
                     )}
