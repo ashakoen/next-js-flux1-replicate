@@ -2,7 +2,7 @@ import React from 'react';
 
 export type FormData = {
     seed: number;
-    model: 'dev' | 'schnell' | 'recraftv3' | 'recraftv3-svg';
+    model: 'dev' | 'schnell' | 'pro' | 'recraftv3' | 'recraftv3-svg';
     privateLoraName: string;
     privateLoraVersion: string;
     width: number;
