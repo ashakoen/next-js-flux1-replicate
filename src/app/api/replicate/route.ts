@@ -40,6 +40,9 @@ console.log('Processing request with image/mask:', {
 			case 'pro':
 				urlToFetch = 'https://api.replicate.com/v1/models/black-forest-labs/flux-1.1-pro/predictions';
 				break;
+			case 'pro-ultra':
+					urlToFetch = 'https://api.replicate.com/v1/models/black-forest-labs/flux-1.1-pro-ultra/predictions';
+					break;
 			case 'recraftv3':
 				// Check output format to determine which Recraft endpoint to use
 				urlToFetch = body.input?.output_format === 'svg' 

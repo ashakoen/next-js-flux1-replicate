@@ -15,7 +15,7 @@ interface GeneratedImagesCardProps {
     onDownloadImage: (imageUrl: string) => Promise<void>;
     onDeleteImage: (imageUrl: string) => void;
     clearGeneratedImages: () => void;
-    onRegenerateWithSeed: (newSeed: number, modelType?: 'dev' | 'schnell' | 'pro' | 'recraftv3') => void;
+    onRegenerateWithSeed: (newSeed: number, modelType?: 'dev' | 'schnell' | 'pro' | 'pro-ultra' | 'recraftv3') => void;
     onUseAsInput: (imageUrl: string) => Promise<void>;
     isGenerating: boolean;
     numberOfOutputs: number;
@@ -59,6 +59,7 @@ export function GeneratedImagesCard({
         return model.includes('flux-dev') ||
             model.includes('flux-schnell') ||
             model.includes('flux-pro') ||
+            model.includes('flux-pro-ultra') ||
             model.includes('recraft') ||
             model.includes('/');
     };
@@ -71,6 +72,7 @@ export function GeneratedImagesCard({
         return (model.includes('flux-dev') ||
             model.includes('flux-schnell') ||
             model.includes('flux-pro') ||
+            model.includes('flux-pro-ultra') ||
             (model.includes('/') && !model.includes('recraft')));
     };
 
@@ -316,7 +318,7 @@ export function GeneratedImagesCard({
                                                                             ? 'schnell'
                                                                             : (image.model?.includes('/')
                                                                                 ? 'dev'
-                                                                                : image.model) as 'dev' | 'schnell' | 'pro' | 'recraftv3';
+                                                                                : image.model) as 'dev' | 'schnell' | 'pro' | 'pro-ultra' | 'recraftv3';
                                                                         onRegenerateWithSeed(newSeed, modelType);
                                                                     }}
                                                                 >
@@ -375,7 +377,7 @@ export function GeneratedImagesCard({
                                                         ? 'schnell'
                                                         : (image.model?.includes('/')
                                                             ? 'dev'
-                                                            : image.model) as 'dev' | 'schnell' | 'pro' | 'recraftv3';
+                                                            : image.model) as 'dev' | 'schnell' | 'pro' | 'pro-ultra' | 'recraftv3';
 
                                                     onRegenerateWithSeed(newSeed, modelType);
                                                 }}

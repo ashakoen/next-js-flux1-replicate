@@ -290,6 +290,7 @@ export function GenerationSettingsCard({
 											<SelectItem value="dev">FLUX.1 Dev</SelectItem>
 											<SelectItem value="schnell">FLUX.1 Schnell</SelectItem>
 											<SelectItem value="pro">FLUX.1 Pro</SelectItem>
+											<SelectItem value="pro-ultra">FLUX.1 Pro-Ultra</SelectItem>
 											<SelectItem value="recraftv3">Recraft v3</SelectItem>
 										</SelectContent>
 									</Select>

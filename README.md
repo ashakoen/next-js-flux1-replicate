@@ -1,6 +1,6 @@
 # Replicate Image Generator
 
-Replicate Image Generator is a web application that allows users to generate images using the FlUX.1 image generation models (dev, pro and schnell versions) hosted on Replicate. Additionally, images may be generated using both Recraft v3 models (image and SVG). This project is built with Next.js to provide a user-friendly interface for image generation.
+Replicate Image Generator is a web application that allows users to generate images using the FlUX.1 image generation models (dev, pro, pro-ultra and schnell versions) hosted on Replicate. Additionally, images may be generated using both Recraft v3 models (image and SVG). This project is built with Next.js to provide a user-friendly interface for image generation.
 
 ![flux-image-creator](public/flux-image-creator.png)
 ![flux-image-creator-update1](public/ashakoen-flux-image-creator-updates-101324-1.png)
