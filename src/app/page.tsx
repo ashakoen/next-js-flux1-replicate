@@ -311,7 +311,7 @@ export default function Component() {
 		setSelectedImage(null);
 	};
 
-	const handleRegenerateWithSeed = async (newSeed: number, modelType?: 'dev' | 'schnell' | 'pro' | 'recraftv3') => {
+	const handleRegenerateWithSeed = async (newSeed: number, modelType?: 'dev' | 'schnell' | 'pro' | 'pro-ultra' | 'recraftv3') => {
 		// Update the form state
 		setFormData(prev => ({
 			...prev,
