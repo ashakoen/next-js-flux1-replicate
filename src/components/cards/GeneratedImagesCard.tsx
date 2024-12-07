@@ -172,7 +172,7 @@ export function GeneratedImagesCard({
                                                     </div>
                                                 </div>
                                             </DialogTrigger>
-                                            <DialogContent className="sm:max-w-[1000px] max-h-[90vh] p-0 overflow-hidden"> {/* Increased max-width */}
+                                            <DialogContent className="sm:max-w-[1000px] max-h-[90vh] p-0 overflow-y-auto"> {/* Increased max-width */}
                                             <div className="flex h-full">
                                                     {/* Left side - Image */}
                                                     <div className="relative bg-black/5 dark:bg-white/5 flex-1">{/* Changed to flex-[2] for better ratio */}
