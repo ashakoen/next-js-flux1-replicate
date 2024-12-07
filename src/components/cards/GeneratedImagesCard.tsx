@@ -31,8 +31,9 @@ export function GeneratedImagesCard({
     numberOfOutputs,
     onRegenerateWithSeed,
     onUseAsInput,
-    model
-}: GeneratedImagesCardProps) {
+    model,
+    onReusePrompt
+}: GeneratedImagesCardProps & { onReusePrompt: (prompt: string) => void }) {
 
     const [isConfirming, setIsConfirming] = useState(false);
     const isFluxModel = (model: string | undefined, privateLoraName?: string) => {
@@ -173,7 +174,7 @@ export function GeneratedImagesCard({
                                                 </div>
                                             </DialogTrigger>
                                             <DialogContent className="sm:max-w-[1000px] max-h-[90vh] p-0 overflow-y-auto"> {/* Increased max-width */}
-                                            <div className="flex h-full">
+                                                <div className="flex h-full">
                                                     {/* Left side - Image */}
                                                     <div className="relative bg-black/5 dark:bg-white/5 flex-1">{/* Changed to flex-[2] for better ratio */}
                                                         <div className="relative w-full h-full">
@@ -279,6 +280,15 @@ export function GeneratedImagesCard({
 
                                                         {/* Action Buttons */}
                                                         <div className="mt-auto pt-4 flex flex-col gap-2"> {/* Reduced gap and padding */}
+                                                            <Button
+
+                                                                className="flex-1"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => onReusePrompt(image.prompt)}
+                                                            >
+                                                                Reuse this Prompt
+                                                            </Button>
                                                             {canUseAsInput(image.model, image.privateLoraName) && (
                                                                 <Button
                                                                     className="flex-1"

@@ -100,6 +100,13 @@ export default function Component() {
 		}
 	}, []);
 
+	const handleReusePrompt = (prompt: string) => {
+		setFormData((prev) => ({
+			...prev,
+			prompt
+		}));
+	};
+
 	useEffect(() => {
 		const savedApiKey = localStorage.getItem('replicateApiKey');
 		if (savedApiKey) {
@@ -378,7 +385,7 @@ export default function Component() {
 			...formData,
 			...overrideData,
 			...(selectedImage && { prompt_strength: formData.prompt_strength }),
-			...(selectedImage?.file && maskDataUrl && isInpaintingEnabled ? { maskDataUrl } : {}) 
+			...(selectedImage?.file && maskDataUrl && isInpaintingEnabled ? { maskDataUrl } : {})
 		};
 
 		const telemetryDataWithoutMask = {
@@ -874,9 +881,9 @@ export default function Component() {
 
 	return (
 		<>
-<div className="container mx-auto px-2 pt-10 pb-20 h-[calc(100vh-2rem)]">
-  <div className="main-layout">
-    <div className="left-column">
+			<div className="container mx-auto px-2 pt-10 pb-20 h-[calc(100vh-2rem)]">
+				<div className="main-layout">
+					<div className="left-column">
 						<ImageUploadCard
 							onImageSelect={handleImageSelect}
 							selectedImage={selectedImage}
@@ -886,14 +893,14 @@ export default function Component() {
 						/>
 						{selectedImage && (
 							<>
-<div className="flex items-center space-x-2 py-4">
-  <Switch
-    id="inpainting-mode"
-    checked={isInpaintingEnabled}
-    onCheckedChange={setIsInpaintingEnabled}
-  />
-  <Label htmlFor="inpainting-mode">Enable Inpainting</Label>
-</div>
+								<div className="flex items-center space-x-2 py-4">
+									<Switch
+										id="inpainting-mode"
+										checked={isInpaintingEnabled}
+										onCheckedChange={setIsInpaintingEnabled}
+									/>
+									<Label htmlFor="inpainting-mode">Enable Inpainting</Label>
+								</div>
 								<DrawingCard
 									sourceImage={selectedImage}
 									onMaskGenerated={handleMaskGenerated}
@@ -942,6 +949,7 @@ export default function Component() {
 							onRegenerateWithSeed={handleRegenerateWithSeed}
 							onUseAsInput={handleUseAsInput}
 							model={formData.model}
+							onReusePrompt={handleReusePrompt}
 						/>
 
 					</div>
