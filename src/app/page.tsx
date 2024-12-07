@@ -166,6 +166,13 @@ export default function Component() {
 		}
 	}, [logs, scrollToBottom]);
 
+	useEffect(() => {
+		if (!isInpaintingEnabled) {
+			console.log('Inpainting disabled, clearing maskDataUrl');
+			setMaskDataUrl(null);
+		}
+	}, [isInpaintingEnabled]);
+
 	const handleNumOutputsChange = (value: number) => {
 		setFormData((prev) => ({
 			...prev,
@@ -371,6 +378,13 @@ export default function Component() {
 			...formData,
 			...overrideData,
 			...(selectedImage && { prompt_strength: formData.prompt_strength }),
+			...(selectedImage?.file && maskDataUrl && isInpaintingEnabled ? { maskDataUrl } : {}) 
+		};
+
+		const telemetryDataWithoutMask = {
+			...submissionData,
+			// Remove maskDataUrl if it exists
+			maskDataUrl: undefined
 		};
 
 		console.log('Final submission data:', submissionData);
@@ -495,7 +509,7 @@ export default function Component() {
 			statusChanges: [],
 			pollingSteps: 0,
 			generationParameters: {
-				...submissionData,
+				...telemetryDataWithoutMask,
 				hasInputImage: !!selectedImage // Add this line to indicate if an input image was used
 			},
 			outputImageSizes: [],
@@ -552,6 +566,7 @@ export default function Component() {
 			newTelemetryData.errors.push(error instanceof Error ? error.message : 'Unknown error occurred')
 			finalizeTelemetryData(newTelemetryData)
 		}
+		setMaskDataUrl(null);
 	};
 
 
