@@ -45,7 +45,7 @@ export default function ServerLogModal({ logs, showLogs, setShowLogs, clearLogs 
             variant="ghost"
             size="sm"
             onClick={clearLogs}
-            className="text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-white hover:bg-gray-700"
           >
             Clear Logs
           </Button>
@@ -53,7 +53,7 @@ export default function ServerLogModal({ logs, showLogs, setShowLogs, clearLogs 
             variant="ghost"
             size="sm"
             onClick={() => setShowLogs(false)}
-            className="text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-white hover:bg-gray-700"
           >
             <X className="h-4 w-4" />
           </Button>

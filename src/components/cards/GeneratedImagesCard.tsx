@@ -88,12 +88,12 @@ export function GeneratedImagesCard({
     }, [isConfirming]);
 
     return (
-        <Card className="flex flex-col w-full h-full">
+        <Card className="flex flex-col w-full h-[calc(100vh-10rem)]">
             <CardHeader className="relative">
                 <CardTitle>Your Image Generations</CardTitle>
                 <CardDescription>Your generations will show up here. Have fun! </CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto">
+            <CardContent className="flex-1 min-h-0 overflow-y-auto">
                 {images.length > 0 ? (
                     <div className="h-full overflow-y-auto">
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-8 p-2">

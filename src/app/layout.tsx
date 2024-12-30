@@ -26,9 +26,9 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       </head>
-      <body className={`${inter.className} min-h-screen`}>
+      <body className={`${inter.className} min-h-screen overflow-hidden`}>
         <ThemeProvider attribute="class">
-          <main className="main-layout w-full">
+        <main className="main-layout w-full overflow-hidden">
             {children}
           </main>
         </ThemeProvider>

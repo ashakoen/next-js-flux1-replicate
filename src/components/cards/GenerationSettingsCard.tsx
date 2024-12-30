@@ -14,6 +14,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { FormData, Recraftv3Size, Recraftv3Style } from '@/types/types';
 import { ApiSettingsModal } from "@/components/modals/ApiSettingsModal";
 import { useEffect } from 'react';
+import { Sun, Moon } from 'lucide-react';
+import { useTheme } from "next-themes";
 
 interface GenerationSettingsCardProps {
 	formData: FormData;
@@ -105,20 +107,32 @@ export function GenerationSettingsCard({
 		"realistic_image/enterprise", "realistic_image/motion_blur"
 	];
 
+	const { theme, setTheme } = useTheme();
+
 	return (
-		<Card className="flex flex-col w-full h-full xl:h-[65vh]">
-			<div className="absolute -top-5 -right-5">
-				<ApiSettingsModal
-					apiKey={apiKey}
-					showApiKeyAlert={showApiKeyAlert}
-					handleApiKeyChange={handleApiKeyChange}
-				/>
-			</div>
-			<CardHeader>
+		<Card className="flex flex-col w-full h-[calc(100vh-10rem)] overflow-hidden">
+<div className="absolute top-2 right-3 flex items-center gap-2 z-50">
+    <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+        className="h-9 w-9 flex items-center justify-center"
+    >
+        <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+        <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        <span className="sr-only">Toggle theme</span>
+    </Button>
+    <ApiSettingsModal
+        apiKey={apiKey}
+        showApiKeyAlert={showApiKeyAlert}
+        handleApiKeyChange={handleApiKeyChange}
+    />
+</div>
+			<CardHeader className="flex-none">
 				<CardTitle>Generation Settings</CardTitle>
 				<CardDescription>Generate images using AI with the Replicate API</CardDescription>
 			</CardHeader>
-			<CardContent className="h-[660px] overflow-y-auto">
+			<CardContent className="flex-1 overflow-y-auto min-h-0">
 				<form onSubmit={handleSubmit}>
 					<Tabs defaultValue="basic" className="w-full">
 						<TabsList className="grid w-full grid-cols-2">

@@ -2,16 +2,13 @@
 
 import ReactDOM from 'react-dom';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Star, Trash2, Moon, Sun } from 'lucide-react';
+import { Star, Trash2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useTheme } from "next-themes";
+
 
 interface SettingsDrawerProps {
 	validatedLoraModels: string[];
@@ -36,7 +33,6 @@ export function SettingsDrawer({
 	setFormData,
 	setSelectedLoraModel
 }: SettingsDrawerProps) {
-	const { theme, setTheme } = useTheme();
 
 	return (
 		<Drawer>
@@ -164,17 +160,6 @@ export function SettingsDrawer({
 							</AccordionContent>
 						</AccordionItem>
 					</Accordion>
-					<div className="mt-4 flex justify-center">
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-						>
-							<Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-							<Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-							<span className="sr-only">Toggle theme</span>
-						</Button>
-					</div>
 				</DrawerContent>,
 				document.body
 			)}

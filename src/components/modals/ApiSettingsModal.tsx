@@ -28,7 +28,11 @@ export function ApiSettingsModal({
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="absolute top-6 right-6">
+            <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-9 w-9 flex items-center justify-center"
+        >
                     <Settings className="h-[1.2rem] w-[1.2rem]" />
                     <span className="sr-only">API Settings</span>
                 </Button>

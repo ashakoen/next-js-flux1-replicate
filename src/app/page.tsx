@@ -18,6 +18,7 @@ import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas';
 import { DrawingCard } from '@/components/cards/DrawingCard';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { SourceImageDrawer } from "@/components/SourceImageDrawer";
 
 
 
@@ -883,34 +884,18 @@ export default function Component() {
 		<>
 			<div className="container mx-auto px-2 pt-10 pb-20 h-[calc(100vh-2rem)]">
 				<div className="main-layout">
-					<div className="left-column">
-						<ImageUploadCard
-							onImageSelect={handleImageSelect}
-							selectedImage={selectedImage}
-							onClearImage={handleClearImage}
-							onError={handleError}
-							disabled={formData.model === 'recraftv3'}
-						/>
-						{selectedImage && (
-							<>
-								<div className="flex items-center space-x-2 py-4">
-									<Switch
-										id="inpainting-mode"
-										checked={isInpaintingEnabled}
-										onCheckedChange={setIsInpaintingEnabled}
-									/>
-									<Label htmlFor="inpainting-mode">Enable Inpainting</Label>
-								</div>
-								<DrawingCard
-									sourceImage={selectedImage}
-									onMaskGenerated={handleMaskGenerated}
-									disabled={!selectedImage || formData.model === 'recraftv3'}
-									width={370}
-									isInpaintingEnabled={isInpaintingEnabled}
-								/>
-							</>
-						)}
-					</div>
+
+				<SourceImageDrawer
+  onImageSelect={handleImageSelect}
+  selectedImage={selectedImage}
+  onClearImage={handleClearImage}
+  onError={handleError}
+  disabled={formData.model === 'recraftv3'}
+  isInpaintingEnabled={isInpaintingEnabled}
+  onInpaintingChange={setIsInpaintingEnabled}
+  onMaskGenerated={handleMaskGenerated}
+/>
+
 					<div className="middle-column">
 						<GenerationSettingsCard
 							formData={formData}

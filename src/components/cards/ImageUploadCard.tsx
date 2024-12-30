@@ -111,7 +111,7 @@ export function ImageUploadCard({
     };
 
     return (
-<Card className={`flex flex-col w-full h-[35vh] xl:h-[35vh] relative ${disabled ? 'opacity-50' : ''}`}>
+<Card className={`flex flex-col w-full h-[45vh] xl:h-[40vh] relative ${disabled ? 'opacity-50' : ''}`}>
 <Button
     variant="destructive"
     size="icon"
@@ -121,13 +121,13 @@ export function ImageUploadCard({
   >
     <X className="w-4 h-4" />
   </Button>
-  <CardHeader>
+  <CardHeader className="py-5">
     <CardTitle className="flex items-center gap-2 text-sm">
       <ImageIcon className="w-5 h-5" />
       Input Image
     </CardTitle>
   </CardHeader>
-  <CardContent className="flex-1 overflow-hidden">
+  <CardContent className="flex-1 overflow-hidden pr-6">
     {!selectedImage ? (
       <div
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors h-full

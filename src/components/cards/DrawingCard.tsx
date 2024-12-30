@@ -29,6 +29,7 @@ export function DrawingCard({
     const [isDrawing, setIsDrawing] = useState(false);
     const [history, setHistory] = useState<ImageData[]>([]);
     const lastPos = useRef<{ x: number; y: number } | null>(null);
+    const [imageHeight, setImageHeight] = useState<number>(0);
 
 
     useEffect(() => {
@@ -58,9 +59,24 @@ export function DrawingCard({
         return () => window.removeEventListener('resize', updateCanvasSize);
     }, [width]);
 
+    useEffect(() => {
+        if (sourceImage?.url) {
+            const img = new Image();
+            img.onload = () => {
+                const aspectRatio = img.height / img.width;
+                const calculatedHeight = width * aspectRatio;
+                setImageHeight(calculatedHeight);
+            };
+            img.src = sourceImage.url;
+        }
+    }, [sourceImage, width]);
+
     if (!isInpaintingEnabled) {
         return null;
     }
+
+    // Add imageHeight + extra space for controls
+    const cardHeight = imageHeight + 150; // 150px for controls and padding
 
     const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
         if (disabled) return;
@@ -182,14 +198,15 @@ export function DrawingCard({
     };
 
     return (
-        <Card className={`flex flex-col w-full h-[40vh] ${disabled ? 'opacity-50' : ''}`}>
+        <Card className={`flex flex-col w-full relative ${disabled ? 'opacity-50' : ''}`} 
+        style={{ height: `${cardHeight}px` }}>
             <CardHeader className="p-3">
                 <CardTitle className="flex items-center gap-2 text-sm">
                     <Brush className="w-5 h-5" />
                     Draw Mask
                 </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-2">
+            <CardContent className="flex-1 overflow-hidden p-2 pr-6">
                 <div className="flex flex-col h-full">
                     {sourceImage ? (
                         <>
