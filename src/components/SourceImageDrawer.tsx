@@ -43,25 +43,31 @@ export function SourceImageDrawer({
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
                 <Button
-    variant="outline"
-    size="sm"
-    className="flex flex-col items-center gap-2 py-3 h-auto
-        border-l-0 rounded-l-none border-2
-        bg-gradient-to-r from-pink-200 to-blue-200
-        hover:from-pink-300 hover:to-blue-300
-        dark:from-pink-900 dark:to-blue-900
-        dark:hover:from-pink-800 dark:hover:to-blue-800
-        transition-all duration-300 shadow-md
-        hover:shadow-lg hover:scale-105"
->
-    <ImageIcon className="h-5 w-5 text-pink-500 dark:text-pink-400" />
+		variant="outline"
+		size="sm"
+		className={`flex flex-col items-center gap-2 py-3 h-auto
+			border-l-0 rounded-l-none border-2
+			bg-gradient-to-r from-pink-200 to-blue-200
+			hover:from-pink-300 hover:to-blue-300
+			dark:from-pink-900 dark:to-blue-900
+			dark:hover:from-pink-800 dark:hover:to-blue-800
+			transition-all duration-300 shadow-md
+			hover:shadow-lg hover:scale-105
+			${selectedImage ? 'ring-2 ring-pink-500 dark:ring-pink-400' : ''}`}
+	>
+		<div className="relative">
+			<ImageIcon className="h-5 w-5 text-pink-500 dark:text-pink-400" />
+			{selectedImage && (
+				<div className="absolute -top-1 -right-1 w-2 h-2 bg-pink-500 dark:bg-pink-400 rounded-full animate-pulse" />
+			)}
+		</div>
     <span 
         className="text-base font-medium bg-gradient-to-b from-pink-500 to-blue-500 
             dark:from-pink-400 dark:to-blue-400 
             text-transparent bg-clip-text" 
         style={{ writingMode: 'vertical-rl' }}
     >
-        {isOpen ? 'Close' : 'Img2Img'}
+        {isOpen ? 'Close' : selectedImage ? 'Img Ready' : 'Img2Img'}
     </span>
 </Button>
                 </SheetTrigger>
@@ -69,10 +75,14 @@ export function SourceImageDrawer({
                     className="w-[500px] left-0 fixed h-[calc(100vh-8rem)] mt-[2rem] p-4 flex flex-col slide-in-from-left rounded-r-xl"
                 >
                     <SheetHeader className="flex-none">
-                        <SheetTitle className="flex items-center gap-2">
-                            <ImageIcon className="h-5 w-5" />
-                            Source Image
-                        </SheetTitle>
+                    <SheetTitle className="flex items-center gap-2">
+						<ImageIcon className="h-5 w-5 text-pink-500 dark:text-pink-400" />
+			<span className="bg-gradient-to-r from-pink-500 to-blue-500 
+				dark:from-pink-400 dark:to-blue-400 
+				text-transparent bg-clip-text font-semibold">
+				img2img
+			</span>
+						</SheetTitle>
                     </SheetHeader>
                     <div className="flex-1 overflow-y-auto mt-4 space-y-4">
                         <div className="px-4">
