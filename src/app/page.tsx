@@ -13,11 +13,6 @@ import {
 	TelemetryData
 } from '@/types/types';
 import { GeneratedImagesCard } from "@/components/cards/GeneratedImagesCard";
-import { ImageUploadCard } from "@/components/cards/ImageUploadCard";
-import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas';
-import { DrawingCard } from '@/components/cards/DrawingCard';
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { SourceImageDrawer } from "@/components/SourceImageDrawer";
 
 
@@ -43,6 +38,9 @@ const initialFormData: FormData = {
 	go_fast: true,
 	style: 'any',
 	prompt_strength: 0.8,
+	negative_prompt: '',
+	style_type: 'None',
+	magic_prompt_option: 'Auto'
 };
 
 export default function Component() {
@@ -440,6 +438,22 @@ export default function Component() {
 				},
 				model: submissionData.model
 			};
+		} else if (submissionData.model === 'ideogram') {
+			replicateParams = {
+				input: {
+					prompt: submissionData.prompt,
+					negative_prompt: submissionData.negative_prompt,
+					style_type: "Realistic",
+					aspect_ratio: submissionData.aspect_ratio,
+					magic_prompt_option: "Off",
+					...(selectedImage?.file && maskDataUrl ? {
+						image: imageData,
+						mask: maskDataUrl
+					} : {})
+				},
+				model: "ideogram"
+			};
+
 
 		} else if (loraName && loraVersion) {
 			replicateParams = {
@@ -885,16 +899,16 @@ export default function Component() {
 			<div className="container mx-auto px-2 pt-10 pb-20 h-[calc(100vh-2rem)]">
 				<div className="main-layout">
 
-				<SourceImageDrawer
-  onImageSelect={handleImageSelect}
-  selectedImage={selectedImage}
-  onClearImage={handleClearImage}
-  onError={handleError}
-  disabled={formData.model === 'recraftv3'}
-  isInpaintingEnabled={isInpaintingEnabled}
-  onInpaintingChange={setIsInpaintingEnabled}
-  onMaskGenerated={handleMaskGenerated}
-/>
+					<SourceImageDrawer
+						onImageSelect={handleImageSelect}
+						selectedImage={selectedImage}
+						onClearImage={handleClearImage}
+						onError={handleError}
+						disabled={formData.model === 'recraftv3'}
+						isInpaintingEnabled={isInpaintingEnabled}
+						onInpaintingChange={setIsInpaintingEnabled}
+						onMaskGenerated={handleMaskGenerated}
+					/>
 
 					<div className="middle-column">
 						<GenerationSettingsCard

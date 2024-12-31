@@ -1,8 +1,11 @@
 import React from 'react';
 
+export type IdeogramStyleType = "None" | "Auto" | "General" | "Realistic" | "Design" | "Render 3D" | "Anime";
+export type IdeogramMagicPromptOption = "Auto" | "On" | "Off";
+
 export type FormData = {
     seed: number;
-    model: 'dev' | 'schnell' | 'pro' | 'pro-ultra' | 'recraftv3' | 'recraftv3-svg';
+    model: 'dev' | 'schnell' | 'pro' | 'pro-ultra' | 'recraftv3' | 'recraftv3-svg' | 'ideogram';
     privateLoraName: string;
     privateLoraVersion: string;
     width: number;
@@ -22,6 +25,9 @@ export type FormData = {
     style?: string;
     maskDataUrl?: string;
     prompt_strength?: number;
+    negative_prompt?: string;
+    style_type?: IdeogramStyleType;
+    magic_prompt_option?: IdeogramMagicPromptOption;
 };
 
 export type GeneratedImage = {
@@ -107,56 +113,56 @@ export type Recraftv3Style =
     | "realistic_image/enterprise"
     | "realistic_image/motion_blur";
 
-    export interface CanvasDrawProps {
-        onChange?: (canvas: CanvasDraw) => void;
-        loadTimeOffset?: number;
-        lazyRadius?: number;
-        brushRadius?: number;
-        brushColor?: string;
-        catenaryColor?: string;
-        gridColor?: string;
-        backgroundColor?: string;
-        hideGrid?: boolean;
-        canvasWidth?: number;
-        canvasHeight?: number;
-        disabled?: boolean;
-        imgSrc?: string;
-        saveData?: string;
-        immediateLoading?: boolean;
-        hideInterface?: boolean;
-        enablePanAndZoom?: boolean;
-        mouseZoomFactor?: number;
-        zoomExtents?: { min: number; max: number };
-        className?: string;
-    }
-    
-    // Add this class declaration for CanvasDraw
-    export declare class CanvasDraw extends React.Component<CanvasDrawProps> {
-        clear(): void;
-        undo(): void;
-        getSaveData(): string;
-        getDataURL(): string;
-        loadSaveData(saveData: string, immediate?: boolean): void;
-        container: HTMLDivElement | null;
-    }
+export interface CanvasDrawProps {
+    onChange?: (canvas: CanvasDraw) => void;
+    loadTimeOffset?: number;
+    lazyRadius?: number;
+    brushRadius?: number;
+    brushColor?: string;
+    catenaryColor?: string;
+    gridColor?: string;
+    backgroundColor?: string;
+    hideGrid?: boolean;
+    canvasWidth?: number;
+    canvasHeight?: number;
+    disabled?: boolean;
+    imgSrc?: string;
+    saveData?: string;
+    immediateLoading?: boolean;
+    hideInterface?: boolean;
+    enablePanAndZoom?: boolean;
+    mouseZoomFactor?: number;
+    zoomExtents?: { min: number; max: number };
+    className?: string;
+}
 
-    export interface ReactSketchCanvasRef {
-        exportImage: (imageType: 'png' | 'jpeg') => Promise<string>;
-        exportSvg: () => Promise<string>;
-        clearCanvas: () => void;
-        undo: () => void;
-        redo: () => void;
-        resetCanvas: () => void;
-    }
+// Add this class declaration for CanvasDraw
+export declare class CanvasDraw extends React.Component<CanvasDrawProps> {
+    clear(): void;
+    undo(): void;
+    getSaveData(): string;
+    getDataURL(): string;
+    loadSaveData(saveData: string, immediate?: boolean): void;
+    container: HTMLDivElement | null;
+}
 
-    export interface ReactSketchCanvasProps {
-        width?: string;
-        height?: string;
-        strokeWidth?: number;
-        strokeColor?: string;
-        canvasColor?: string;
-        backgroundImage?: string;
-        exportWithBackgroundImage?: boolean;
-        preserveBackgroundImageAspectRatio?: string;
-        className?: string;
-    }
+export interface ReactSketchCanvasRef {
+    exportImage: (imageType: 'png' | 'jpeg') => Promise<string>;
+    exportSvg: () => Promise<string>;
+    clearCanvas: () => void;
+    undo: () => void;
+    redo: () => void;
+    resetCanvas: () => void;
+}
+
+export interface ReactSketchCanvasProps {
+    width?: string;
+    height?: string;
+    strokeWidth?: number;
+    strokeColor?: string;
+    canvasColor?: string;
+    backgroundImage?: string;
+    exportWithBackgroundImage?: boolean;
+    preserveBackgroundImageAspectRatio?: string;
+    className?: string;
+}

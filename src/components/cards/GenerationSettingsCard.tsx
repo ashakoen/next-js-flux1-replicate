@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { FormData, Recraftv3Size, Recraftv3Style } from '@/types/types';
+import { FormData, Recraftv3Size, Recraftv3Style, IdeogramStyleType, IdeogramMagicPromptOption, } from '@/types/types';
 import { ApiSettingsModal } from "@/components/modals/ApiSettingsModal";
 import { useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
@@ -64,9 +64,14 @@ export function GenerationSettingsCard({
 	const isRecraftModel = (model: string) => {
 		return model.includes('recraftv3');
 	};
+	const isIdeogramModel = (model: string) => {
+		return model.includes('ideogram');
+	};
+	const isIdeogram = isIdeogramModel(formData.model);
 	const isRecraftv3 = isRecraftModel(formData.model);
 	const isSvgFormat = formData.output_format === 'svg';
 	const validAspectRatios = ["1:1", "16:9", "21:9", "2:3", "3:2", "4:5", "5:4", "9:16", "9:21", "custom"];
+
 
 	useEffect(() => {
 		console.log('formData changed:', {
@@ -80,7 +85,17 @@ export function GenerationSettingsCard({
 	console.log('Current model:', formData.model);
 	console.log('isRecraftModel result:', isRecraftModel(formData.model));
 	console.log('isRecraftv3 value:', isRecraftv3);
+	console.log('isIdeogramModel result:', isIdeogramModel(formData.model));
+	console.log('isIdeogram value:', isIdeogram);
 	console.log('Output format:', formData.output_format);
+
+	const ideogramStyleTypes: IdeogramStyleType[] = [
+		"None", "Auto", "General", "Realistic", "Design", "Render 3D", "Anime"
+	];
+
+	const ideogramMagicPromptOptions: IdeogramMagicPromptOption[] = [
+		"Auto", "On", "Off"
+	];
 
 	const recraftv3Sizes: Recraftv3Size[] = [
 		"1024x1024", "1365x1024", "1024x1365", "1536x1024", "1024x1536",
@@ -111,23 +126,23 @@ export function GenerationSettingsCard({
 
 	return (
 		<Card className="flex flex-col w-full h-[calc(100vh-10rem)] overflow-hidden">
-<div className="absolute top-2 right-3 flex items-center gap-2 z-50">
-    <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-        className="h-9 w-9 flex items-center justify-center"
-    >
-        <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-        <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-        <span className="sr-only">Toggle theme</span>
-    </Button>
-    <ApiSettingsModal
-        apiKey={apiKey}
-        showApiKeyAlert={showApiKeyAlert}
-        handleApiKeyChange={handleApiKeyChange}
-    />
-</div>
+			<div className="absolute top-2 right-3 flex items-center gap-2 z-50">
+				<Button
+					variant="ghost"
+					size="icon"
+					onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+					className="h-9 w-9 flex items-center justify-center"
+				>
+					<Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+					<Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+					<span className="sr-only">Toggle theme</span>
+				</Button>
+				<ApiSettingsModal
+					apiKey={apiKey}
+					showApiKeyAlert={showApiKeyAlert}
+					handleApiKeyChange={handleApiKeyChange}
+				/>
+			</div>
 			<CardHeader className="flex-none">
 				<CardTitle>Generation Settings</CardTitle>
 				<CardDescription>Generate images using AI with the Replicate API</CardDescription>
@@ -153,34 +168,34 @@ export function GenerationSettingsCard({
 										className="min-h-[100px]"
 									/>
 								</div>
-                                {hasSourceImage && (
-                                    <div>
-                                        <Label htmlFor="prompt_strength">
-                                            Prompt Strength: {formData.prompt_strength}
-                                        </Label>
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <div>
-                                                        <Slider
-                                                            id="prompt_strength"
-                                                            min={0}
-                                                            max={1}
-                                                            step={0.01}
-                                                            value={[formData.prompt_strength || 0.8]}
-                                                            onValueChange={(value) => handleSliderChange('prompt_strength', value)}
-                                                            className="custom-slider"
-                                                        />
-                                                    </div>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Controls how much to transform the source image. Lower values preserve more of the original image.</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    </div>
-                                )}
-								{!isRecraftv3 && (
+								{hasSourceImage && (
+									<div>
+										<Label htmlFor="prompt_strength">
+											Prompt Strength: {formData.prompt_strength}
+										</Label>
+										<TooltipProvider>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<div>
+														<Slider
+															id="prompt_strength"
+															min={0}
+															max={1}
+															step={0.01}
+															value={[formData.prompt_strength || 0.8]}
+															onValueChange={(value) => handleSliderChange('prompt_strength', value)}
+															className="custom-slider"
+														/>
+													</div>
+												</TooltipTrigger>
+												<TooltipContent>
+													<p>Controls how much to transform the source image. Lower values preserve more of the original image.</p>
+												</TooltipContent>
+											</Tooltip>
+										</TooltipProvider>
+									</div>
+								)}
+								{!isRecraftv3 && !isIdeogram && (
 									<div className="flex items-center space-x-2">
 										<Switch
 											id="go_fast"
@@ -200,7 +215,7 @@ export function GenerationSettingsCard({
 										</TooltipProvider>
 									</div>
 								)}
-								{!isRecraftv3 && (
+								{!isRecraftv3 && !isIdeogram && (
 									<div>
 										<Label>Number of Outputs</Label>
 										<div className="flex space-x-2">
@@ -221,7 +236,7 @@ export function GenerationSettingsCard({
 									</div>
 								)}
 
-								{!isRecraftv3 && (
+								{!isRecraftv3 && !isIdeogram && (
 									<>
 										<div>
 											<Label htmlFor="guidance_scale">Guidance Scale: {formData.guidance_scale}</Label>
@@ -306,41 +321,44 @@ export function GenerationSettingsCard({
 											<SelectItem value="pro">FLUX.1 Pro</SelectItem>
 											<SelectItem value="pro-ultra">FLUX.1 Pro-Ultra</SelectItem>
 											<SelectItem value="recraftv3">Recraft v3</SelectItem>
+											<SelectItem value="ideogram">Ideogram v2</SelectItem>
 										</SelectContent>
 									</Select>
 								</div>
 
 
 
+								{!isIdeogram && (
+									<div>
+										<Label htmlFor="output_format">Output Format</Label>
+										<Select
+											name="output_format"
+											value={formData.output_format}
+											onValueChange={(value) => handleSelectChange('output_format', value)}
+										>
+											<SelectTrigger>
+												<SelectValue placeholder="Select output format" />
+											</SelectTrigger>
+											<SelectContent>
+												{isRecraftv3 ? (
+													<>
+														<SelectItem value="webp">WebP</SelectItem>
+														<SelectItem value="svg">SVG</SelectItem>
+													</>
+												) : (
+													<>
+														<SelectItem value="webp">WebP</SelectItem>
+														<SelectItem value="jpg">JPG</SelectItem>
+														<SelectItem value="png">PNG</SelectItem>
+													</>
+												)}
+											</SelectContent>
+										</Select>
+									</div>
+								)}
 
-								<div>
-									<Label htmlFor="output_format">Output Format</Label>
-									<Select
-										name="output_format"
-										value={formData.output_format}
-										onValueChange={(value) => handleSelectChange('output_format', value)}
-									>
-										<SelectTrigger>
-											<SelectValue placeholder="Select output format" />
-										</SelectTrigger>
-										<SelectContent>
-											{isRecraftv3 ? (
-												<>
-													<SelectItem value="webp">WebP</SelectItem>
-													<SelectItem value="svg">SVG</SelectItem>
-												</>
-											) : (
-												<>
-													<SelectItem value="webp">WebP</SelectItem>
-													<SelectItem value="jpg">JPG</SelectItem>
-													<SelectItem value="png">PNG</SelectItem>
-												</>
-											)}
-										</SelectContent>
-									</Select>
-								</div>
 
-								{!isRecraftv3 && (
+								{!isRecraftv3 && !isIdeogram && (
 									<>
 
 										<div>
@@ -369,6 +387,12 @@ export function GenerationSettingsCard({
 												</Tooltip>
 											</TooltipProvider>
 										</div>
+
+									</>
+								)}
+
+								{!isRecraftv3 && (
+									<>
 
 										<div>
 											<Label htmlFor="aspect_ratio">Aspect Ratio</Label>
@@ -418,7 +442,7 @@ export function GenerationSettingsCard({
 
 
 
-								{isRecraftv3 && (
+								{isRecraftv3 && !isIdeogram && (
 									<>
 										<div>
 											<Label htmlFor="recraftSize">Size</Label>
@@ -470,7 +494,7 @@ export function GenerationSettingsCard({
 										</div>
 									</>
 								)}
-								{!isRecraftv3 && (
+								{!isRecraftv3 && !isIdeogram && (
 									<>
 										<div className="pt-4">
 											<h6 className="text-md font-medium">Fine-tuned Model Settings</h6>
