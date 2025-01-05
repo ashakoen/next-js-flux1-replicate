@@ -179,7 +179,7 @@ export function GenerationSettingsCard({
 											type="button"
 											variant="ghost"
 											size="icon"
-											className={`absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-background/50 hover:bg-background/80 
+											className={`absolute top-[0.18rem] right-[0.18rem] opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-background/50 hover:bg-background/80 
 												${isPromptInFavorites ? 'cursor-not-allowed' : ''}`}
 											onClick={() => {
 												if (!isPromptInFavorites) {
