@@ -14,8 +14,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { FormData, Recraftv3Size, Recraftv3Style, IdeogramStyleType, IdeogramMagicPromptOption, } from '@/types/types';
 import { ApiSettingsModal } from "@/components/modals/ApiSettingsModal";
 import { useEffect } from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Star } from 'lucide-react';
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
 
 interface GenerationSettingsCardProps {
 	formData: FormData;
@@ -37,6 +38,8 @@ interface GenerationSettingsCardProps {
 	showApiKeyAlert: boolean;
 	hasSourceImage: boolean;
 	handleApiKeyChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+	onAddToFavorites: (prompt: string) => void;
+	favoritePrompts: string[];
 }
 
 export function GenerationSettingsCard({
@@ -58,8 +61,12 @@ export function GenerationSettingsCard({
 	handleCancel,
 	apiKey,
 	showApiKeyAlert,
-	handleApiKeyChange
+	handleApiKeyChange,
+	onAddToFavorites,
+	favoritePrompts,
 }: GenerationSettingsCardProps) {
+
+	const isPromptInFavorites = favoritePrompts.includes(formData.prompt);
 
 	const isRecraftModel = (model: string) => {
 		return model.includes('recraftv3');
@@ -156,17 +163,42 @@ export function GenerationSettingsCard({
 						</TabsList>
 						<TabsContent value="basic" className="mt-4">
 							<div className="space-y-4 px-2">
-								<div>
+								<div className="relative group">
 									<Label htmlFor="prompt">Prompt</Label>
-									<Textarea
-										id="prompt"
-										name="prompt"
-										value={formData.prompt}
-										onChange={handleInputChange}
-										placeholder="Enter your prompt here"
-										required
-										className="min-h-[100px]"
-									/>
+									<div className="relative">
+										<Textarea
+											id="prompt"
+											name="prompt"
+											value={formData.prompt}
+											onChange={handleInputChange}
+											placeholder="Enter your prompt here"
+											required
+											className="min-h-[100px] pr-10"
+										/>
+										<Button
+											type="button"
+											variant="ghost"
+											size="icon"
+											className={`absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-background/50 hover:bg-background/80 
+												${isPromptInFavorites ? 'cursor-not-allowed' : ''}`}
+											onClick={() => {
+												if (!isPromptInFavorites) {
+													onAddToFavorites(formData.prompt);
+													toast.success("Prompt added to favorites!");
+												}
+											}}
+											disabled={isPromptInFavorites}
+										>
+											<Star
+												className={`h-5 w-5 hover:h-6 hover:w-6 transition-all ${isPromptInFavorites ? 'text-green-500' : 'text-yellow-400'
+													}`}
+												fill="currentColor"
+											/>
+											<span className="sr-only">
+												{isPromptInFavorites ? 'Already in favorites' : 'Add to favorites'}
+											</span>
+										</Button>
+									</div>
 								</div>
 								{hasSourceImage && (
 									<div>

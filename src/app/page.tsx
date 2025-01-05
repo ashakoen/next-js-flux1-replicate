@@ -14,6 +14,7 @@ import {
 } from '@/types/types';
 import { GeneratedImagesCard } from "@/components/cards/GeneratedImagesCard";
 import { SourceImageDrawer } from "@/components/SourceImageDrawer";
+import { Toaster } from "sonner";
 
 
 
@@ -372,6 +373,14 @@ export default function Component() {
 			...prev,
 			maskDataUrl
 		}));
+	};
+
+	const handleAddToFavorites = (prompt: string) => {
+		if (prompt && !favoritePrompts.includes(prompt)) {
+			const updatedFavorites = [...favoritePrompts, prompt];
+			setFavoritePrompts(updatedFavorites);
+			localStorage.setItem('favoritePrompts', JSON.stringify(updatedFavorites));
+		}
 	};
 
 	const handleSubmit = async (e: React.FormEvent, overrideData?: Partial<FormData>) => {
@@ -896,6 +905,7 @@ export default function Component() {
 
 	return (
 		<>
+			<Toaster position="top-right" />
 			<div className="container mx-auto px-2 pt-10 pb-20 h-[calc(100vh-2rem)]">
 				<div className="main-layout">
 
@@ -931,6 +941,8 @@ export default function Component() {
 							showApiKeyAlert={showApiKeyAlert}
 							handleApiKeyChange={handleApiKeyChange}
 							hasSourceImage={!!selectedImage}
+							onAddToFavorites={handleAddToFavorites}
+							favoritePrompts={favoritePrompts}
 						/>
 					</div>
 
