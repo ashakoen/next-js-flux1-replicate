@@ -3,35 +3,27 @@
 import ReactDOM from 'react-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Star, Trash2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 interface SettingsDrawerProps {
-	validatedLoraModels: string[];
-	selectedLoraModel: string | null;
-	favoritePrompts: string[];
-	formData: { prompt: string;[key: string]: any };
-	handleDeleteFavoritePrompt: (prompt: string) => void;
-	handleSavePrompt: () => void;
-	clearValidatedModels: () => void;
-	setFormData: (fn: (prev: any) => any) => void;
-	setSelectedLoraModel: (value: string | null) => void;
+    validatedLoraModels: string[];
+    selectedLoraModel: string | null;
+    clearValidatedModels: () => void;
+    setFormData: (fn: (prev: any) => any) => void;
+    setSelectedLoraModel: (value: string | null) => void;
+    formData: { prompt: string; [key: string]: any };
 }
 
 export function SettingsDrawer({
-	validatedLoraModels,
-	selectedLoraModel,
-	favoritePrompts,
-	formData,
-	handleDeleteFavoritePrompt,
-	handleSavePrompt,
-	clearValidatedModels,
-	setFormData,
-	setSelectedLoraModel
+    validatedLoraModels,
+    selectedLoraModel,
+    clearValidatedModels,
+    setFormData,
+    setSelectedLoraModel,
+    formData
 }: SettingsDrawerProps) {
 
 	return (
@@ -103,57 +95,6 @@ export function SettingsDrawer({
 											disabled={validatedLoraModels.length === 0}
 										>
 											Clear Validated Models
-										</Button>
-									</CardFooter>
-								</Card>
-							</AccordionContent>
-						</AccordionItem>
-						<AccordionItem value="favorite-prompts" className="border-b border-gray-200 dark:border-gray-700">
-							<AccordionTrigger>Favorite Prompts</AccordionTrigger>
-							<AccordionContent>
-								<Card>
-									<CardContent className="pt-6">
-										{favoritePrompts.length > 0 ? (
-											<ul className="space-y-2 max-h-48 overflow-y-auto">
-												{favoritePrompts.map((prompt, index) => (
-													<li key={index} className="flex justify-between items-center">
-														<TooltipProvider>
-															<Tooltip>
-																<TooltipTrigger asChild>
-																	<span
-																		className="truncate cursor-pointer"
-																		onClick={() => setFormData((prev) => ({ ...prev, prompt }))}
-																	>
-																		{prompt}
-																	</span>
-																</TooltipTrigger>
-																<TooltipContent>
-																	<p>Click to use</p>
-																</TooltipContent>
-															</Tooltip>
-														</TooltipProvider>
-														<Button
-															variant="ghost"
-															size="sm"
-															onClick={() => handleDeleteFavoritePrompt(prompt)}
-														>
-															<Trash2 className="h-4 w-4" />
-														</Button>
-													</li>
-												))}
-											</ul>
-										) : (
-											<p>No favorite prompts saved yet.</p>
-										)}
-									</CardContent>
-									<CardFooter>
-										<Button
-											className="btn-theme"
-											onClick={handleSavePrompt}
-											disabled={!formData.prompt || favoritePrompts.includes(formData.prompt)}
-										>
-											<Star className="mr-2 h-4 w-4" />
-											Save Current Prompt
 										</Button>
 									</CardFooter>
 								</Card>

@@ -10,7 +10,8 @@ import {
     SheetContent,
     SheetHeader,
     SheetTitle,
-    SheetTrigger
+    SheetTrigger,
+    SheetClose
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -74,6 +75,7 @@ export function SourceImageDrawer({
                 <SheetContent
                     className="w-[500px] left-0 fixed h-[calc(100vh-8rem)] mt-[2rem] p-4 flex flex-col slide-in-from-left rounded-r-xl"
                 >
+                    <SheetClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-secondary" />
                     <SheetHeader className="flex-none">
                     <SheetTitle className="flex items-center gap-2">
 						<ImageIcon className="h-5 w-5 text-pink-500 dark:text-pink-400" />

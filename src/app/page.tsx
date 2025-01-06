@@ -14,6 +14,8 @@ import {
 } from '@/types/types';
 import { GeneratedImagesCard } from "@/components/cards/GeneratedImagesCard";
 import { SourceImageDrawer } from "@/components/SourceImageDrawer";
+import { FavoritePromptsDrawer } from "@/components/FavoritePromptsDrawer";
+import { LoraModelsDrawer } from '@/components/LoraModelsDrawer';
 import { Toaster } from "sonner";
 
 
@@ -920,6 +922,23 @@ export default function Component() {
 						onMaskGenerated={handleMaskGenerated}
 					/>
 
+<FavoritePromptsDrawer
+            favoritePrompts={favoritePrompts}
+            handleDeleteFavoritePrompt={handleDeleteFavoritePrompt}
+            onUsePrompt={(prompt) => setFormData(prev => ({ ...prev, prompt }))}
+        />
+
+<LoraModelsDrawer
+    validatedLoraModels={validatedLoraModels}
+    setValidatedLoraModels={setValidatedLoraModels}
+    selectedLoraModel={selectedLoraModel}
+    clearValidatedModels={clearValidatedModels}
+    setSelectedLoraModel={setSelectedLoraModel}
+    setFormData={setFormData}
+    apiKey={apiKey}
+    setShowApiKeyAlert={setShowApiKeyAlert}
+/>
+
 					<div className="middle-column">
 						<GenerationSettingsCard
 							formData={formData}
@@ -991,9 +1010,6 @@ export default function Component() {
 					<SettingsDrawer
 						validatedLoraModels={validatedLoraModels}
 						selectedLoraModel={selectedLoraModel}
-						favoritePrompts={favoritePrompts}
-						handleDeleteFavoritePrompt={handleDeleteFavoritePrompt}
-						handleSavePrompt={handleSavePrompt}
 						clearValidatedModels={clearValidatedModels}
 						setFormData={setFormData}
 						setSelectedLoraModel={setSelectedLoraModel}
