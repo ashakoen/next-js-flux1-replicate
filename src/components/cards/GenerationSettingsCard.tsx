@@ -151,7 +151,7 @@ export function GenerationSettingsCard({
 				/>
 			</div>
 			<CardHeader className="flex-none">
-				<CardTitle>Generation Settings</CardTitle>
+				<CardTitle className="text-[#9b59b6] dark:text-[#fa71cd]">Generation Settings</CardTitle>
 				<CardDescription>Generate images using AI with the Replicate API</CardDescription>
 			</CardHeader>
 			<CardContent className="flex-1 overflow-y-auto min-h-0">
