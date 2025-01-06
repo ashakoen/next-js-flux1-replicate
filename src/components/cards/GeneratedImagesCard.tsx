@@ -116,7 +116,7 @@ export function GeneratedImagesCard({
             <CardContent className="flex-1 min-h-0 overflow-y-auto">
                 {images.length > 0 ? (
                     <div className="h-full overflow-y-auto">
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-8 p-2">
+                        <div className="grid grid-cols-2 md:grid-cols-3 3xl:grid-cols-4 gap-8 p-2">
                             <AnimatePresence mode="popLayout">
                                 {/* Loading Placeholders */}
                                 {isGenerating && Array.from({ length: numberOfOutputs }).map((_, index) => (

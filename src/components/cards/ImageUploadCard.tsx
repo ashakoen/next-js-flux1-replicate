@@ -111,28 +111,40 @@ export function ImageUploadCard({
     };
 
     return (
-<Card className={`flex flex-col w-full h-[45vh] xl:h-[40vh] relative ${disabled ? 'opacity-50' : ''}`}>
-<Button
+<Card
+  className={`flex flex-col w-full h-[45vh] xl:h-[40vh] relative rounded-lg shadow-md ${
+    disabled ? 'opacity-50' : ''
+  } bg-muted`}
+>
+  <Button
     variant="destructive"
     size="icon"
-    className={`absolute top-3 right-3 z-10 ${!selectedImage ? 'opacity-50 cursor-not-allowed' : ''}`}
+    className={`absolute top-3 right-3 z-10 rounded-md shadow-sm ${
+      !selectedImage ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary hover:text-primary-foreground'
+    }`}
     onClick={onClearImage}
     disabled={disabled || !selectedImage}
   >
     <X className="w-4 h-4" />
   </Button>
   <CardHeader className="py-5">
-    <CardTitle className="flex items-center gap-2 text-sm">
-      <ImageIcon className="w-5 h-5" />
+    <CardTitle
+      className="flex items-center gap-2 text-sm font-semibold text-foreground tracking-wide"
+    >
+      <ImageIcon className="w-5 h-5 text-accent" />
       Input Image
     </CardTitle>
   </CardHeader>
   <CardContent className="flex-1 overflow-hidden pr-6">
     {!selectedImage ? (
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors h-full
-        ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 dark:border-gray-700'}
-        ${disabled ? 'pointer-events-none' : 'hover:border-primary hover:bg-primary/5'}`}
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors h-full bg-muted/30
+        ${isDragging ? 'border-primary bg-primary/10' : 'border-muted-foreground'}
+        ${
+          disabled
+            ? 'pointer-events-none'
+            : 'hover:border-accent hover:bg-accent/10'
+        }`}
         onDragEnter={handleDragIn}
         onDragLeave={handleDragOut}
         onDragOver={handleDrag}
@@ -148,11 +160,16 @@ export function ImageUploadCard({
         />
         <label
           htmlFor="image-upload"
-          className={`flex flex-col items-center gap-4 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+          className={`flex flex-col items-center gap-4 ${
+            disabled ? 'cursor-not-allowed' : 'cursor-pointer'
+          }`}
         >
-          <Upload className="w-6 h-6 text-gray-400" />
-          <div className="text-xs text-gray-600 dark:text-gray-400">
-            <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+          <Upload className="w-6 h-6 text-muted-foreground" />
+          <div className="text-xs text-muted-foreground">
+            <span className="font-semibold text-primary">
+              Click to upload
+            </span>{' '}
+            or drag and drop
             <div className="mt-2">
               PNG, JPG, WEBP (max. {MAX_FILE_SIZE / 1024 / 1024}MB)
             </div>

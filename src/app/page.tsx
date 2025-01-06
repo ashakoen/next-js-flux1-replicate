@@ -498,7 +498,7 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 			// Cleanup
 			window.URL.revokeObjectURL(configDownloadUrl);
 			
-			toast.success('Configuration saved');
+			toast.success('Preparing config for download...');
 		} catch (error) {
 			console.error('Failed to download config:', error);
 			toast.error('Failed to download configuration');

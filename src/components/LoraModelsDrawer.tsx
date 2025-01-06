@@ -81,34 +81,38 @@ export function LoraModelsDrawer({
         <div className="fixed left-0 top-[20rem] z-30">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className={`flex flex-col items-center gap-2 py-3 h-auto
-                            border-l-0 rounded-l-none border-2
-                            bg-gradient-to-r from-purple-200 to-indigo-200
-                            hover:from-purple-300 hover:to-indigo-300
-                            dark:from-purple-900 dark:to-indigo-900
-                            dark:hover:from-purple-800 dark:hover:to-indigo-800
-                            transition-all duration-300 shadow-md
-                            hover:shadow-lg hover:scale-105
-                            ${validatedLoraModels.length > 0 ? 'ring-2 ring-purple-500 dark:ring-purple-400' : ''}`}
-                    >
-                        <div className="relative">
-                            <FolderLock className="h-5 w-5 text-purple-500 dark:text-purple-400" />
-                            {validatedLoraModels.length > 0 && (
-                                <div className="absolute -top-1 -right-2.5 w-2 h-2 bg-purple-500 dark:bg-purple-400 rounded-full animate-pulse" />
-                            )}
-                        </div>
-                        <span
-                            className="text-base font-medium bg-gradient-to-b from-purple-500 to-indigo-500 
-                                dark:from-purple-400 dark:to-indigo-400 
-                                text-transparent bg-clip-text"
-                            style={{ writingMode: 'vertical-rl' }}
-                        >
-                            {isOpen ? 'Close' : 'Private LoRAs'}
-                        </span>
-                    </Button>
+                <Button
+    variant="outline"
+    size="sm"
+    className={`flex flex-col items-center gap-2 py-3 h-auto
+        border-l-0 rounded-r-lg shadow-md border-2
+        bg-gradient-to-r from-purple-200 to-indigo-200
+        hover:from-purple-300 hover:to-indigo-300
+        dark:from-purple-900 dark:to-indigo-900
+        dark:hover:from-purple-800 dark:hover:to-indigo-800
+        transition-all duration-300
+        ${validatedLoraModels.length > 0 ? 'ring-2 ring-purple-500 dark:ring-purple-400' : ''}
+    `}
+    style={{
+        borderTopLeftRadius: 0, // Force flat top-left edge
+        borderBottomLeftRadius: 0, // Force flat bottom-left edge
+    }}
+>
+    <div className="relative">
+        <FolderLock className="h-5 w-5 text-purple-500 dark:text-purple-400" />
+        {validatedLoraModels.length > 0 && (
+            <div className="absolute -top-1 -right-2.5 w-2 h-2 bg-purple-500 dark:bg-purple-400 rounded-full animate-pulse" />
+        )}
+    </div>
+    <span
+        className="text-base font-medium text-transparent bg-clip-text 
+        bg-gradient-to-b from-purple-500 to-indigo-500
+        dark:from-purple-400 dark:to-indigo-400"
+        style={{ writingMode: 'vertical-rl' }}
+    >
+        {isOpen ? 'Close' : 'Private LoRAs'}
+    </span>
+</Button>
                 </SheetTrigger>
                 <SheetContent className="w-[400px] fixed left-0 h-[calc(100vh-8rem)] mt-[2rem] p-4 flex flex-col slide-in-from-left rounded-r-xl">
                     <SheetHeader>
