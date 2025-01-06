@@ -162,6 +162,18 @@ export default function Component() {
 		}
 	}, []);
 
+// Add this useEffect after your other localStorage-related effects
+useEffect(() => {
+    const savedFormData = localStorage.getItem('replicateFormData');
+    if (savedFormData) {
+        const parsedData = JSON.parse(savedFormData);
+        // Only update selectedLoraModel if there's a privateLoraName and it's in our validated list
+        if (parsedData.privateLoraName && validatedLoraModels.includes(parsedData.privateLoraName)) {
+            setSelectedLoraModel(parsedData.privateLoraName);
+        }
+    }
+}, [validatedLoraModels]); // Only re-run when validatedLoraModels changes
+
 	useEffect(() => {
 		if (logEndRef.current) {
 			logEndRef.current.scrollIntoView({ behavior: "smooth" });
