@@ -359,6 +359,90 @@ useEffect(() => {
 		);
 	};
 
+	const handleUpscaleImage = async (params: any) => {
+		console.log('Starting upscale with params:', params);
+		
+		if (!apiKey) {
+			setShowApiKeyAlert(true);
+			return;
+		}
+	
+		if (isGenerating) {
+			return;
+		}
+	
+		setIsGenerating(true);
+		setIsLoading(true);
+		setShowApiKeyAlert(false);
+	
+		isPolling.current = true;
+		abortController.current = new AbortController();
+	
+		const newTelemetryData: TelemetryData = {
+			requestId: `upscale-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+			requestStartTime: getCurrentUTCTimestamp(),
+			responseTime: 0,
+			totalDuration: 0,
+			statusChanges: [],
+			pollingSteps: 0,
+			generationParameters: params,
+			outputImageSizes: [],
+			clientInfo: getClientInfo(),
+			timeOfDay: getLocalTimeOfDay(),
+			dayOfWeek: getLocalDayOfWeek(),
+			errors: [],
+			cancelledByUser: false,
+			replicateId: '',
+			replicateModel: '',
+			replicateVersion: '',
+			replicateCreatedAt: '',
+			replicateStartedAt: '',
+			replicateCompletedAt: '',
+			replicatePredictTime: 0
+		};
+	
+		setTelemetryData(newTelemetryData);
+	
+		try {
+			const startTime = Date.now();
+			const response = await fetch('/api/replicate', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					apiKey,
+					body: params,
+				}),
+				signal: abortController.current?.signal,
+			});
+	
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+	
+			const data = await response.json();
+			const endTime = Date.now();
+			const getUrl = data.urls.get;
+			setCancelUrl(data.urls.cancel);
+	
+			newTelemetryData.responseTime = endTime - startTime;
+			newTelemetryData.statusChanges.push({
+				status: data.status,
+				timestamp: getCurrentUTCTimestamp()
+			});
+	
+			pollForResult(getUrl, newTelemetryData);
+	
+		} catch (error) {
+			console.error('Error upscaling image:', error);
+			setShowApiKeyAlert(true);
+			stopStatuses();
+			newTelemetryData.errors.push(error instanceof Error ? error.message : 'Unknown error occurred');
+			finalizeTelemetryData(newTelemetryData);
+		}
+	};
+
 	const handleUseAsInput = async (imageUrl: string) => {
 		try {
 			// Fetch the image
@@ -992,6 +1076,7 @@ useEffect(() => {
 							onUseAsInput={handleUseAsInput}
 							model={formData.model}
 							onReusePrompt={handleReusePrompt}
+							onUpscaleImage={handleUpscaleImage}
 						/>
 
 					</div>

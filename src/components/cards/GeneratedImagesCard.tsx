@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import Image from 'next/image';
-import { Download, Loader2, RefreshCw, Upload } from 'lucide-react';
+import { ArrowUpToLine, Download, Loader2, RefreshCw, Upload } from 'lucide-react';
 import { GeneratedImage } from '@/types/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
@@ -12,14 +12,16 @@ import { WandSparkles } from 'lucide-react';
 
 interface GeneratedImagesCardProps {
     images: GeneratedImage[];
-    onDownloadImage: (imageUrl: string) => Promise<void>;
-    onDeleteImage: (imageUrl: string) => void;
+    onDownloadImage: (url: string) => void;
+    onDeleteImage: (url: string) => void;
     clearGeneratedImages: () => void;
-    onRegenerateWithSeed: (newSeed: number, modelType?: 'dev' | 'schnell' | 'pro' | 'pro-ultra' | 'recraftv3') => void;
-    onUseAsInput: (imageUrl: string) => Promise<void>;
     isGenerating: boolean;
     numberOfOutputs: number;
+    onRegenerateWithSeed: (seed: number, modelType: 'dev' | 'schnell' | 'pro' | 'pro-ultra' | 'recraftv3') => void;
+    onUseAsInput: (url: string) => Promise<void>;
     model: string;
+    onReusePrompt: (prompt: string) => void;
+    onUpscaleImage: (params: { version: string; input: { image: string; scale: number; face_enhance: boolean; }; }) => void;
 }
 
 export function GeneratedImagesCard({
@@ -32,7 +34,8 @@ export function GeneratedImagesCard({
     onRegenerateWithSeed,
     onUseAsInput,
     model,
-    onReusePrompt
+    onReusePrompt,
+    onUpscaleImage
 }: GeneratedImagesCardProps & { onReusePrompt: (prompt: string) => void }) {
 
     const [isConfirming, setIsConfirming] = useState(false);
@@ -336,6 +339,37 @@ export function GeneratedImagesCard({
                                                                     Regenerate
                                                                 </Button>
                                                             )}
+
+<Button
+    className="flex-1"
+    size="sm"
+    variant="outline"
+    onClick={() => {
+        const upsizeParams = {
+            version: "f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa",
+            input: {
+                image: image.url,
+                scale: 2,
+                face_enhance: true
+            }
+        };
+
+        // Find and click the close button
+        const dialogRoot = document.querySelector('[role="dialog"]');
+        if (dialogRoot) {
+            const closeButton = dialogRoot.querySelector('button[type="button"]');
+            if (closeButton instanceof HTMLElement) {
+                closeButton.click();
+            }
+        }
+
+        onUpscaleImage(upsizeParams);
+    }}
+>
+    <ArrowUpToLine className="w-3 h-3 mr-1" />
+    Upscale 2x
+</Button>
+
                                                         </div>
                                                     </div>
                                                 </div>
