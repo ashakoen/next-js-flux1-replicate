@@ -16,7 +16,7 @@ import { GeneratedImagesCard } from "@/components/cards/GeneratedImagesCard";
 import { SourceImageDrawer } from "@/components/SourceImageDrawer";
 import { FavoritePromptsDrawer } from "@/components/FavoritePromptsDrawer";
 import { LoraModelsDrawer } from '@/components/LoraModelsDrawer';
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 
 
 
@@ -370,6 +370,9 @@ useEffect(() => {
 		if (isGenerating) {
 			return;
 		}
+
+
+		toast.info("Starting image upscale...");
 	
 		setIsGenerating(true);
 		setIsLoading(true);
