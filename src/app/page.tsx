@@ -162,17 +162,17 @@ export default function Component() {
 		}
 	}, []);
 
-// Add this useEffect after your other localStorage-related effects
-useEffect(() => {
-    const savedFormData = localStorage.getItem('replicateFormData');
-    if (savedFormData) {
-        const parsedData = JSON.parse(savedFormData);
-        // Only update selectedLoraModel if there's a privateLoraName and it's in our validated list
-        if (parsedData.privateLoraName && validatedLoraModels.includes(parsedData.privateLoraName)) {
-            setSelectedLoraModel(parsedData.privateLoraName);
-        }
-    }
-}, [validatedLoraModels]); // Only re-run when validatedLoraModels changes
+	// Add this useEffect after your other localStorage-related effects
+	useEffect(() => {
+		const savedFormData = localStorage.getItem('replicateFormData');
+		if (savedFormData) {
+			const parsedData = JSON.parse(savedFormData);
+			// Only update selectedLoraModel if there's a privateLoraName and it's in our validated list
+			if (parsedData.privateLoraName && validatedLoraModels.includes(parsedData.privateLoraName)) {
+				setSelectedLoraModel(parsedData.privateLoraName);
+			}
+		}
+	}, [validatedLoraModels]); // Only re-run when validatedLoraModels changes
 
 	useEffect(() => {
 		if (logEndRef.current) {
@@ -361,26 +361,26 @@ useEffect(() => {
 
 	const handleUpscaleImage = async (params: any) => {
 		console.log('Starting upscale with params:', params);
-		
+
 		if (!apiKey) {
 			setShowApiKeyAlert(true);
 			return;
 		}
-	
+
 		if (isGenerating) {
 			return;
 		}
 
 
 		toast.info("Starting image upscale...");
-	
+
 		setIsGenerating(true);
 		setIsLoading(true);
 		setShowApiKeyAlert(false);
-	
+
 		isPolling.current = true;
 		abortController.current = new AbortController();
-	
+
 		const newTelemetryData: TelemetryData = {
 			requestId: `upscale-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
 			requestStartTime: getCurrentUTCTimestamp(),
@@ -403,9 +403,9 @@ useEffect(() => {
 			replicateCompletedAt: '',
 			replicatePredictTime: 0
 		};
-	
+
 		setTelemetryData(newTelemetryData);
-	
+
 		try {
 			const startTime = Date.now();
 			const response = await fetch('/api/replicate', {
@@ -419,24 +419,24 @@ useEffect(() => {
 				}),
 				signal: abortController.current?.signal,
 			});
-	
+
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
-	
+
 			const data = await response.json();
 			const endTime = Date.now();
 			const getUrl = data.urls.get;
 			setCancelUrl(data.urls.cancel);
-	
+
 			newTelemetryData.responseTime = endTime - startTime;
 			newTelemetryData.statusChanges.push({
 				status: data.status,
 				timestamp: getCurrentUTCTimestamp()
 			});
-	
+
 			pollForResult(getUrl, newTelemetryData);
-	
+
 		} catch (error) {
 			console.error('Error upscaling image:', error);
 			setShowApiKeyAlert(true);
@@ -1021,22 +1021,22 @@ useEffect(() => {
 						onMaskGenerated={handleMaskGenerated}
 					/>
 
-<FavoritePromptsDrawer
-            favoritePrompts={favoritePrompts}
-            handleDeleteFavoritePrompt={handleDeleteFavoritePrompt}
-            onUsePrompt={(prompt) => setFormData(prev => ({ ...prev, prompt }))}
-        />
+					<FavoritePromptsDrawer
+						favoritePrompts={favoritePrompts}
+						handleDeleteFavoritePrompt={handleDeleteFavoritePrompt}
+						onUsePrompt={(prompt) => setFormData(prev => ({ ...prev, prompt }))}
+					/>
 
-<LoraModelsDrawer
-    validatedLoraModels={validatedLoraModels}
-    setValidatedLoraModels={setValidatedLoraModels}
-    selectedLoraModel={selectedLoraModel}
-    clearValidatedModels={clearValidatedModels}
-    setSelectedLoraModel={setSelectedLoraModel}
-    setFormData={setFormData}
-    apiKey={apiKey}
-    setShowApiKeyAlert={setShowApiKeyAlert}
-/>
+					<LoraModelsDrawer
+						validatedLoraModels={validatedLoraModels}
+						setValidatedLoraModels={setValidatedLoraModels}
+						selectedLoraModel={selectedLoraModel}
+						clearValidatedModels={clearValidatedModels}
+						setSelectedLoraModel={setSelectedLoraModel}
+						setFormData={setFormData}
+						apiKey={apiKey}
+						setShowApiKeyAlert={setShowApiKeyAlert}
+					/>
 
 					<div className="middle-column">
 						<GenerationSettingsCard

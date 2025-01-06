@@ -2,13 +2,18 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import Image from 'next/image';
 import { ArrowUpToLine, Download, Loader2, RefreshCw, Upload } from 'lucide-react';
 import { GeneratedImage } from '@/types/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { WandSparkles } from 'lucide-react';
+
+import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+
 
 interface GeneratedImagesCardProps {
     images: GeneratedImage[];
@@ -37,7 +42,8 @@ export function GeneratedImagesCard({
     onReusePrompt,
     onUpscaleImage
 }: GeneratedImagesCardProps & { onReusePrompt: (prompt: string) => void }) {
-
+    const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
+    const [faceEnhance, setFaceEnhance] = useState(true);
     const [isConfirming, setIsConfirming] = useState(false);
     const isFluxModel = (model: string | undefined, privateLoraName?: string) => {
         if (!model) return false;
@@ -340,36 +346,59 @@ export function GeneratedImagesCard({
                                                                 </Button>
                                                             )}
 
-<Button
-    className="flex-1"
-    size="sm"
-    variant="outline"
-    onClick={() => {
-        const upsizeParams = {
-            version: "f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa",
-            input: {
-                image: image.url,
-                scale: 2,
-                face_enhance: true
-            }
-        };
 
-        // Find and click the close button
-        const dialogRoot = document.querySelector('[role="dialog"]');
-        if (dialogRoot) {
-            const closeButton = dialogRoot.querySelector('button[type="button"]');
-            if (closeButton instanceof HTMLElement) {
-                closeButton.click();
-            }
-        }
 
-        onUpscaleImage(upsizeParams);
-    }}
->
-    <ArrowUpToLine className="w-3 h-3 mr-1" />
-    Upscale 2x
-</Button>
+                                                            <Button
+                                                                className="flex-1"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => setShowUpscaleDialog(true)}
+                                                            >
+                                                                <ArrowUpToLine className="w-3 h-3 mr-1" />
+                                                                Upscale 2x
+                                                            </Button>
+                                                            <Dialog open={showUpscaleDialog} onOpenChange={setShowUpscaleDialog}>
+                                                                <DialogContent className="sm:max-w-[425px]">
+                                                                    <DialogHeader>
+                                                                        <DialogTitle>Upscale Settings</DialogTitle>
+                                                                    </DialogHeader>
+                                                                    <div className="flex items-center space-x-2 py-4">
+                                                                        <Checkbox
+                                                                            id="face-enhance"
+                                                                            checked={faceEnhance}
+                                                                            onCheckedChange={(checked) => setFaceEnhance(checked as boolean)}
+                                                                        />
+                                                                        <Label htmlFor="face-enhance">Enhance faces</Label>
+                                                                    </div>
+                                                                    <DialogFooter>
+                                                                        <Button variant="outline" onClick={() => setShowUpscaleDialog(false)}>Cancel</Button>
+                                                                        <Button onClick={() => {
+                                                                            const upsizeParams = {
+                                                                                version: "f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa",
+                                                                                input: {
+                                                                                    image: image.url,
+                                                                                    scale: 2,
+                                                                                    face_enhance: faceEnhance
+                                                                                }
+                                                                            };
 
+                                                                            // Find and click the close button
+                                                                            const dialogRoot = document.querySelector('[role="dialog"]');
+                                                                            if (dialogRoot) {
+                                                                                const closeButton = dialogRoot.querySelector('button[type="button"]');
+                                                                                if (closeButton instanceof HTMLElement) {
+                                                                                    closeButton.click();
+                                                                                }
+                                                                            }
+
+                                                                            setShowUpscaleDialog(false);
+                                                                            onUpscaleImage(upsizeParams);
+                                                                        }}>
+                                                                            Start Upscale
+                                                                        </Button>
+                                                                    </DialogFooter>
+                                                                </DialogContent>
+                                                            </Dialog>
                                                         </div>
                                                     </div>
                                                 </div>
