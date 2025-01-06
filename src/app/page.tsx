@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Terminal } from 'lucide-react';
 import { GenerationSettingsCard } from '@/components/cards/GenerationSettingsCard';
-import { SettingsDrawer } from '@/components/SettingsDrawer';
+
 import ServerLogModal from '../components/modals/serverLogModal';
 import {
 	FormData,
@@ -1006,16 +1006,7 @@ export default function Component() {
 					</Button>
 				</div>
 
-				<div className="fixed bottom-4 right-4 z-50">
-					<SettingsDrawer
-						validatedLoraModels={validatedLoraModels}
-						selectedLoraModel={selectedLoraModel}
-						clearValidatedModels={clearValidatedModels}
-						setFormData={setFormData}
-						setSelectedLoraModel={setSelectedLoraModel}
-						formData={formData}
-					/>
-				</div>
+
 
 			</div>
 		</>

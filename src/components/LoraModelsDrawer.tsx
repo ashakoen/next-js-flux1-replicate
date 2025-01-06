@@ -97,7 +97,7 @@ export function LoraModelsDrawer({
                         <div className="relative">
                             <Wand2 className="h-5 w-5 text-purple-500 dark:text-purple-400" />
                             {validatedLoraModels.length > 0 && (
-                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 dark:bg-purple-400 rounded-full animate-pulse" />
+                                <div className="absolute -top-1 -right-2.5 w-2 h-2 bg-purple-500 dark:bg-purple-400 rounded-full animate-pulse" />
                             )}
                         </div>
                         <span

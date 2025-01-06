@@ -51,7 +51,7 @@ export function FavoritePromptsDrawer({
                         <div className="relative">
                             <Star className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />
                             {favoritePrompts.length > 0 && (
-                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 dark:bg-yellow-400 rounded-full animate-pulse" />
+                                <div className="absolute -top-1 -right-2.5 w-2 h-2 bg-yellow-500 dark:bg-yellow-400 rounded-full animate-pulse" />
                             )}
                         </div>
                         <span 
