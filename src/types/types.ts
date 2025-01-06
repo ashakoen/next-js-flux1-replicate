@@ -43,6 +43,12 @@ export type GeneratedImage = {
     seed?: number;
     isImg2Img: boolean;
     privateLoraName?: string;
+    style?: string;
+    width?: number;
+    height?: number;
+    negative_prompt?: string;
+    extra_lora?: string;
+    extra_lora_scale?: number;
 };
 
 export type LogEntry = {

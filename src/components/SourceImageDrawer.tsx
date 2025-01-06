@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon,X } from "lucide-react";
 import { useState } from "react";
 import { ImageUploadCard } from "./cards/ImageUploadCard";
 import { DrawingCard } from "./cards/DrawingCard";
@@ -72,17 +72,19 @@ export function SourceImageDrawer({
                 </span>
             </Button>
         </SheetTrigger>
-        <SheetContent className="w-[400px] fixed left-0 h-[calc(100vh-8rem)] mt-[2rem] p-4 flex flex-col slide-in-from-left rounded-r-xl">
-            <SheetHeader>
-                <SheetTitle className="flex items-center gap-2">
-                    <ImageIcon className="h-5 w-5 text-rose-500 dark:text-rose-400" />
-                    <span className="bg-gradient-to-r from-rose-500 to-sky-500 
-                        dark:from-rose-400 dark:to-sky-400 
-                        text-transparent bg-clip-text font-semibold">
-                        img2img {selectedImage && '(Ready)'}
-                    </span>
-                </SheetTitle>
-            </SheetHeader>
+        <SheetContent className="w-[400px] fixed left-0 h-[calc(100vh-8rem)] mt-[2rem] p-4 flex flex-col slide-in-from-left rounded-r-xl focus-visible:outline-none">
+    <SheetHeader>
+        <SheetTitle className="flex items-center gap-2">
+            <ImageIcon className="h-5 w-5 text-rose-500 dark:text-rose-400" />
+            <span className="bg-gradient-to-r from-rose-500 to-sky-500 
+                dark:from-rose-400 dark:to-sky-400 
+                text-transparent bg-clip-text font-semibold">
+                img2img {selectedImage && '(Ready)'}
+            </span>
+        </SheetTitle>
+    </SheetHeader>
+
+
 
             <div className="flex-1 overflow-y-auto mt-4 space-y-4">
                 <ImageUploadCard

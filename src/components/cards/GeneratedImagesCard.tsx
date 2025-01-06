@@ -4,13 +4,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import Image from 'next/image';
-import { ArrowUpToLine, Download, Loader2, RefreshCw, Upload } from 'lucide-react';
+import { ArrowUpToLine, Download, Loader2, RefreshCw, Save, Upload } from 'lucide-react';
 import { GeneratedImage } from '@/types/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { WandSparkles } from 'lucide-react';
 
-import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
@@ -27,6 +26,7 @@ interface GeneratedImagesCardProps {
     model: string;
     onReusePrompt: (prompt: string) => void;
     onUpscaleImage: (params: { version: string; input: { image: string; scale: number; face_enhance: boolean; }; }) => void;
+    onDownloadWithConfig: (imageUrl: string, image: GeneratedImage) => void;
 }
 
 export function GeneratedImagesCard({
@@ -40,7 +40,8 @@ export function GeneratedImagesCard({
     onUseAsInput,
     model,
     onReusePrompt,
-    onUpscaleImage
+    onUpscaleImage,
+    onDownloadWithConfig
 }: GeneratedImagesCardProps & { onReusePrompt: (prompt: string) => void }) {
     const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
     const [faceEnhance, setFaceEnhance] = useState(true);
@@ -285,6 +286,19 @@ export function GeneratedImagesCard({
                                                                     <p className="text-sm mt-0.5">{image.privateLoraName}</p>
                                                                 </div>
                                                             )}
+
+{image.extra_lora && (
+    <div>
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Extra LoRA</h3>
+        <p className="text-sm mt-0.5">{image.extra_lora}</p>
+    </div>
+)}
+{image.extra_lora_scale !== undefined && image.extra_lora && (
+    <div>
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Extra LoRA Scale</h3>
+        <p className="text-sm mt-0.5">{image.extra_lora_scale}</p>
+    </div>
+)}
                                                         </div>
 
                                                         {/* Action Buttons */}
@@ -346,7 +360,15 @@ export function GeneratedImagesCard({
                                                                 </Button>
                                                             )}
 
-
+<Button
+        className="flex-1"
+        size="sm"
+        variant="outline"
+        onClick={() => onDownloadWithConfig(image.url, image)}
+    >
+        <Save className="w-3 h-3 mr-1" />
+        Save Config
+    </Button>
 
                                                             <Button
                                                                 className="flex-1"

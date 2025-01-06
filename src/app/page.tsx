@@ -446,6 +446,50 @@ export default function Component() {
 		}
 	};
 
+	const downloadImageWithConfig = async (imageUrl: string, image: GeneratedImage) => {
+		try {
+			// Create config object from image data
+			const config = {
+				prompt: image.prompt,
+				model: image.model,
+				seed: image.seed,
+				lora_scale: image.lora_scale,
+				extra_lora: image.extra_lora, 
+				extra_lora_scale: image.extra_lora_scale,
+				guidance_scale: image.guidance_scale,
+				num_inference_steps: image.num_inference_steps,
+				go_fast: image.go_fast,
+				style: image.style,
+				negative_prompt: image.negative_prompt,
+				width: image.width,
+				height: image.height,
+				timestamp: image.timestamp,
+				isImg2Img: image.isImg2Img,
+				version: image.version
+			};
+	
+			// Get timestamp for filename
+			const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+			const baseFilename = `generation-${timestamp}`;
+	
+			// Download config
+			const configBlob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+			const configDownloadUrl = window.URL.createObjectURL(configBlob);
+			const configLink = document.createElement('a');
+			configLink.href = configDownloadUrl;
+			configLink.download = `${baseFilename}.json`;
+			configLink.click();
+	
+			// Cleanup
+			window.URL.revokeObjectURL(configDownloadUrl);
+			
+			toast.success('Configuration saved');
+		} catch (error) {
+			console.error('Failed to download config:', error);
+			toast.error('Failed to download configuration');
+		}
+	};
+
 	const handleUseAsInput = async (imageUrl: string) => {
 		try {
 			// Fetch the image
@@ -784,6 +828,8 @@ export default function Component() {
 							num_inference_steps: pollData.input.num_inference_steps,
 							lora_scale: pollData.input.lora_scale,
 							seed: seed,
+							extra_lora: pollData.input.extra_lora,
+							extra_lora_scale: pollData.input.extra_lora_scale,
 						} : {
 							style: pollData.input.style,
 							width: pollData.input.width,
@@ -1080,6 +1126,7 @@ export default function Component() {
 							model={formData.model}
 							onReusePrompt={handleReusePrompt}
 							onUpscaleImage={handleUpscaleImage}
+							onDownloadWithConfig={downloadImageWithConfig}
 						/>
 
 					</div>
