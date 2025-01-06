@@ -75,6 +75,16 @@ export function GeneratedImagesCard({
             model.includes('/');
     };
 
+    const getImageExpiry = (timestamp: string) => {
+        const imageTime = new Date(timestamp).getTime();
+        const currentTime = Date.now();
+        const timeLeft = Math.max(0, 3600000 - (currentTime - imageTime)); // 1 hour in ms
+        return {
+            isExpired: timeLeft === 0,
+            timeLeft
+        };
+    };
+
     // For determining if image can be regenerated (excludes Recraft)
     const canRegenerate = (model: string | undefined, privateLoraName?: string) => {
         if (!model) return false;
@@ -172,14 +182,31 @@ export function GeneratedImagesCard({
                                         <Dialog>
                                             <DialogTrigger asChild>
                                                 <div className="cursor-pointer">
-                                                    <div className="relative w-full pb-[100%]">
+                                                    <div className="relative w-full pb-[100%] transition-transform duration-200 transform group-hover:scale-105">
                                                         <Image
                                                             src={image.url}
                                                             alt={`Generated image ${index + 1}`}
                                                             layout="fill"
                                                             objectFit="cover"
-                                                            className="rounded-lg shadow-md transition-transform duration-200 transform group-hover:scale-105"
+                                                            className="rounded-lg shadow-md"
                                                         />
+                                                        {(() => {
+                                                            if (!image.timestamp) return null;
+                                                            const { isExpired, timeLeft } = getImageExpiry(image.timestamp);
+                                                            const showWarning = timeLeft > 0 && timeLeft < 300000;
+
+                                                            return (
+                                                                showWarning ? (
+                                                                    <div className="absolute top-0 left-0 right-0 z-10 bg-red-500/80 text-white text-sm py-1 px-2 text-center rounded-t-lg">
+                                                                        Expires Soon
+                                                                    </div>
+                                                                ) : isExpired ? (
+                                                                    <div className="absolute top-0 left-0 right-0 z-10 bg-gray-500/80 text-white text-sm py-1 px-2 text-center rounded-t-lg">
+                                                                        Expired
+                                                                    </div>
+                                                                ) : null
+                                                            );
+                                                        })()}
                                                     </div>
                                                 </div>
                                             </DialogTrigger>
@@ -287,18 +314,18 @@ export function GeneratedImagesCard({
                                                                 </div>
                                                             )}
 
-{image.extra_lora && (
-    <div>
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Extra LoRA</h3>
-        <p className="text-sm mt-0.5">{image.extra_lora}</p>
-    </div>
-)}
-{image.extra_lora_scale !== undefined && image.extra_lora && (
-    <div>
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Extra LoRA Scale</h3>
-        <p className="text-sm mt-0.5">{image.extra_lora_scale}</p>
-    </div>
-)}
+                                                            {image.extra_lora && (
+                                                                <div>
+                                                                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Extra LoRA</h3>
+                                                                    <p className="text-sm mt-0.5">{image.extra_lora}</p>
+                                                                </div>
+                                                            )}
+                                                            {image.extra_lora_scale !== undefined && image.extra_lora && (
+                                                                <div>
+                                                                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Extra LoRA Scale</h3>
+                                                                    <p className="text-sm mt-0.5">{image.extra_lora_scale}</p>
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         {/* Action Buttons */}
@@ -360,15 +387,15 @@ export function GeneratedImagesCard({
                                                                 </Button>
                                                             )}
 
-<Button
-        className="flex-1"
-        size="sm"
-        variant="outline"
-        onClick={() => onDownloadWithConfig(image.url, image)}
-    >
-        <Save className="w-3 h-3 mr-1" />
-        Save Config
-    </Button>
+                                                            <Button
+                                                                className="flex-1"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => onDownloadWithConfig(image.url, image)}
+                                                            >
+                                                                <Save className="w-3 h-3 mr-1" />
+                                                                Save Config
+                                                            </Button>
 
                                                             <Button
                                                                 className="flex-1"

@@ -49,6 +49,7 @@ export type GeneratedImage = {
     negative_prompt?: string;
     extra_lora?: string;
     extra_lora_scale?: number;
+    generatedAt: string;
 };
 
 export type LogEntry = {

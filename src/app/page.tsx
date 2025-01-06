@@ -16,6 +16,7 @@ import { GeneratedImagesCard } from "@/components/cards/GeneratedImagesCard";
 import { SourceImageDrawer } from "@/components/SourceImageDrawer";
 import { FavoritePromptsDrawer } from "@/components/FavoritePromptsDrawer";
 import { LoraModelsDrawer } from '@/components/LoraModelsDrawer';
+import { ExtraLoraModelsDrawer } from "@/components/ExtraLoraModelsDrawer";
 import { Toaster, toast } from "sonner";
 
 
@@ -73,6 +74,8 @@ export default function Component() {
 	const [selectedImage, setSelectedImage] = useState<{ url: string; file: File | null } | null>(null);
 	const [maskDataUrl, setMaskDataUrl] = useState<string | null>(null);
 	const [isInpaintingEnabled, setIsInpaintingEnabled] = useState(false);
+	const [extraLoraModels, setExtraLoraModels] = useState<string[]>([]);
+const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 
 
 	const getClientInfo = () => {
@@ -159,6 +162,13 @@ export default function Component() {
 				privateLoraName: parsedData.privateLoraName || '',
 				privateLoraVersion: parsedData.privateLoraVersion || '',
 			}));
+		}
+	}, []);
+
+	useEffect(() => {
+		const savedExtraModels = localStorage.getItem('extraLoraModels');
+		if (savedExtraModels) {
+			setExtraLoraModels(JSON.parse(savedExtraModels));
 		}
 	}, []);
 
@@ -337,6 +347,11 @@ export default function Component() {
 			URL.revokeObjectURL(selectedImage.url);
 		}
 		setSelectedImage(null);
+	};
+
+	const clearExtraModels = () => {
+		setExtraLoraModels([]);
+		localStorage.removeItem('extraLoraModels');
 	};
 
 	const handleRegenerateWithSeed = async (newSeed: number, modelType?: 'dev' | 'schnell' | 'pro' | 'pro-ultra' | 'recraftv3') => {
@@ -1083,6 +1098,15 @@ export default function Component() {
 						apiKey={apiKey}
 						setShowApiKeyAlert={setShowApiKeyAlert}
 					/>
+
+<ExtraLoraModelsDrawer
+    extraLoraModels={extraLoraModels}
+    setExtraLoraModels={setExtraLoraModels}
+    selectedExtraLora={selectedExtraLora}
+    clearExtraModels={clearExtraModels}
+    setSelectedExtraLora={setSelectedExtraLora}
+    setFormData={setFormData}
+/>
 
 					<div className="middle-column">
 						<GenerationSettingsCard
