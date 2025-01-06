@@ -2,7 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
-import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import { useState, useMemo } from "react";
 import {
     Sheet,
     SheetContent,
@@ -30,6 +32,14 @@ export function FavoritePromptsDrawer({
     onUsePrompt
 }: FavoritePromptsDrawerProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredPrompts = useMemo(() => {
+        if (!searchQuery.trim()) return favoritePrompts;
+        return favoritePrompts.filter(prompt =>
+            prompt.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [favoritePrompts, searchQuery]);
 
     return (
         <div className="fixed left-0 top-[11rem] z-30">
@@ -39,25 +49,25 @@ export function FavoritePromptsDrawer({
                         variant="outline"
                         size="sm"
                         className={`flex flex-col items-center gap-2 py-3 h-auto
-                            border-l-0 rounded-l-none border-2
-                            bg-gradient-to-r from-yellow-200 to-orange-200
-                            hover:from-yellow-300 hover:to-orange-300
-                            dark:from-yellow-900 dark:to-orange-900
-                            dark:hover:from-yellow-800 dark:hover:to-orange-800
-                            transition-all duration-300 shadow-md
-                            hover:shadow-lg hover:scale-105
-                            ${favoritePrompts.length > 0 ? 'ring-2 ring-yellow-500 dark:ring-yellow-400' : ''}`}
+            border-l-0 rounded-l-none border-2
+            bg-gradient-to-r from-emerald-200 to-green-200
+            hover:from-emerald-300 hover:to-green-300
+            dark:from-emerald-900 dark:to-green-900
+            dark:hover:from-emerald-800 dark:hover:to-green-800
+            transition-all duration-300 shadow-md
+            hover:shadow-lg hover:scale-105
+            ${favoritePrompts.length > 0 ? 'ring-2 ring-emerald-500 dark:ring-emerald-400' : ''}`}
                     >
                         <div className="relative">
-                            <Star className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />
+                            <Star className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
                             {favoritePrompts.length > 0 && (
-                                <div className="absolute -top-1 -right-2.5 w-2 h-2 bg-yellow-500 dark:bg-yellow-400 rounded-full animate-pulse" />
+                                <div className="absolute -top-1 -right-2.5 w-2 h-2 bg-emerald-500 dark:bg-emerald-400 rounded-full animate-pulse" />
                             )}
                         </div>
-                        <span 
-                            className="text-base font-medium bg-gradient-to-b from-yellow-500 to-orange-500 
-                                dark:from-yellow-400 dark:to-orange-400 
-                                text-transparent bg-clip-text" 
+                        <span
+                            className="text-base font-medium bg-gradient-to-b from-emerald-500 to-green-500 
+                dark:from-emerald-400 dark:to-green-400 
+                text-transparent bg-clip-text"
                             style={{ writingMode: 'vertical-rl' }}
                         >
                             {isOpen ? 'Close' : 'Prompts'}
@@ -65,40 +75,50 @@ export function FavoritePromptsDrawer({
                     </Button>
                 </SheetTrigger>
                 <SheetContent
-    className="w-[400px] fixed left-0 h-[calc(100vh-8rem)] mt-[2rem] p-4 flex flex-col slide-in-from-left rounded-r-xl"
->
+                    className="w-[400px] fixed left-0 h-[calc(100vh-8rem)] mt-[2rem] p-4 flex flex-col slide-in-from-left rounded-r-xl"
+                >
                     <SheetHeader>
                         <SheetTitle className="flex items-center gap-2">
-                            <Star className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />
-                            <span className="bg-gradient-to-r from-yellow-500 to-orange-500 
-                                dark:from-yellow-400 dark:to-orange-400 
-                                text-transparent bg-clip-text font-semibold">
+                            <Star className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
+                            <span className="bg-gradient-to-r from-emerald-500 to-green-500 
+        dark:from-emerald-400 dark:to-green-400 
+        text-transparent bg-clip-text font-semibold">
                                 Favorite Prompts ({favoritePrompts.length})
                             </span>
                         </SheetTitle>
                     </SheetHeader>
 
+                    <div className="relative mt-4">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search prompts..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-8"
+                        />
+                    </div>
+
                     <ScrollArea className="flex-1 mt-4 pr-4">
                         <div className="space-y-3">
-                            {favoritePrompts.length > 0 ? (
-                                favoritePrompts.map((prompt, index) => (
+                            {filteredPrompts.length > 0 ? (
+                                filteredPrompts.map((prompt, index) => (
                                     <TooltipProvider key={index} delayDuration={300}>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <div 
+                                                <div
                                                     className="group relative p-4 rounded-lg border border-gray-200 
                                                         dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 
                                                         transition-all duration-200"
                                                 >
                                                     {/* Preview text with truncation */}
-                                                    <div 
+                                                    <div
                                                         className="cursor-pointer mb-8"
                                                         onClick={() => onUsePrompt(prompt)}
                                                     >
                                                         <p className="text-sm line-clamp-2 pr-8">
                                                             {prompt}
                                                         </p>
-                                                        
+
                                                         {/* Character count badge */}
                                                         <div className="absolute top-2 right-2 text-xs text-gray-500 
                                                             dark:text-gray-400 bg-gray-100 dark:bg-gray-700 
@@ -136,8 +156,8 @@ export function FavoritePromptsDrawer({
                                                     </div>
                                                 </div>
                                             </TooltipTrigger>
-                                            <TooltipContent 
-                                                side="right" 
+                                            <TooltipContent
+                                                side="right"
                                                 className="max-w-[300px] p-3 text-xs"
                                             >
                                                 <p className="whitespace-pre-wrap">{prompt}</p>
@@ -147,7 +167,7 @@ export function FavoritePromptsDrawer({
                                 ))
                             ) : (
                                 <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-                                    No favorite prompts yet
+                                    {searchQuery ? 'No matching prompts found' : 'No favorite prompts yet'}
                                 </div>
                             )}
                         </div>

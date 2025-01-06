@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { Loader2, Wand2 } from "lucide-react";
+import { Loader2, FolderLock, Wand2 } from "lucide-react";
 import { useState } from "react";
 import {
     Sheet,
@@ -95,7 +95,7 @@ export function LoraModelsDrawer({
                             ${validatedLoraModels.length > 0 ? 'ring-2 ring-purple-500 dark:ring-purple-400' : ''}`}
                     >
                         <div className="relative">
-                            <Wand2 className="h-5 w-5 text-purple-500 dark:text-purple-400" />
+                            <FolderLock className="h-5 w-5 text-purple-500 dark:text-purple-400" />
                             {validatedLoraModels.length > 0 && (
                                 <div className="absolute -top-1 -right-2.5 w-2 h-2 bg-purple-500 dark:bg-purple-400 rounded-full animate-pulse" />
                             )}
