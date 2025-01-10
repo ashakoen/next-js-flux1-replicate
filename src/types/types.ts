@@ -152,6 +152,34 @@ export interface CanvasDrawProps {
     className?: string;
 }
 
+export interface ImagePackConfig {
+    prompt: string;
+    negative_prompt?: string;
+    model: string;
+    seed: number;
+    version?: string;
+    privateLoraName?: string;
+    lora_scale?: number;
+    extra_lora?: string;
+    extra_lora_scale?: number;
+    guidance_scale: number;
+    num_inference_steps: number;
+    go_fast?: boolean;
+    output_format: string;
+    output_quality?: number;
+    disable_safety_checker?: boolean;
+    width?: number;
+    height?: number;
+    aspect_ratio?: string;
+    style?: string;
+    isImg2Img: boolean;
+    prompt_strength?: number;
+    sourceImageUrl?: string;
+    maskDataUrl?: string;
+    zipFile: File;
+    previewImageUrl?: string;
+}
+
 // Add this class declaration for CanvasDraw
 export declare class CanvasDraw extends React.Component<CanvasDrawProps> {
     clear(): void;

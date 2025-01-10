@@ -10,13 +10,15 @@ import {
 	FormData,
 	GeneratedImage,
 	LogEntry,
-	TelemetryData
+	TelemetryData,
+	ImagePackConfig
 } from '@/types/types';
 import { GeneratedImagesCard } from "@/components/cards/GeneratedImagesCard";
 import { SourceImageDrawer } from "@/components/SourceImageDrawer";
 import { FavoritePromptsDrawer } from "@/components/FavoritePromptsDrawer";
 import { LoraModelsDrawer } from '@/components/LoraModelsDrawer';
 import { ExtraLoraModelsDrawer } from "@/components/ExtraLoraModelsDrawer";
+import { GenerateConfirmModal } from "@/components/modals/GenerateConfirmModal";
 import { Toaster, toast } from "sonner";
 
 
@@ -75,7 +77,11 @@ export default function Component() {
 	const [maskDataUrl, setMaskDataUrl] = useState<string | null>(null);
 	const [isInpaintingEnabled, setIsInpaintingEnabled] = useState(false);
 	const [extraLoraModels, setExtraLoraModels] = useState<string[]>([]);
-const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
+	const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
+
+	const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
+	const [pendingFormData, setPendingFormData] = useState<FormData | null>(null)
+	const [previewImageUrl, setPreviewImageUrl] = useState<string | undefined>();
 
 
 	const getClientInfo = () => {
@@ -104,6 +110,14 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 			logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
 		}
 	}, []);
+
+	const handleCloseConfirm = () => {
+		setShowGenerateConfirm(false);
+		if (previewImageUrl) {
+			URL.revokeObjectURL(previewImageUrl);
+			setPreviewImageUrl(undefined);
+		}
+	};
 
 	const handleReusePrompt = (prompt: string) => {
 		setFormData((prev) => ({
@@ -461,24 +475,123 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 		}
 	};
 
+
+	const handleImagePackUpload = async (config: ImagePackConfig) => {
+		try {
+			console.log('Processing image pack config:', config);
+
+
+			const JSZip = (await import('jszip')).default;
+			const zip = await JSZip.loadAsync(config.zipFile);
+
+			const imageFile = Object.values(zip.files).find(file =>
+				!file.name.includes('source') &&
+				!file.name.includes('mask') &&
+				/\.(png|jpg|webp)$/i.test(file.name)
+			);
+
+			if (imageFile) {
+				const blob = await imageFile.async('blob');
+				const previewUrl = URL.createObjectURL(blob);
+				setPreviewImageUrl(previewUrl);
+			}
+
+			// Handle model mapping
+			let modelType: FormData['model'] = 'dev';
+			let privateLoraName = '';
+
+			if (config.lora_scale !== undefined) {
+				// It's a LoRA model
+				modelType = 'dev'; // Default model for LoRA
+				privateLoraName = `${config.model}:${config.version}`;
+			} else if (config.model.includes('recraftv3')) {
+				modelType = 'recraftv3';
+			} else {
+				modelType = 'dev';
+			}
+
+			const newFormData: FormData = {
+				...formData, // Start with current form data as base
+				prompt: config.prompt,
+				negative_prompt: config.negative_prompt || '',
+				model: modelType,
+				seed: config.seed,
+				privateLoraName: privateLoraName,
+				privateLoraVersion: '',
+				lora_scale: config.lora_scale || 1,
+				extra_lora: config.extra_lora || '',
+				extra_lora_scale: config.extra_lora_scale || 0.8,
+				width: config.width || formData.width,
+				height: config.height || formData.height,
+				aspect_ratio: config.aspect_ratio || '1:1',
+				guidance_scale: config.guidance_scale,
+				num_inference_steps: config.num_inference_steps,
+				num_outputs: 1,
+				output_format: (config.output_format as 'webp' | 'jpg' | 'png' | 'svg') || 'png',
+				output_quality: config.output_quality || 80,
+				disable_safety_checker: config.disable_safety_checker || false,
+				go_fast: config.go_fast || false,
+				style: config.style || 'any',
+				prompt_strength: config.prompt_strength || 0.8,
+				style_type: formData.style_type,
+				magic_prompt_option: formData.magic_prompt_option,
+			};
+
+			// Update form state
+			setFormData(newFormData);
+			setPendingFormData(newFormData);
+
+			// If it's a LoRA model, validate it
+			if (privateLoraName && !validatedLoraModels.includes(privateLoraName)) {
+				await validateLoraModel(privateLoraName);
+			}
+
+			// Handle source image if present
+			if (config.isImg2Img && config.sourceImageUrl) {
+				const response = await fetch(config.sourceImageUrl);
+				const blob = await response.blob();
+				const file = new File([blob], 'source-image.png', { type: 'image/png' });
+
+				setSelectedImage({
+					url: config.sourceImageUrl,
+					file
+				});
+
+				if (config.maskDataUrl) {
+					setMaskDataUrl(config.maskDataUrl);
+					setIsInpaintingEnabled(true);
+				}
+
+			}
+
+			setShowGenerateConfirm(true);
+
+			//toast.success('Image pack configuration loaded successfully!');
+		} catch (error) {
+			console.error('Error processing image pack:', error);
+			toast.error('Failed to process image pack configuration');
+		}
+	};
+
 	const downloadImageWithConfig = async (imageUrl: string, image: GeneratedImage) => {
+		console.log('Image object received:', image);
 		try {
 			toast.info('Preparing image pack...');
-			
+
 			const JSZip = (await import('jszip')).default;
 			const zip = new JSZip();
-			
+
 			// Fetch the generated image (this is still a URL)
 			const imageResponse = await fetch(imageUrl);
 			if (!imageResponse.ok) throw new Error('Failed to fetch generated image');
 			const imageBlob = await imageResponse.blob();
-	
+
 			const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 			const baseFilename = `generation-${timestamp}`;
-	
+
 			// Add generated image
 			zip.file(`${baseFilename}.${image.output_format || (image.model === 'recraftv3' ? 'webp' : 'png')}`, imageBlob);
-	
+
 			// If it's img2img, add the source image from data URI
 			if (image.isImg2Img && image.sourceImageUrl) {
 				try {
@@ -489,7 +602,7 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 					console.warn('Failed to process source image:', error);
 				}
 			}
-	
+
 			// If it's inpainting, add the mask from data URI
 			if (image.maskDataUrl) {
 				try {
@@ -501,11 +614,15 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 					console.warn('Failed to process mask:', error);
 				}
 			}
-	
+
+			// Clean up prompt text by removing line breaks
+			const cleanPrompt = image.prompt.replace(/[\n\r]+/g, ' ').trim();
+			const cleanNegativePrompt = image.negative_prompt?.replace(/[\n\r]+/g, ' ').trim();
+
 			// Add config last (after we know what files were successfully added)
 			const config = {
-				prompt: image.prompt,
-				negative_prompt: image.negative_prompt,
+				prompt: cleanPrompt,
+				negative_prompt: cleanNegativePrompt,
 				model: image.model,
 				seed: image.seed,
 				version: image.version,
@@ -525,25 +642,25 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 				style: image.style,
 				isImg2Img: image.isImg2Img,
 				prompt_strength: image.prompt_strength,
-				generationType: image.isImg2Img ? 
-					(image.maskDataUrl ? 'inpainting' : 'img2img') : 
+				generationType: image.isImg2Img ?
+					(image.maskDataUrl ? 'inpainting' : 'img2img') :
 					'txt2img',
 				timestamp: image.timestamp
 			};
-	
+
 			zip.file(`${baseFilename}.json`, JSON.stringify(config, null, 2));
-	
+
 			// Generate and download zip
 			const zipBlob = await zip.generateAsync({ type: 'blob' });
 			const zipUrl = window.URL.createObjectURL(zipBlob);
-	
+
 			const link = document.createElement('a');
 			link.href = zipUrl;
 			link.download = `${baseFilename}.zip`;
 			link.click();
-	
+
 			window.URL.revokeObjectURL(zipUrl);
-			
+
 			//toast.success('Image pack downloaded successfully!');
 		} catch (error) {
 			console.error('Failed to create image pack:', error);
@@ -586,6 +703,22 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 			const updatedFavorites = [...favoritePrompts, prompt];
 			setFavoritePrompts(updatedFavorites);
 			localStorage.setItem('favoritePrompts', JSON.stringify(updatedFavorites));
+		}
+	};
+
+	const handleGenerateConfirm = async () => {
+		setShowGenerateConfirm(false);
+		if (!pendingFormData) return;
+
+		try {
+			await handleSubmit(
+				{ preventDefault: () => { } } as React.FormEvent,
+				pendingFormData
+			);
+			//toast.success('Image generated successfully!');
+		} catch (error) {
+			console.error('Error generating image:', error);
+			toast.error('Failed to generate image');
 		}
 	};
 
@@ -873,6 +1006,7 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 				const outputUrls = Array.isArray(pollData.output) ? pollData.output : [pollData.output];
 
 				const newImages = outputUrls.map((outputUrl: string) => {
+					console.log('pollData input:', pollData.input);
 					// Fetch image size
 					fetch(outputUrl).then(response => {
 						const size = parseInt(response.headers.get('content-length') || '0')
@@ -883,6 +1017,7 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 						prompt: pollData.input.prompt,
 						model: pollData.model,
 						version: pollData.version,
+						aspect_ratio: formData.aspect_ratio,
 						...(pollData.model !== 'recraftv3' ? {
 							go_fast: pollData.input.go_fast,
 							guidance_scale: pollData.input.guidance_scale,
@@ -894,7 +1029,7 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 						} : {
 							style: pollData.input.style,
 							width: pollData.input.width,
-							height: pollData.input.height
+							height: pollData.input.height,
 						}),
 						timestamp: new Date().toISOString(),
 						isImg2Img: !!selectedImage,
@@ -1120,6 +1255,14 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 			<div className="container mx-auto px-2 pt-10 pb-20 h-[calc(100vh-2rem)]">
 				<div className="main-layout">
 
+					<GenerateConfirmModal
+						isOpen={showGenerateConfirm}
+						onClose={() => setShowGenerateConfirm(false)}
+						onConfirm={handleGenerateConfirm}
+						formData={pendingFormData || initialFormData}
+						previewImageUrl={previewImageUrl}
+					/>
+
 					<SourceImageDrawer
 						onImageSelect={handleImageSelect}
 						selectedImage={selectedImage}
@@ -1149,14 +1292,14 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 						setShowApiKeyAlert={setShowApiKeyAlert}
 					/>
 
-<ExtraLoraModelsDrawer
-    extraLoraModels={extraLoraModels}
-    setExtraLoraModels={setExtraLoraModels}
-    selectedExtraLora={selectedExtraLora}
-    clearExtraModels={clearExtraModels}
-    setSelectedExtraLora={setSelectedExtraLora}
-    setFormData={setFormData}
-/>
+					<ExtraLoraModelsDrawer
+						extraLoraModels={extraLoraModels}
+						setExtraLoraModels={setExtraLoraModels}
+						selectedExtraLora={selectedExtraLora}
+						clearExtraModels={clearExtraModels}
+						setSelectedExtraLora={setSelectedExtraLora}
+						setFormData={setFormData}
+					/>
 
 					<div className="middle-column">
 						<GenerationSettingsCard
@@ -1202,6 +1345,7 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 							onReusePrompt={handleReusePrompt}
 							onUpscaleImage={handleUpscaleImage}
 							onDownloadWithConfig={downloadImageWithConfig}
+							onImagePackUpload={handleImagePackUpload}
 						/>
 
 					</div>
