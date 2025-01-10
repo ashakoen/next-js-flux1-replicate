@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 
 interface GeneratedImagesCardProps {
     images: GeneratedImage[];
+    setImages: React.Dispatch<React.SetStateAction<GeneratedImage[]>>;
     onDownloadImage: (url: string) => void;
     onDeleteImage: (url: string) => void;
     clearGeneratedImages: () => void;
@@ -31,6 +32,7 @@ interface GeneratedImagesCardProps {
 
 export function GeneratedImagesCard({
     images,
+    setImages,
     onDownloadImage,
     onDeleteImage,
     clearGeneratedImages,
@@ -46,6 +48,13 @@ export function GeneratedImagesCard({
     const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
     const [faceEnhance, setFaceEnhance] = useState(true);
     const [isConfirming, setIsConfirming] = useState(false);
+
+// Constants for timing
+const EXPIRY_TIME_MS = 3600000; // 1 hour
+const EXPIRY_TIME_MS_REMOVE = 600000; // 10 minutes
+const TOTAL_REMOVAL_TIME = EXPIRY_TIME_MS + EXPIRY_TIME_MS_REMOVE;
+const CLEANUP_INTERVAL_MS = 60000;
+
     const isFluxModel = (model: string | undefined, privateLoraName?: string) => {
         if (!model) return false;
 
@@ -78,10 +87,13 @@ export function GeneratedImagesCard({
     const getImageExpiry = (timestamp: string) => {
         const imageTime = new Date(timestamp).getTime();
         const currentTime = Date.now();
-        const timeLeft = Math.max(0, 3600000 - (currentTime - imageTime)); // 1 hour in ms
+        const timeLeft = Math.max(0, EXPIRY_TIME_MS - (currentTime - imageTime));
+        const shouldRemove = (currentTime - imageTime) > TOTAL_REMOVAL_TIME;
+        
         return {
             isExpired: timeLeft === 0,
-            timeLeft
+            timeLeft,
+            shouldRemove
         };
     };
 
@@ -106,6 +118,26 @@ export function GeneratedImagesCard({
         }
         return () => clearTimeout(timeoutId);
     }, [isConfirming]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const currentTime = Date.now();
+            setImages(prevImages => {  // Fixed arrow function syntax
+                const filteredImages = prevImages.filter(image => {  // Fixed nested arrow function
+                    if (!image.timestamp) return true;
+                    const { shouldRemove } = getImageExpiry(image.timestamp);
+                    return !shouldRemove;
+                });
+                
+                if (filteredImages.length !== prevImages.length) {
+                    localStorage.setItem('generatedImages', JSON.stringify(filteredImages));
+                }
+                return filteredImages;
+            });
+        }, CLEANUP_INTERVAL_MS);
+    
+        return () => clearInterval(interval);
+    }, [setImages]);
 
     return (
         <Card className="flex flex-col w-full h-[calc(100vh-10rem)] md:overflow-hidden">
@@ -205,7 +237,7 @@ export function GeneratedImagesCard({
                                                                     </div>
                                                                 ) : isExpired ? (
                                                                     <div className="absolute top-0 left-0 right-0 z-10 bg-gray-500/80 text-white text-sm py-1 px-2 text-center rounded-t-lg">
-                                                                        Expired
+                                                                        Expiring Soon!
                                                                     </div>
                                                                 ) : null
                                                             );
@@ -397,7 +429,7 @@ export function GeneratedImagesCard({
                                                                 onClick={() => onDownloadWithConfig(image.url, image)}
                                                             >
                                                                 <Save className="w-3 h-3 mr-1" />
-                                                                Save Config
+                                                                Download IMG Pack
                                                             </Button>
 
                                                             <Button

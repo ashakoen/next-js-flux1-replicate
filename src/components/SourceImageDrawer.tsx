@@ -25,6 +25,7 @@ interface SourceImageDrawerProps {
     isInpaintingEnabled: boolean;
     onInpaintingChange: (enabled: boolean) => void;
     onMaskGenerated: (maskDataUrl: string) => void;
+    currentMaskDataUrl?: string | null;
 }
 
 export function SourceImageDrawer({
@@ -35,7 +36,8 @@ export function SourceImageDrawer({
     disabled = false,
     isInpaintingEnabled,
     onInpaintingChange,
-    onMaskGenerated
+    onMaskGenerated,
+    currentMaskDataUrl = null
 }: SourceImageDrawerProps) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -112,6 +114,7 @@ export function SourceImageDrawer({
                             disabled={!selectedImage || disabled}
                             width={370}
                             isInpaintingEnabled={isInpaintingEnabled}
+                            currentMaskDataUrl={currentMaskDataUrl}
                         />
                     </>
                 )}

@@ -463,45 +463,91 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 
 	const downloadImageWithConfig = async (imageUrl: string, image: GeneratedImage) => {
 		try {
-			// Create config object from image data
+			toast.info('Preparing image pack...');
+			
+			const JSZip = (await import('jszip')).default;
+			const zip = new JSZip();
+			
+			// Fetch the generated image (this is still a URL)
+			const imageResponse = await fetch(imageUrl);
+			if (!imageResponse.ok) throw new Error('Failed to fetch generated image');
+			const imageBlob = await imageResponse.blob();
+	
+			const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+			const baseFilename = `generation-${timestamp}`;
+	
+			// Add generated image
+			zip.file(`${baseFilename}.${image.output_format || (image.model === 'recraftv3' ? 'webp' : 'png')}`, imageBlob);
+	
+			// If it's img2img, add the source image from data URI
+			if (image.isImg2Img && image.sourceImageUrl) {
+				try {
+					// Convert data URI to blob
+					const sourceImageBlob = await fetch(image.sourceImageUrl).then(r => r.blob());
+					zip.file(`${baseFilename}-source.png`, sourceImageBlob);
+				} catch (error) {
+					console.warn('Failed to process source image:', error);
+				}
+			}
+	
+			// If it's inpainting, add the mask from data URI
+			if (image.maskDataUrl) {
+				try {
+					// Convert base64 data URI directly to blob
+					const base64Data = image.maskDataUrl.split(',')[1];
+					const maskBlob = await fetch(`data:image/png;base64,${base64Data}`).then(r => r.blob());
+					zip.file(`${baseFilename}-mask.png`, maskBlob);
+				} catch (error) {
+					console.warn('Failed to process mask:', error);
+				}
+			}
+	
+			// Add config last (after we know what files were successfully added)
 			const config = {
 				prompt: image.prompt,
+				negative_prompt: image.negative_prompt,
 				model: image.model,
 				seed: image.seed,
+				version: image.version,
+				privateLoraName: image.privateLoraName,
 				lora_scale: image.lora_scale,
-				extra_lora: image.extra_lora, 
+				extra_lora: image.extra_lora,
 				extra_lora_scale: image.extra_lora_scale,
 				guidance_scale: image.guidance_scale,
 				num_inference_steps: image.num_inference_steps,
 				go_fast: image.go_fast,
-				style: image.style,
-				negative_prompt: image.negative_prompt,
+				output_format: image.output_format,
+				output_quality: image.output_quality,
+				disable_safety_checker: image.disable_safety_checker,
 				width: image.width,
 				height: image.height,
-				timestamp: image.timestamp,
+				aspect_ratio: image.aspect_ratio,
+				style: image.style,
 				isImg2Img: image.isImg2Img,
-				version: image.version
+				prompt_strength: image.prompt_strength,
+				generationType: image.isImg2Img ? 
+					(image.maskDataUrl ? 'inpainting' : 'img2img') : 
+					'txt2img',
+				timestamp: image.timestamp
 			};
 	
-			// Get timestamp for filename
-			const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-			const baseFilename = `generation-${timestamp}`;
+			zip.file(`${baseFilename}.json`, JSON.stringify(config, null, 2));
 	
-			// Download config
-			const configBlob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
-			const configDownloadUrl = window.URL.createObjectURL(configBlob);
-			const configLink = document.createElement('a');
-			configLink.href = configDownloadUrl;
-			configLink.download = `${baseFilename}.json`;
-			configLink.click();
+			// Generate and download zip
+			const zipBlob = await zip.generateAsync({ type: 'blob' });
+			const zipUrl = window.URL.createObjectURL(zipBlob);
 	
-			// Cleanup
-			window.URL.revokeObjectURL(configDownloadUrl);
+			const link = document.createElement('a');
+			link.href = zipUrl;
+			link.download = `${baseFilename}.zip`;
+			link.click();
+	
+			window.URL.revokeObjectURL(zipUrl);
 			
-			toast.success('Preparing config for download...');
+			toast.success('Image pack downloaded successfully!');
 		} catch (error) {
-			console.error('Failed to download config:', error);
-			toast.error('Failed to download configuration');
+			console.error('Failed to create image pack:', error);
+			toast.error(error instanceof Error ? error.message : 'Failed to create image pack');
 		}
 	};
 
@@ -527,7 +573,7 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 		}
 	};
 
-	const handleMaskGenerated = (maskDataUrl: string) => {
+	const handleMaskGenerated = (maskDataUrl: string | null) => {
 		setMaskDataUrl(maskDataUrl);
 		setFormData(prev => ({
 			...prev,
@@ -757,7 +803,7 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 			newTelemetryData.errors.push(error instanceof Error ? error.message : 'Unknown error occurred')
 			finalizeTelemetryData(newTelemetryData)
 		}
-		setMaskDataUrl(null);
+		//setMaskDataUrl(null);
 	};
 
 
@@ -851,7 +897,10 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 							height: pollData.input.height
 						}),
 						timestamp: new Date().toISOString(),
-						isImg2Img: !!selectedImage
+						isImg2Img: !!selectedImage,
+						sourceImageUrl: selectedImage?.url || undefined,
+						maskDataUrl: maskDataUrl || undefined,
+						prompt_strength: pollData.input.prompt_strength
 					}
 				})
 
@@ -1080,6 +1129,7 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 						isInpaintingEnabled={isInpaintingEnabled}
 						onInpaintingChange={setIsInpaintingEnabled}
 						onMaskGenerated={handleMaskGenerated}
+						currentMaskDataUrl={maskDataUrl}
 					/>
 
 					<FavoritePromptsDrawer
@@ -1140,6 +1190,7 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 
 						<GeneratedImagesCard
 							images={generatedImages}
+							setImages={setGeneratedImages}
 							onDownloadImage={downloadImage}
 							onDeleteImage={handleDeleteImage}
 							clearGeneratedImages={clearGeneratedImages}

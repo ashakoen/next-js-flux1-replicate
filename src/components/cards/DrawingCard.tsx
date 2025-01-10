@@ -13,6 +13,7 @@ interface DrawingCardProps {
     disabled?: boolean;
     width?: number;
     isInpaintingEnabled?: boolean;
+    currentMaskDataUrl?: string | null;
 }
 
 export function DrawingCard({
@@ -20,7 +21,8 @@ export function DrawingCard({
     onMaskGenerated,
     disabled = false,
     width = 370,
-    isInpaintingEnabled = false
+    isInpaintingEnabled = false,
+    currentMaskDataUrl = null
 }: DrawingCardProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [tool, setTool] = useState<'brush' | 'eraser'>('brush');
@@ -43,10 +45,22 @@ export function DrawingCard({
         ctx.fillStyle = 'black';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Save initial state
-        const initialState = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        setHistory([initialState]);
-    }, [sourceImage]);
+        // If we have an existing mask, load it
+        if (currentMaskDataUrl) {
+            const img = new Image();
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                // Save this state to history
+                const initialState = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                setHistory([initialState]);
+            };
+            img.src = currentMaskDataUrl;
+        } else {
+            // Save initial black state to history
+            const initialState = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            setHistory([initialState]);
+        }
+    }, [sourceImage, currentMaskDataUrl]);
 
     useEffect(() => {
         const updateCanvasSize = () => {
@@ -109,16 +123,23 @@ export function DrawingCard({
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
         if (!ctx || !canvas || !lastPos.current) return;
-
+    
+        // Debug: Log drawing coordinates
+        console.log('Drawing at:', { x, y });
+    
         ctx.beginPath();
         ctx.moveTo(lastPos.current.x, lastPos.current.y);
         ctx.lineTo(x, y);
-        // Always draw in white (areas to inpaint)
-        ctx.strokeStyle = 'white';
+        ctx.strokeStyle = 'white';  // areas to inpaint
         ctx.lineWidth = brushRadius;
         ctx.lineCap = 'round';
         ctx.stroke();
-
+    
+        // Debug: Verify pixel color after drawing
+        const imageData = ctx.getImageData(x - 1, y - 1, 3, 3);
+        const hasWhite = Array.from(imageData.data).some((value, index) => index % 4 === 0 && value === 255);
+        console.log('White pixels detected in drawn area:', hasWhite);
+    
         lastPos.current = { x, y };
     };
 
@@ -191,9 +212,30 @@ export function DrawingCard({
     const handleSave = () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-
-        // Get both the original and final mask data
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+    
+        // Debug: Check mask data before saving
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let whitePixels = 0;
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            if (imageData.data[i] === 255) { // Check red channel
+                whitePixels++;
+            }
+        }
+        console.log(`Mask contains ${whitePixels} pixels to inpaint`);
+    
+        // If no white pixels found, something might be wrong
+        if (whitePixels === 0) {
+            console.warn('Warning: No white pixels found in mask!');
+        }
+    
         const maskDataUrl = canvas.toDataURL('image/png');
+        
+        // Debug: Log the first part of the data URL
+        console.log('Mask data URL preview:', maskDataUrl.substring(0, 100));
+    
         onMaskGenerated(maskDataUrl);
     };
 

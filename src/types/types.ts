@@ -23,7 +23,7 @@ export type FormData = {
     disable_safety_checker: boolean;
     go_fast: boolean;
     style?: string;
-    maskDataUrl?: string;
+    maskDataUrl?: string | null;
     prompt_strength?: number;
     negative_prompt?: string;
     style_type?: IdeogramStyleType;
@@ -33,24 +33,33 @@ export type FormData = {
 export type GeneratedImage = {
     url: string;
     prompt: string;
-    model?: string;
-    version?: string;
-    go_fast?: boolean;
-    guidance_scale?: number;
-    num_inference_steps?: number;
-    lora_scale?: number;
-    timestamp?: string;
-    seed?: number;
-    isImg2Img: boolean;
-    privateLoraName?: string;
-    style?: string;
-    width?: number;
-    height?: number;
     negative_prompt?: string;
+    model: string;
+    seed: number;
+    version?: string;
+    privateLoraName?: string;
+    lora_scale?: number;
     extra_lora?: string;
     extra_lora_scale?: number;
-    generatedAt: string;
-};
+    guidance_scale: number;
+    num_inference_steps: number;
+    go_fast?: boolean;
+    output_format?: string;
+    output_quality?: number;
+    disable_safety_checker?: boolean;
+    width: number;
+    height: number;
+    aspect_ratio?: string;
+    style?: string;
+    isImg2Img?: boolean;
+    prompt_strength?: number;
+    maskDataUrl?: string | null;
+    sourceImageUrl: string,
+    timestamp: string;
+    baseInputImage?: string;
+    baseInputImageFormat?: string;
+    generationType?: 'txt2img' | 'img2img' | 'inpainting';
+}
 
 export type LogEntry = {
     timestamp: string;
