@@ -9,14 +9,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, Upload } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { FormData, Recraftv3Size, Recraftv3Style, IdeogramStyleType, IdeogramMagicPromptOption, } from '@/types/types';
+import { FormData, Recraftv3Size, Recraftv3Style, IdeogramStyleType, IdeogramMagicPromptOption, ImagePackConfig } from '@/types/types';
 import { ApiSettingsModal } from "@/components/modals/ApiSettingsModal";
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { Sun, Moon, Star } from 'lucide-react';
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
+import { useDropzone } from 'react-dropzone';
+
 
 interface GenerationSettingsCardProps {
 	formData: FormData;
@@ -40,6 +42,7 @@ interface GenerationSettingsCardProps {
 	handleApiKeyChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 	onAddToFavorites: (prompt: string) => void;
 	favoritePrompts: string[];
+	onImagePackUpload: (config: ImagePackConfig) => Promise<void>;
 }
 
 export function GenerationSettingsCard({
@@ -64,6 +67,7 @@ export function GenerationSettingsCard({
 	handleApiKeyChange,
 	onAddToFavorites,
 	favoritePrompts,
+	onImagePackUpload
 }: GenerationSettingsCardProps) {
 
 	const isPromptInFavorites = favoritePrompts.includes(formData.prompt);
@@ -79,6 +83,67 @@ export function GenerationSettingsCard({
 	const isSvgFormat = formData.output_format === 'svg';
 	const validAspectRatios = ["1:1", "16:9", "21:9", "2:3", "3:2", "4:5", "5:4", "9:16", "9:21", "custom"];
 
+
+    const onDrop = useCallback(async (acceptedFiles: File[]) => {
+        const file = acceptedFiles[0];
+        if (!file || !file.name.endsWith('.zip')) {
+            toast.error('Please upload a valid image pack ZIP file');
+            return;
+        }
+
+        try {
+            const JSZip = (await import('jszip')).default;
+            const zip = await JSZip.loadAsync(file);
+            
+            // Find and parse config file
+            const configFile = Object.values(zip.files).find(f => f.name.endsWith('.json'));
+            if (!configFile) throw new Error('No config file found in ZIP');
+            
+            const configText = await configFile.async('text');
+            const config = JSON.parse(configText) as ImagePackConfig;
+
+            config.zipFile = file;
+
+            const imageFile = Object.values(zip.files).find(f => 
+                !f.name.includes('-source') && 
+                !f.name.includes('-mask') && 
+                /\.(png|jpg|webp)$/i.test(f.name)
+            );
+    
+            if (imageFile) {
+                const imageBlob = await imageFile.async('blob');
+                config.previewImageUrl = URL.createObjectURL(imageBlob);
+            }
+            
+            // Handle source image if present
+            if (config.isImg2Img) {
+                const sourceFile = Object.values(zip.files).find(f => f.name.includes('-source'));
+                if (sourceFile) {
+                    const sourceBlob = await sourceFile.async('blob');
+                    config.sourceImageUrl = URL.createObjectURL(sourceBlob);
+                }
+                
+                // Handle mask if present
+                const maskFile = Object.values(zip.files).find(f => f.name.includes('-mask'));
+                if (maskFile) {
+                    const maskBlob = await maskFile.async('blob');
+                    config.maskDataUrl = URL.createObjectURL(maskBlob);
+                }
+            }
+
+            await onImagePackUpload(config);
+            toast.success('Image pack loaded successfully!');
+        } catch (error) {
+            console.error('Error processing ZIP:', error);
+            toast.error('Failed to process image pack');
+        }
+    }, [onImagePackUpload]);
+
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        onDrop,
+        accept: { 'application/zip': ['.zip'] },
+        multiple: false
+    });
 
 	useEffect(() => {
 		console.log('formData changed:', {
@@ -152,7 +217,7 @@ export function GenerationSettingsCard({
 			</div>
 			<CardHeader className="flex-none">
 				<CardTitle className="text-[#9b59b6] dark:text-[#fa71cd]">Generation Settings</CardTitle>
-				<CardDescription>Generate images using AI with the Replicate API</CardDescription>
+				<CardDescription>Generate images using AI</CardDescription>
 			</CardHeader>
 			<CardContent className="flex-1 overflow-y-auto min-h-0">
 				<form onSubmit={handleSubmit}>
@@ -247,26 +312,7 @@ export function GenerationSettingsCard({
 										</TooltipProvider>
 									</div>
 								)}
-								{!isRecraftv3 && !isIdeogram && (
-									<div>
-										<Label>Number of Outputs</Label>
-										<div className="flex space-x-2">
-											{[1, 2, 3, 4].map((value) => (
-												<button
-													key={value}
-													type="button"
-													onClick={() => handleNumOutputsChange(value)}
-													className={`w-12 h-12 flex items-center justify-center rounded-lg ${formData.num_outputs === value
-														? 'btn-theme'
-														: 'bg-gray-200 text-gray-700 border border-gray-300'
-														}`}
-												>
-													{value}
-												</button>
-											))}
-										</div>
-									</div>
-								)}
+
 
 								{!isRecraftv3 && !isIdeogram && (
 									<>
@@ -294,16 +340,7 @@ export function GenerationSettingsCard({
 												className="custom-slider"
 											/>
 										</div>
-										<div>
-											<Label htmlFor="seed">Seed</Label>
-											<Input
-												id="seed"
-												name="seed"
-												type="number"
-												value={formData.seed}
-												onChange={handleInputChange}
-											/>
-										</div>
+
 									</>
 								)}
 
@@ -333,6 +370,19 @@ export function GenerationSettingsCard({
 									Cancel
 								</Button>
 							</div>
+
+							<div 
+                        {...getRootProps()} 
+                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                            isDragActive 
+                                ? 'bg-primary/10 border-2 border-dashed border-primary' 
+                                : 'bg-transparent hover:bg-accent/10'
+                        }`}
+                    >
+                        <input {...getInputProps()} />
+                        <Upload className="w-4 h-4" />
+                        <span className="text-sm">Drop Image Pack</span>
+                    </div>
 
 						</TabsContent>
 						<TabsContent value="advanced" className="mt-4 overflow-y-auto scrollbar-hide overscroll-none touch-pan-y">
@@ -389,6 +439,27 @@ export function GenerationSettingsCard({
 									</div>
 								)}
 
+{!isRecraftv3 && !isIdeogram && (
+									<div>
+										<Label>Number of Outputs</Label>
+										<div className="flex space-x-2">
+											{[1, 2, 3, 4].map((value) => (
+												<button
+													key={value}
+													type="button"
+													onClick={() => handleNumOutputsChange(value)}
+													className={`w-12 h-12 flex items-center justify-center rounded-lg ${formData.num_outputs === value
+														? 'btn-theme'
+														: 'bg-gray-200 text-gray-700 border border-gray-300'
+														}`}
+												>
+													{value}
+												</button>
+											))}
+										</div>
+									</div>
+								)}
+
 
 								{!isRecraftv3 && !isIdeogram && (
 									<>
@@ -425,7 +496,16 @@ export function GenerationSettingsCard({
 
 								{!isRecraftv3 && (
 									<>
-
+										<div>
+											<Label htmlFor="seed">Seed</Label>
+											<Input
+												id="seed"
+												name="seed"
+												type="number"
+												value={formData.seed}
+												onChange={handleInputChange}
+											/>
+										</div>
 										<div>
 											<Label htmlFor="aspect_ratio">Aspect Ratio</Label>
 											<Select name="aspect_ratio" value={formData.aspect_ratio} onValueChange={(value) => handleSelectChange('aspect_ratio', value)}>

@@ -1324,6 +1324,7 @@ export default function Component() {
 							hasSourceImage={!!selectedImage}
 							onAddToFavorites={handleAddToFavorites}
 							favoritePrompts={favoritePrompts}
+							onImagePackUpload={handleImagePackUpload}
 						/>
 					</div>
 
@@ -1345,7 +1346,7 @@ export default function Component() {
 							onReusePrompt={handleReusePrompt}
 							onUpscaleImage={handleUpscaleImage}
 							onDownloadWithConfig={downloadImageWithConfig}
-							onImagePackUpload={handleImagePackUpload}
+						
 						/>
 
 					</div>
