@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { ArrowUpToLine, Download, Loader2, RefreshCw, Save, Upload } from 'lucide-react';
 import { GeneratedImage } from '@/types/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { WandSparkles } from 'lucide-react';
 
 import { Checkbox } from "@/components/ui/checkbox";
@@ -51,7 +51,7 @@ export function GeneratedImagesCard({
 
 // Constants for timing
 const EXPIRY_TIME_MS = 3600000; // 1 hour
-const EXPIRY_TIME_MS_REMOVE = 600000; // 10 minutes
+const EXPIRY_TIME_MS_REMOVE = 60000; 
 const TOTAL_REMOVAL_TIME = EXPIRY_TIME_MS + EXPIRY_TIME_MS_REMOVE;
 const CLEANUP_INTERVAL_MS = 60000;
 
@@ -84,7 +84,7 @@ const CLEANUP_INTERVAL_MS = 60000;
             model.includes('/');
     };
 
-    const getImageExpiry = (timestamp: string) => {
+    const getImageExpiry = useCallback((timestamp: string) => {
         const imageTime = new Date(timestamp).getTime();
         const currentTime = Date.now();
         const timeLeft = Math.max(0, EXPIRY_TIME_MS - (currentTime - imageTime));
@@ -95,7 +95,7 @@ const CLEANUP_INTERVAL_MS = 60000;
             timeLeft,
             shouldRemove
         };
-    };
+    }, [EXPIRY_TIME_MS, TOTAL_REMOVAL_TIME]); 
 
     // For determining if image can be regenerated (excludes Recraft)
     const canRegenerate = (model: string | undefined, privateLoraName?: string) => {
@@ -121,9 +121,8 @@ const CLEANUP_INTERVAL_MS = 60000;
 
     useEffect(() => {
         const interval = setInterval(() => {
-            const currentTime = Date.now();
-            setImages(prevImages => {  // Fixed arrow function syntax
-                const filteredImages = prevImages.filter(image => {  // Fixed nested arrow function
+            setImages(prevImages => {
+                const filteredImages = prevImages.filter(image => {
                     if (!image.timestamp) return true;
                     const { shouldRemove } = getImageExpiry(image.timestamp);
                     return !shouldRemove;
@@ -137,7 +136,7 @@ const CLEANUP_INTERVAL_MS = 60000;
         }, CLEANUP_INTERVAL_MS);
     
         return () => clearInterval(interval);
-    }, [setImages]);
+    }, [setImages, getImageExpiry]);
 
     return (
         <Card className="flex flex-col w-full h-[calc(100vh-10rem)] md:overflow-hidden">
