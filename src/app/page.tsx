@@ -544,7 +544,7 @@ const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 	
 			window.URL.revokeObjectURL(zipUrl);
 			
-			toast.success('Image pack downloaded successfully!');
+			//toast.success('Image pack downloaded successfully!');
 		} catch (error) {
 			console.error('Failed to create image pack:', error);
 			toast.error(error instanceof Error ? error.message : 'Failed to create image pack');
