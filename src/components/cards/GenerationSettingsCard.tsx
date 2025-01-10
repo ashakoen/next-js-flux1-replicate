@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Loader2, Upload } from 'lucide-react';
+import { AlertCircle, Loader2, Upload, Gift } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FormData, Recraftv3Size, Recraftv3Style, IdeogramStyleType, IdeogramMagicPromptOption, ImagePackConfig } from '@/types/types';
 import { ApiSettingsModal } from "@/components/modals/ApiSettingsModal";
@@ -372,17 +372,17 @@ export function GenerationSettingsCard({
 							</div>
 
 							<div 
-                        {...getRootProps()} 
-                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-                            isDragActive 
-                                ? 'bg-primary/10 border-2 border-dashed border-primary' 
-                                : 'bg-transparent hover:bg-accent/10'
-                        }`}
-                    >
-                        <input {...getInputProps()} />
-                        <Upload className="w-4 h-4" />
-                        <span className="text-sm">Drop Image Pack</span>
-                    </div>
+    {...getRootProps()} 
+    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+        isDragActive 
+            ? 'bg-primary/10 border-2 border-dashed border-primary' 
+            : 'bg-transparent hover:bg-accent/10'
+    }`}
+>
+    <input {...getInputProps()} />
+    <Gift className="w-4 h-4 text-[#9b59b6] dark:text-[#fa71cd]" />
+    <span className="text-sm">Drop Image Pack</span>
+</div>
 
 						</TabsContent>
 						<TabsContent value="advanced" className="mt-4 overflow-y-auto scrollbar-hide overscroll-none touch-pan-y">

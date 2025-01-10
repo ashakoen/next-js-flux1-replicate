@@ -4,12 +4,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import Image from 'next/image';
-import { ArrowUpToLine, Download, Loader2, RefreshCw, Save, Upload } from 'lucide-react';
-import { GeneratedImage, ImagePackConfig } from '@/types/types';
+import { ArrowUpToLine, Download, Loader2, RefreshCw, Gift, Upload } from 'lucide-react';
+import { GeneratedImage } from '@/types/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useCallback } from 'react';
 import { WandSparkles } from 'lucide-react';
-import { toast } from "sonner";
 
 
 import { Checkbox } from "@/components/ui/checkbox";
@@ -382,15 +381,7 @@ const CLEANUP_INTERVAL_MS = 60000;
                                                                     Use as Input
                                                                 </Button>
                                                             )}
-                                                            <Button
-                                                                className="flex-1"
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => onDownloadImage(image.url)}
-                                                            >
-                                                                <Download className="w-3 h-3 mr-1" />
-                                                                Download
-                                                            </Button>
+
                                                             {canRegenerate(image.model, image.privateLoraName) && (
                                                                 <Button
                                                                     className="flex-1"
@@ -412,14 +403,22 @@ const CLEANUP_INTERVAL_MS = 60000;
                                                                     Regenerate
                                                                 </Button>
                                                             )}
-
+                                                            <Button
+                                                                className="flex-1"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => onDownloadImage(image.url)}
+                                                            >
+                                                                <Download className="w-3 h-3 mr-1" />
+                                                                Download Image
+                                                            </Button>
                                                             <Button
                                                                 className="flex-1"
                                                                 size="sm"
                                                                 variant="outline"
                                                                 onClick={() => onDownloadWithConfig(image.url, image)}
                                                             >
-                                                                <Save className="w-3 h-3 mr-1" />
+                                                                <Gift className="w-3 h-3 mr-1" />
                                                                 Download IMG Pack
                                                             </Button>
 
