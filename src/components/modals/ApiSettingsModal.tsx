@@ -13,7 +13,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ApiSettingsModalProps {
     apiKey: string;
@@ -40,6 +40,15 @@ export function ApiSettingsModal({
 }: ApiSettingsModalProps) {
 
     const [open, setOpen] = useState(false);
+
+    useEffect(() => {
+        if (showApiKeyAlert) {
+            toast.error("Please enter your Replicate API key in Settings", {
+                description: "Click the settings icon in the top right to add your API key",
+                duration: 5000,
+            });
+        }
+    }, [showApiKeyAlert]);
 
     const handleExportSettings = () => {
         const settings = {
@@ -125,7 +134,7 @@ export function ApiSettingsModal({
                             <AlertCircle className="h-4 w-4" />
                             <AlertTitle>Error</AlertTitle>
                             <AlertDescription>
-                                Please enter your Replicate API key before generating images.
+                                Please enter a valid Replicate API key before generating images.
                             </AlertDescription>
                         </Alert>
                     )}

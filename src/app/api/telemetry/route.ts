@@ -23,6 +23,17 @@ type TelemetryResponse = {
 export async function POST(request: Request) {
   try {
     const telemetryData = await request.json();
+
+    // Skip telemetry logging if API key is missing or invalid
+    if (!telemetryData.apiKey || telemetryData.errors?.some((error: string) => 
+      error.includes('API key') || error.includes('authentication')
+    )) {
+      return NextResponse.json({ 
+        message: 'Skipped telemetry for API key error',
+        skipped: true 
+      }, { status: 200 });
+    }
+
     const userHash = hashApiKey(telemetryData.apiKey);
 
     const { data, error } = await supabase
