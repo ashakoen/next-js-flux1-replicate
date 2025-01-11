@@ -1,11 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createHash } from 'crypto';
 
 // Initialize Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+function hashApiKey(apiKey: string): string {
+  const salt = process.env.TELEMETRY_SALT || 'default-salt';
+  return createHash('sha256')
+    .update(apiKey + salt)
+    .digest('hex');
+}
 
 type TelemetryResponse = {
   id: number;
@@ -15,11 +23,12 @@ type TelemetryResponse = {
 export async function POST(request: Request) {
   try {
     const telemetryData = await request.json();
+    const userHash = hashApiKey(telemetryData.apiKey);
 
-    // Insert into Supabase
     const { data, error } = await supabase
       .from('telemetry')
       .insert([{
+        user_hash: userHash,
         request_id: telemetryData.requestId,
         request_start_time: telemetryData.requestStartTime,
         response_time: telemetryData.responseTime,
@@ -41,6 +50,8 @@ export async function POST(request: Request) {
         replicate_completed_at: telemetryData.replicateCompletedAt,
         replicate_predict_time: telemetryData.replicatePredictTime
       }]) as { data: TelemetryResponse[] | null, error: any };
+
+    delete telemetryData.apiKey;
 
     if (error) throw error;
 
