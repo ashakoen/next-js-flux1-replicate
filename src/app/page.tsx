@@ -497,18 +497,35 @@ export default function Component() {
 			}
 
 			// Handle model mapping
-			let modelType: FormData['model'] = 'dev';
-			let privateLoraName = '';
+// Improved model mapping
+let modelType: FormData['model'];
+let privateLoraName = '';
 
-			if (config.lora_scale !== undefined) {
-				// It's a LoRA model
-				modelType = 'dev'; // Default model for LoRA
-				privateLoraName = `${config.model}:${config.version}`;
-			} else if (config.model.includes('recraftv3')) {
-				modelType = 'recraftv3';
-			} else {
-				modelType = 'dev';
-			}
+// Map the model from the config
+if (config.model.includes('flux')) {
+    // Extract model type from full identifier
+    if (config.model.includes('pro-ultra')) {
+        modelType = 'pro-ultra';
+    } else if (config.model.includes('pro')) {
+        modelType = 'pro';
+    } else if (config.model.includes('schnell')) {
+        modelType = 'schnell';
+    } else {
+        modelType = 'dev';
+    }
+} else if (config.model.includes('recraftv3')) {
+    modelType = 'recraftv3';
+} else if (config.model.includes('/')) {
+    // It's a LoRA model
+    modelType = 'dev';
+    privateLoraName = config.model;
+    if (config.version) {
+        privateLoraName += `:${config.version}`;
+    }
+} else {
+    console.warn(`Unknown model type: ${config.model}, falling back to dev`);
+    modelType = 'dev';
+}
 
 			const newFormData: FormData = {
 				...formData, // Start with current form data as base
