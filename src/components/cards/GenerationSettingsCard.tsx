@@ -204,7 +204,7 @@ export function GenerationSettingsCard({
 	const { theme, setTheme } = useTheme();
 
 	return (
-		<Card className="flex flex-col w-full h-[calc(100vh-10rem)] overflow-hidden">
+		<Card className="flex flex-col w-full h-[calc(100vh-8rem)] overflow-hidden">
 			<div className="absolute top-2 right-3 flex items-center gap-2 z-50">
 				<Button
 					variant="ghost"
