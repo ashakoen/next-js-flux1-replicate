@@ -111,14 +111,6 @@ export default function Component() {
 		}
 	}, []);
 
-	const handleCloseConfirm = () => {
-		setShowGenerateConfirm(false);
-		if (previewImageUrl) {
-			URL.revokeObjectURL(previewImageUrl);
-			setPreviewImageUrl(undefined);
-		}
-	};
-
 	const handleReusePrompt = (prompt: string) => {
 		setFormData((prev) => ({
 			...prev,
@@ -186,7 +178,6 @@ export default function Component() {
 		}
 	}, []);
 
-	// Add this useEffect after your other localStorage-related effects
 	useEffect(() => {
 		const savedFormData = localStorage.getItem('replicateFormData');
 		if (savedFormData) {
@@ -224,14 +215,6 @@ export default function Component() {
 			num_outputs: value,
 		}));
 	};
-
-	const handleSavePrompt = useCallback(() => {
-		if (formData.prompt && !favoritePrompts.includes(formData.prompt)) {
-			const updatedFavorites = [...favoritePrompts, formData.prompt];
-			setFavoritePrompts(updatedFavorites);
-			localStorage.setItem('favoritePrompts', JSON.stringify(updatedFavorites));
-		}
-	}, [formData.prompt, favoritePrompts]);
 
 	const handleDeleteFavoritePrompt = useCallback((prompt: string) => {
 		const updatedFavorites = favoritePrompts.filter(p => p !== prompt);
@@ -496,36 +479,34 @@ export default function Component() {
 				setPreviewImageUrl(previewUrl);
 			}
 
-			// Handle model mapping
-// Improved model mapping
-let modelType: FormData['model'];
-let privateLoraName = '';
+			let modelType: FormData['model'];
+			let privateLoraName = '';
 
-// Map the model from the config
-if (config.model.includes('flux')) {
-    // Extract model type from full identifier
-    if (config.model.includes('pro-ultra')) {
-        modelType = 'pro-ultra';
-    } else if (config.model.includes('pro')) {
-        modelType = 'pro';
-    } else if (config.model.includes('schnell')) {
-        modelType = 'schnell';
-    } else {
-        modelType = 'dev';
-    }
-} else if (config.model.includes('recraftv3')) {
-    modelType = 'recraftv3';
-} else if (config.model.includes('/')) {
-    // It's a LoRA model
-    modelType = 'dev';
-    privateLoraName = config.model;
-    if (config.version) {
-        privateLoraName += `:${config.version}`;
-    }
-} else {
-    console.warn(`Unknown model type: ${config.model}, falling back to dev`);
-    modelType = 'dev';
-}
+			// Map the model from the config
+			if (config.model.includes('flux')) {
+				// Extract model type from full identifier
+				if (config.model.includes('pro-ultra')) {
+					modelType = 'pro-ultra';
+				} else if (config.model.includes('pro')) {
+					modelType = 'pro';
+				} else if (config.model.includes('schnell')) {
+					modelType = 'schnell';
+				} else {
+					modelType = 'dev';
+				}
+			} else if (config.model.includes('recraftv3')) {
+				modelType = 'recraftv3';
+			} else if (config.model.includes('/')) {
+				// It's a LoRA model
+				modelType = 'dev';
+				privateLoraName = config.model;
+				if (config.version) {
+					privateLoraName += `:${config.version}`;
+				}
+			} else {
+				console.warn(`Unknown model type: ${config.model}, falling back to dev`);
+				modelType = 'dev';
+			}
 
 			const newFormData: FormData = {
 				...formData, // Start with current form data as base
@@ -583,7 +564,6 @@ if (config.model.includes('flux')) {
 
 			setShowGenerateConfirm(true);
 
-			//toast.success('Image pack configuration loaded successfully!');
 		} catch (error) {
 			console.error('Error processing image pack:', error);
 			toast.error('Failed to process image pack configuration');
@@ -732,7 +712,7 @@ if (config.model.includes('flux')) {
 				{ preventDefault: () => { } } as React.FormEvent,
 				pendingFormData
 			);
-			//toast.success('Image generated successfully!');
+
 		} catch (error) {
 			console.error('Error generating image:', error);
 			toast.error('Failed to generate image');
@@ -785,7 +765,7 @@ if (config.model.includes('flux')) {
 			const reader = new FileReader();
 			const base64Promise = new Promise<string | ArrayBuffer | null>((resolve) => {
 				reader.onload = () => resolve(reader.result);
-				reader.readAsDataURL(selectedImage.file!); // '!' tells TypeScript we know file exists
+				reader.readAsDataURL(selectedImage.file!);
 			});
 			const base64Data = await base64Promise;
 			imageData = base64Data as string;
@@ -798,7 +778,7 @@ if (config.model.includes('flux')) {
 					width: submissionData.width,
 					height: submissionData.height,
 					style: submissionData.style || 'any',
-					output_format: submissionData.output_format,  // Add this line
+					output_format: submissionData.output_format,
 					...(selectedImage?.file ? { image: imageData } : {})
 				},
 				model: submissionData.model
@@ -878,7 +858,7 @@ if (config.model.includes('flux')) {
 		console.log('Replicate Params:', replicateParams);
 		if (selectedImage?.file && maskDataUrl) {
 			console.log('Sending inpainting request with:', {
-				imageSize: imageData ? imageData.length : 0,  // Add null check here
+				imageSize: imageData ? imageData.length : 0,
 				maskSize: maskDataUrl.length,
 				maskPreview: maskDataUrl.substring(0, 100) + '...'
 			});
@@ -897,7 +877,7 @@ if (config.model.includes('flux')) {
 			pollingSteps: 0,
 			generationParameters: {
 				...telemetryDataWithoutMask,
-				hasInputImage: !!selectedImage // Add this line to indicate if an input image was used
+				hasInputImage: !!selectedImage
 			},
 			outputImageSizes: [],
 			clientInfo: getClientInfo(),
@@ -953,7 +933,7 @@ if (config.model.includes('flux')) {
 			newTelemetryData.errors.push(error instanceof Error ? error.message : 'Unknown error occurred')
 			finalizeTelemetryData(newTelemetryData)
 		}
-		//setMaskDataUrl(null);
+
 	};
 
 
@@ -1019,16 +999,13 @@ if (config.model.includes('flux')) {
 				currentTelemetryData.replicateCompletedAt = pollData.completed_at
 				currentTelemetryData.replicatePredictTime = pollData.metrics?.predict_time || 0
 				currentTelemetryData.generationParameters.seed = seed;
+				currentTelemetryData.outputImageSizes = [];
 
 				const outputUrls = Array.isArray(pollData.output) ? pollData.output : [pollData.output];
 
 				const newImages = outputUrls.map((outputUrl: string) => {
 					console.log('pollData input:', pollData.input);
-					// Fetch image size
-					fetch(outputUrl).then(response => {
-						const size = parseInt(response.headers.get('content-length') || '0')
-						currentTelemetryData.outputImageSizes.push(size)
-					})
+
 					return {
 						url: outputUrl,
 						prompt: pollData.input.prompt,
@@ -1318,7 +1295,7 @@ if (config.model.includes('flux')) {
 						setFormData={setFormData}
 					/>
 
-<div className="middle-column order-2 xl:order-1">
+					<div className="middle-column order-2 xl:order-1">
 						<GenerationSettingsCard
 							formData={formData}
 							isLoading={isLoading}
@@ -1342,6 +1319,10 @@ if (config.model.includes('flux')) {
 							onAddToFavorites={handleAddToFavorites}
 							favoritePrompts={favoritePrompts}
 							onImagePackUpload={handleImagePackUpload}
+							extraLoraModels={extraLoraModels}
+							setExtraLoraModels={setExtraLoraModels}
+							setValidatedLoraModels={setValidatedLoraModels}
+							setFavoritePrompts={setFavoritePrompts}
 						/>
 					</div>
 
@@ -1363,7 +1344,7 @@ if (config.model.includes('flux')) {
 							onReusePrompt={handleReusePrompt}
 							onUpscaleImage={handleUpscaleImage}
 							onDownloadWithConfig={downloadImageWithConfig}
-						
+
 						/>
 
 					</div>

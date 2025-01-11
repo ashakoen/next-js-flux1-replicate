@@ -9,12 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Loader2, Upload, Gift } from 'lucide-react';
+import { Sun, Moon, Star, AlertCircle, Loader2, Gift } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FormData, Recraftv3Size, Recraftv3Style, IdeogramStyleType, IdeogramMagicPromptOption, ImagePackConfig } from '@/types/types';
 import { ApiSettingsModal } from "@/components/modals/ApiSettingsModal";
 import { useEffect, useCallback } from 'react';
-import { Sun, Moon, Star } from 'lucide-react';
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { useDropzone } from 'react-dropzone';
@@ -43,6 +42,10 @@ interface GenerationSettingsCardProps {
 	onAddToFavorites: (prompt: string) => void;
 	favoritePrompts: string[];
 	onImagePackUpload: (config: ImagePackConfig) => Promise<void>;
+    extraLoraModels: string[];
+    setExtraLoraModels: (models: string[]) => void;
+    setValidatedLoraModels: (models: string[]) => void;
+    setFavoritePrompts: (prompts: string[]) => void;
 }
 
 export function GenerationSettingsCard({
@@ -67,7 +70,11 @@ export function GenerationSettingsCard({
 	handleApiKeyChange,
 	onAddToFavorites,
 	favoritePrompts,
-	onImagePackUpload
+	onImagePackUpload,
+	extraLoraModels,
+	setExtraLoraModels,
+    setValidatedLoraModels,
+    setFavoritePrompts,
 }: GenerationSettingsCardProps) {
 
 	const isPromptInFavorites = favoritePrompts.includes(formData.prompt);
@@ -213,6 +220,12 @@ export function GenerationSettingsCard({
 					apiKey={apiKey}
 					showApiKeyAlert={showApiKeyAlert}
 					handleApiKeyChange={handleApiKeyChange}
+					extraLoraModels={extraLoraModels}
+					validatedLoraModels={validatedLoraModels}
+					favoritePrompts={favoritePrompts}
+					setExtraLoraModels={setExtraLoraModels}
+					setValidatedLoraModels={setValidatedLoraModels}
+					setFavoritePrompts={setFavoritePrompts}
 				/>
 			</div>
 			<CardHeader className="flex-none">
