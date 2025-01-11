@@ -12,6 +12,48 @@ export async function POST(req: Request): Promise<Response> {
 			return new Response(JSON.stringify({ error: 'API key is required' }), { status: 400 });
 		}
 
+		// Add near the top with other conditions
+		if (body?.validateLora) {
+			console.log('Validating LoRA model:', body.modelPath);
+
+			if (!body.modelPath || !body.version) {
+				console.error('Missing required LoRA validation parameters');
+				return new Response(
+					JSON.stringify({ error: 'Missing modelPath or version' }), 
+					{ status: 400 }
+				);
+			}
+
+			try {
+				const urlToFetch = `https://api.replicate.com/v1/models/${body.modelPath}/versions`;
+				
+				const response = await fetch(urlToFetch, {
+					method: 'GET',
+					headers: {
+						'Authorization': `Token ${apiKey}`,
+						'Content-Type': 'application/json',
+					}
+				});
+		
+				const data = await response.json();
+				console.log('LoRA Validation Response:', response.status, data);
+		
+				if (!response.ok) {
+					console.error('Error validating LoRA:', data);
+					return new Response(JSON.stringify(data), { status: response.status });
+				}
+		
+				return new Response(JSON.stringify(data), { status: 200 });
+		
+			} catch (error) {
+				console.error('Error during LoRA validation:', error);
+				return new Response(
+					JSON.stringify({ error: 'Failed to validate LoRA model' }), 
+					{ status: 500 }
+				);
+			}
+		}
+
 		let urlToFetch = 'https://api.replicate.com/v1/predictions';
 		let method = 'POST';
 		let fetchBody = JSON.stringify(body);

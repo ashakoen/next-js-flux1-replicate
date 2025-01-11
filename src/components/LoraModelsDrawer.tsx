@@ -47,28 +47,65 @@ export function LoraModelsDrawer({
     const [isValidatingLora, setIsValidatingLora] = useState(false);
     const [loraValidationError, setLoraValidationError] = useState<string | null>(null);
 
-    const validateAndAddLoraModel = (modelName: string) => {
+    const validateAndAddLoraModel = async (modelName: string) => {
         if (!apiKey) {
             setShowApiKeyAlert(true);
             return;
         }
-
+    
         setIsValidatingLora(true);
         setLoraValidationError(null);
-
-        // Simulate validation (replace with actual API call if needed)
-        setTimeout(() => {
+    
+        const matches = modelName.match(/^([^/]+)\/([^:]+):(.+)$/);
+        if (!matches) {
             setIsValidatingLora(false);
-            setValidatedLoraModels((prev) => {
+            setLoraValidationError("Invalid format. Expected: username/model-name:version");
+            return;
+        }
+    
+        const [_, username, modelBaseName, version] = matches;
+        const modelPath = `${username}/${modelBaseName}`;
+    
+        try {
+            const response = await fetch('/api/replicate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    apiKey,
+                    body: {
+                        validateLora: true,
+                        modelPath,
+                        version
+                    }
+                })
+            });
+    
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || "Failed to validate model");
+            }
+    
+            const versionExists = data.results?.some((result: any) => result.id === version);
+            if (!versionExists) {
+                throw new Error("Version not found for this model");
+            }
+    
+            setValidatedLoraModels(prev => {
                 const newModels = Array.from(new Set([...prev, modelName]));
                 localStorage.setItem('validatedLoraModels', JSON.stringify(newModels));
                 return newModels;
             });
-            setLoraValidationError(null);
-            setFormData((prev) => ({ ...prev, privateLoraName: modelName }));
+            setFormData(prev => ({ ...prev, privateLoraName: modelName }));
             setNewModelInput('');
             toast.success("LoRA model validated and added successfully!");
-        }, 2000);
+    
+        } catch (error) {
+            console.error('Validation error:', error);
+            setLoraValidationError(error instanceof Error ? error.message : "Failed to validate LoRA model");
+        } finally {
+            setIsValidatingLora(false);
+        }
     };
 
     const handleAddModel = () => {
