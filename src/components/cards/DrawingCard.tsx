@@ -90,7 +90,7 @@ export function DrawingCard({
     }
 
     // Add imageHeight + extra space for controls
-    const cardHeight = imageHeight + 150; // 150px for controls and padding
+    const cardHeight = imageHeight + 200; // 150px for controls and padding
 
     const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
         if (disabled) return;
