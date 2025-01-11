@@ -20,6 +20,7 @@ import { LoraModelsDrawer } from '@/components/LoraModelsDrawer';
 import { ExtraLoraModelsDrawer } from "@/components/ExtraLoraModelsDrawer";
 import { GenerateConfirmModal } from "@/components/modals/GenerateConfirmModal";
 import { Toaster, toast } from "sonner";
+import { createHash } from 'crypto';
 
 
 
@@ -1093,12 +1094,22 @@ export default function Component() {
 		setTelemetryData(finalTelemetryData)
 
 		try {
+
+			const userHash = createHash('sha256')
+			.update(apiKey + (process.env.TELEMETRY_SALT || 'default-salt'))
+			.digest('hex');
+	  
+		  const telemetryWithHash = {
+			...finalTelemetryData,
+			user_hash: userHash
+		  };
+
 			const response = await fetch('/api/telemetry', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify(finalTelemetryData),
+				body: JSON.stringify(telemetryWithHash),
 			})
 
 			if (!response.ok) {
