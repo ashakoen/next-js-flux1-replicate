@@ -60,6 +60,7 @@ export function ApiSettingsModal({
         
         URL.revokeObjectURL(url);
         toast.success('Settings exported successfully!');
+        setOpen(false);
     };
 
     const handleImportSettings = async (e: React.ChangeEvent<HTMLInputElement>) => {

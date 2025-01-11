@@ -1246,7 +1246,7 @@ export default function Component() {
 	return (
 		<>
 			<Toaster position="top-right" />
-			<div className="container mx-auto px-2 pt-10 pb-20 h-[calc(100vh-2rem)]">
+			<div className="container mx-auto px-2 pt-12 pb-20 h-[calc(100vh-2rem)]">
 				<div className="main-layout">
 
 					<GenerateConfirmModal
