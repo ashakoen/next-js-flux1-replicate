@@ -26,7 +26,7 @@ export function GenerateConfirmModal({
     previewImageUrl
 }: GenerateConfirmModalProps) {
 
-    console.log('Preview URL in modal:', previewImageUrl);
+    //console.log('Preview URL in modal:', previewImageUrl);
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>

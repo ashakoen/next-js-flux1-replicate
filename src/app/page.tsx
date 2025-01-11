@@ -133,7 +133,7 @@ export default function Component() {
 
 	useEffect(() => {
 		const savedGeneratedImages = localStorage.getItem('generatedImages');
-		console.log('Loaded generatedImages from localStorage:', savedGeneratedImages);
+		//console.log('Loaded generatedImages from localStorage:', savedGeneratedImages);
 		if (savedGeneratedImages) {
 			setGeneratedImages(JSON.parse(savedGeneratedImages));
 		}
@@ -142,7 +142,7 @@ export default function Component() {
 
 	useEffect(() => {
 		if (!isInitialLoad) {
-			console.log('Saving generatedImages to localStorage:', generatedImages);
+			//console.log('Saving generatedImages to localStorage:', generatedImages);
 			localStorage.setItem('generatedImages', JSON.stringify(generatedImages));
 		}
 	}, [generatedImages, isInitialLoad]);
@@ -205,7 +205,7 @@ export default function Component() {
 
 	useEffect(() => {
 		if (!isInpaintingEnabled) {
-			console.log('Inpainting disabled, clearing maskDataUrl');
+			//console.log('Inpainting disabled, clearing maskDataUrl');
 			setMaskDataUrl(null);
 		}
 	}, [isInpaintingEnabled]);
@@ -269,12 +269,6 @@ export default function Component() {
 
 	const handleSelectChange = (name: string, value: string) => {
 		setFormData((prev) => {
-			console.log('handleSelectChange:', {
-				name,
-				value,
-				prevModel: prev.model,
-				prevFormat: prev.output_format
-			});
 
 			// Guard against empty output_format
 			if (name === 'output_format' && !value) {
@@ -307,7 +301,7 @@ export default function Component() {
 				})
 			};
 
-			console.log('Updated formData:', updatedFormData);
+			//console.log('Updated formData:', updatedFormData);
 			localStorage.setItem('replicateFormData', JSON.stringify(updatedFormData));
 			return updatedFormData as FormData;
 		});
@@ -373,7 +367,7 @@ export default function Component() {
 	};
 
 	const handleUpscaleImage = async (params: any) => {
-		console.log('Starting upscale with params:', params);
+		//console.log('Starting upscale with params:', params);
 
 		if (!apiKey) {
 			setShowApiKeyAlert(true);
@@ -462,7 +456,7 @@ export default function Component() {
 
 	const handleImagePackUpload = async (config: ImagePackConfig) => {
 		try {
-			console.log('Processing image pack config:', config);
+			//console.log('Processing image pack config:', config);
 
 
 			const JSZip = (await import('jszip')).default;
@@ -572,7 +566,7 @@ export default function Component() {
 	};
 
 	const downloadImageWithConfig = async (imageUrl: string, image: GeneratedImage) => {
-		console.log('Image object received:', image);
+		//console.log('Image object received:', image);
 		try {
 			toast.info('Preparing image pack...');
 
@@ -757,8 +751,8 @@ export default function Component() {
 
 		const [loraName, loraVersion] = submissionData.privateLoraName.split(':');
 
-		console.log('LoRA Name:', loraName);
-		console.log('LoRA Version:', loraVersion);
+		//console.log('LoRA Name:', loraName);
+		//console.log('LoRA Version:', loraVersion);
 
 		let imageData: string | undefined;
 
@@ -1005,7 +999,7 @@ export default function Component() {
 				const outputUrls = Array.isArray(pollData.output) ? pollData.output : [pollData.output];
 
 				const newImages = outputUrls.map((outputUrl: string) => {
-					console.log('pollData input:', pollData.input);
+					//('pollData input:', pollData.input);
 
 					return {
 						url: outputUrl,
@@ -1036,7 +1030,7 @@ export default function Component() {
 
 				setGeneratedImages((prev) => {
 					const updatedImages = [...prev, ...newImages]
-					console.log('Saving images with img2img data:', updatedImages)  // Add this line
+					//console.log('Saving images with img2img data:', updatedImages)  // Add this line
 					localStorage.setItem('generatedImages', JSON.stringify(updatedImages))
 					return updatedImages
 				})

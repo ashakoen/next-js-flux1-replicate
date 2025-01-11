@@ -152,21 +152,7 @@ export function GenerationSettingsCard({
         multiple: false
     });
 
-	useEffect(() => {
-		console.log('formData changed:', {
-			model: formData.model,
-			outputFormat: formData.output_format,
-			isRecraftModel: isRecraftModel(formData.model),
-			isRecraftv3: isRecraftModel(formData.model)
-		});
-	}, [formData]); // Now we only need formData as a dependency
 
-	console.log('Current model:', formData.model);
-	console.log('isRecraftModel result:', isRecraftModel(formData.model));
-	console.log('isRecraftv3 value:', isRecraftv3);
-	console.log('isIdeogramModel result:', isIdeogramModel(formData.model));
-	console.log('isIdeogram value:', isIdeogram);
-	console.log('Output format:', formData.output_format);
 
 	const ideogramStyleTypes: IdeogramStyleType[] = [
 		"None", "Auto", "General", "Realistic", "Design", "Render 3D", "Anime"

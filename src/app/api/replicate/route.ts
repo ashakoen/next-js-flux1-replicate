@@ -4,8 +4,8 @@ export async function POST(req: Request): Promise<Response> {
 
 		const model = body?.model;
 
-		console.log('Received model:', model);
-		console.log('Received body:', body);
+		//console.log('Received model:', model);
+		//console.log('Received body:', body);
 
 		if (!apiKey) {
 			console.error('Error: API key is missing');
