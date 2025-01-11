@@ -1318,7 +1318,7 @@ if (config.model.includes('flux')) {
 						setFormData={setFormData}
 					/>
 
-<div className="middle-column order-2 md:order-1">
+<div className="middle-column order-2 xl:order-1">
 						<GenerationSettingsCard
 							formData={formData}
 							isLoading={isLoading}
@@ -1347,7 +1347,7 @@ if (config.model.includes('flux')) {
 
 
 					{/* Generated Images Card - Right 2/3 */}
-					<div className="right-column order-1 md:order-2">
+					<div className="right-column order-1 xl:order-2">
 
 						<GeneratedImagesCard
 							images={generatedImages}
