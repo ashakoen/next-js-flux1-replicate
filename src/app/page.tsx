@@ -125,35 +125,21 @@ export default function Component() {
 		}));
 	};
 
-    useEffect(() => {
-        const initializeStorage = async () => {
-            try {
-                // Try to load images from IndexedDB first
-                const storedImages = await db.getImages();
-                if (storedImages?.length) {
-                    setGeneratedImages(storedImages);
-                } else {
-                    // Fallback to localStorage
-                    const localImages = localStorage.getItem('generatedImages');
-                    if (localImages) {
-                        const parsedImages = JSON.parse(localImages);
-                        setGeneratedImages(parsedImages);
-                        // Migrate to IndexedDB
-                        await db.saveImages(parsedImages);
-                    }
-                }
-            } catch (error) {
-                console.error('Storage initialization error:', error);
-                // Fallback to localStorage if IndexedDB fails
-                const localImages = localStorage.getItem('generatedImages');
-                if (localImages) {
-                    setGeneratedImages(JSON.parse(localImages));
-                }
-            }
-        };
-
-        initializeStorage();
-    }, []);
+	useEffect(() => {
+		const initializeStorage = async () => {
+			try {
+				// Only load images from IndexedDB
+				const storedImages = await db.getImages();
+				if (storedImages?.length) {
+					setGeneratedImages(storedImages);
+				}
+			} catch (error) {
+				console.error('Storage initialization error:', error);
+			}
+		};
+	
+		initializeStorage();
+	}, []);
 
 	useEffect(() => {
 		const savedApiKey = localStorage.getItem('replicateApiKey');
@@ -167,28 +153,11 @@ export default function Component() {
 		}
 	}, []);
 
-	useEffect(() => {
-		const savedGeneratedImages = localStorage.getItem('generatedImages');
-		//console.log('Loaded generatedImages from localStorage:', savedGeneratedImages);
-		if (savedGeneratedImages) {
-			setGeneratedImages(JSON.parse(savedGeneratedImages));
-		}
-		setIsInitialLoad(false);
-	}, []);
-
-	useEffect(() => {
-		if (!isInitialLoad) {
-			//console.log('Saving generatedImages to localStorage:', generatedImages);
-			localStorage.setItem('generatedImages', JSON.stringify(generatedImages));
-		}
-	}, [generatedImages, isInitialLoad]);
-
 	const clearGeneratedImages = useCallback(() => {
 		db.clearImages().catch(error => {
 			console.error('Error clearing IndexedDB:', error);
 		});
 		setGeneratedImages([]);
-		localStorage.removeItem('generatedImages'); // Keep existing localStorage cleanup
 	}, []);
 
 	useEffect(() => {
@@ -263,15 +232,8 @@ export default function Component() {
 	}, [favoritePrompts]);
 
 	const handleDeleteImage = useCallback(async (timestamp: string) => {
-		// First delete from IndexedDB
 		await db.deleteImage(timestamp);
-		
-		// Then update state and localStorage
-		setGeneratedImages(prev => {
-			const filtered = prev.filter(img => img.timestamp !== timestamp);
-			localStorage.setItem('generatedImages', JSON.stringify(filtered));
-			return filtered;
-		});
+		setGeneratedImages(prev => prev.filter(img => img.timestamp !== timestamp));
 	}, []);
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -1145,15 +1107,12 @@ export default function Component() {
 				})
 
 				setGeneratedImages((prev) => {
-					const updatedImages = [...prev, ...newImages];
-					// Add IndexedDB storage while keeping localStorage
+					const updatedImages = [...prev, ...newImages]
 					db.saveImages(updatedImages).catch(error => {
 						console.error('Error saving to IndexedDB:', error);
-						// Fallback to existing localStorage
-						localStorage.setItem('generatedImages', JSON.stringify(updatedImages));
 					});
-					return updatedImages;
-				});
+					return updatedImages
+				})
 
 				stopStatuses()
 				finalizeTelemetryData(currentTelemetryData)
