@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Terminal } from 'lucide-react';
 import { GenerationSettingsCard } from '@/components/cards/GenerationSettingsCard';
+import { db } from '@/services/indexedDB';
 
 import ServerLogModal from '../components/modals/serverLogModal';
 import {
@@ -124,6 +125,36 @@ export default function Component() {
 		}));
 	};
 
+    useEffect(() => {
+        const initializeStorage = async () => {
+            try {
+                // Try to load images from IndexedDB first
+                const storedImages = await db.getImages();
+                if (storedImages?.length) {
+                    setGeneratedImages(storedImages);
+                } else {
+                    // Fallback to localStorage
+                    const localImages = localStorage.getItem('generatedImages');
+                    if (localImages) {
+                        const parsedImages = JSON.parse(localImages);
+                        setGeneratedImages(parsedImages);
+                        // Migrate to IndexedDB
+                        await db.saveImages(parsedImages);
+                    }
+                }
+            } catch (error) {
+                console.error('Storage initialization error:', error);
+                // Fallback to localStorage if IndexedDB fails
+                const localImages = localStorage.getItem('generatedImages');
+                if (localImages) {
+                    setGeneratedImages(JSON.parse(localImages));
+                }
+            }
+        };
+
+        initializeStorage();
+    }, []);
+
 	useEffect(() => {
 		const savedApiKey = localStorage.getItem('replicateApiKey');
 		if (savedApiKey) {
@@ -152,10 +183,13 @@ export default function Component() {
 		}
 	}, [generatedImages, isInitialLoad]);
 
-	const clearGeneratedImages = () => {
+	const clearGeneratedImages = useCallback(() => {
+		db.clearImages().catch(error => {
+			console.error('Error clearing IndexedDB:', error);
+		});
 		setGeneratedImages([]);
-		localStorage.removeItem('generatedImages');
-	};
+		localStorage.removeItem('generatedImages'); // Keep existing localStorage cleanup
+	}, []);
 
 	useEffect(() => {
 		const savedFavoritePrompts = localStorage.getItem('favoritePrompts');
@@ -228,13 +262,17 @@ export default function Component() {
 		localStorage.setItem('favoritePrompts', JSON.stringify(updatedFavorites));
 	}, [favoritePrompts]);
 
-	const handleDeleteImage = (imageUrl: string) => {
-		setGeneratedImages((prev) => {
-			const updatedImages = prev.filter((image) => image.url !== imageUrl);
-			localStorage.setItem('generatedImages', JSON.stringify(updatedImages));
-			return updatedImages;
+	const handleDeleteImage = useCallback(async (timestamp: string) => {
+		// First delete from IndexedDB
+		await db.deleteImage(timestamp);
+		
+		// Then update state and localStorage
+		setGeneratedImages(prev => {
+			const filtered = prev.filter(img => img.timestamp !== timestamp);
+			localStorage.setItem('generatedImages', JSON.stringify(filtered));
+			return filtered;
 		});
-	};
+	}, []);
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		const { name, value, type } = e.target;
@@ -701,11 +739,21 @@ export default function Component() {
 		try {
 			const response = await fetch(blobUrl);
 			const blob = await response.blob();
+			// Create a compressed version for storage
+			const canvas = document.createElement('canvas');
+			const ctx = canvas.getContext('2d');
+			const img = new Image();
+			
 			return new Promise((resolve, reject) => {
-				const reader = new FileReader();
-				reader.onloadend = () => resolve(reader.result as string);
-				reader.onerror = reject;
-				reader.readAsDataURL(blob);
+				img.onload = () => {
+					// Resize to smaller dimensions
+					canvas.width = 400;  // Reduced size
+					canvas.height = 400;
+					ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+					resolve(canvas.toDataURL('image/jpeg', 0.7)); // Compressed JPEG
+				};
+				img.onerror = reject;
+				img.src = URL.createObjectURL(blob);
 			});
 		} catch (error) {
 			console.error('Error converting blob URL to data URI:', error);
@@ -846,7 +894,7 @@ export default function Component() {
 				},
 				model: "luma"
 			};
-			
+
 		} else if (loraName && loraVersion) {
 
 			replicateParams = {
@@ -1097,11 +1145,15 @@ export default function Component() {
 				})
 
 				setGeneratedImages((prev) => {
-					const updatedImages = [...prev, ...newImages]
-					//console.log('Saving images with img2img data:', updatedImages)  // Add this line
-					localStorage.setItem('generatedImages', JSON.stringify(updatedImages))
-					return updatedImages
-				})
+					const updatedImages = [...prev, ...newImages];
+					// Add IndexedDB storage while keeping localStorage
+					db.saveImages(updatedImages).catch(error => {
+						console.error('Error saving to IndexedDB:', error);
+						// Fallback to existing localStorage
+						localStorage.setItem('generatedImages', JSON.stringify(updatedImages));
+					});
+					return updatedImages;
+				});
 
 				stopStatuses()
 				finalizeTelemetryData(currentTelemetryData)

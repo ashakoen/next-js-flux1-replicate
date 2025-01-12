@@ -19,7 +19,7 @@ interface GeneratedImagesCardProps {
     images: GeneratedImage[];
     setImages: React.Dispatch<React.SetStateAction<GeneratedImage[]>>;
     onDownloadImage: (url: string) => void;
-    onDeleteImage: (url: string) => void;
+    onDeleteImage: (timestamp: string) => void;
     clearGeneratedImages: () => void;
     isGenerating: boolean;
     numberOfOutputs: number;
@@ -698,7 +698,7 @@ export function GeneratedImagesCard({
                                             variant="destructive"
                                             size="icon"
                                             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                            onClick={() => onDeleteImage(image.url)}
+                                            onClick={() => onDeleteImage(image.timestamp)}
                                         >
                                             <span className="sr-only">Delete image</span>
                                             &times;
