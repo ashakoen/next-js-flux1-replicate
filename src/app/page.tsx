@@ -47,7 +47,12 @@ const initialFormData: FormData = {
 	prompt_strength: 0.8,
 	negative_prompt: '',
 	style_type: 'None',
-	magic_prompt_option: 'Auto'
+	magic_prompt_option: 'Auto',
+	image_reference_weight: 0.85,
+	style_reference_weight: 0.85,
+	image_reference_url: '',
+	style_reference_url: '',
+	character_reference_url: ''
 };
 
 export default function Component() {
@@ -528,6 +533,11 @@ export default function Component() {
 				prompt_strength: config.prompt_strength || 0.8,
 				style_type: formData.style_type,
 				magic_prompt_option: formData.magic_prompt_option,
+				image_reference_url: config.image_reference_url || '',
+				image_reference_weight: config.image_reference_weight || 0.85,
+				style_reference_url: config.style_reference_url || '',
+				style_reference_weight: config.style_reference_weight || 0.85,
+				character_reference_url: config.character_reference_url || ''
 			};
 
 			// Update form state
@@ -637,6 +647,11 @@ export default function Component() {
 				generationType: image.isImg2Img ?
 					(image.maskDataUrl ? 'inpainting' : 'img2img') :
 					'txt2img',
+				image_reference_url: image.image_reference_url,
+				image_reference_weight: image.image_reference_weight,
+				style_reference_url: image.style_reference_url,
+				style_reference_weight: image.style_reference_weight,
+				character_reference_url: image.character_reference_url,
 				timestamp: image.timestamp
 			};
 
@@ -679,6 +694,22 @@ export default function Component() {
 		} catch (error) {
 			console.error('Failed to use image as input:', error);
 			handleError('Failed to use image as input');
+		}
+	};
+
+	const blobUrlToDataUri = async (blobUrl: string): Promise<string> => {
+		try {
+			const response = await fetch(blobUrl);
+			const blob = await response.blob();
+			return new Promise((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onloadend = () => resolve(reader.result as string);
+				reader.onerror = reject;
+				reader.readAsDataURL(blob);
+			});
+		} catch (error) {
+			console.error('Error converting blob URL to data URI:', error);
+			return '';
 		}
 	};
 
@@ -793,6 +824,29 @@ export default function Component() {
 				},
 				model: "ideogram"
 			};
+
+		} else if (submissionData.model === 'luma') {
+			replicateParams = {
+				input: {
+					prompt: submissionData.prompt,
+					aspect_ratio: submissionData.aspect_ratio,
+					seed: submissionData.seed || Math.floor(Math.random() * 1000000),
+					// Add reference images and weights only if they exist
+					...(submissionData.image_reference_url ? {
+						image_reference_url: submissionData.image_reference_url,
+						image_reference_weight: submissionData.image_reference_weight
+					} : {}),
+					...(submissionData.style_reference_url ? {
+						style_reference_url: submissionData.style_reference_url,
+						style_reference_weight: submissionData.style_reference_weight
+					} : {}),
+					...(submissionData.character_reference_url ? {
+						character_reference_url: submissionData.character_reference_url
+					} : {})
+				},
+				model: "luma"
+			};
+		} else if (loraName && loraVersion) {
 
 
 		} else if (loraName && loraVersion) {
@@ -998,6 +1052,11 @@ export default function Component() {
 
 				const outputUrls = Array.isArray(pollData.output) ? pollData.output : [pollData.output];
 
+				let sourceImageDataUri: string | undefined;
+				if (selectedImage?.url) {
+					sourceImageDataUri = await blobUrlToDataUri(selectedImage.url);
+				}
+
 				const newImages = outputUrls.map((outputUrl: string) => {
 					//('pollData input:', pollData.input);
 
@@ -1007,7 +1066,13 @@ export default function Component() {
 						model: pollData.model,
 						version: pollData.version,
 						aspect_ratio: formData.aspect_ratio,
-						...(pollData.model !== 'recraftv3' ? {
+						...(pollData.model === 'luma/photon' ? {
+							image_reference_url: pollData.input.image_reference_url,
+							image_reference_weight: pollData.input.image_reference_weight,
+							style_reference_url: pollData.input.style_reference_url,
+							style_reference_weight: pollData.input.style_reference_weight,
+							character_reference_url: pollData.input.character_reference_url,
+						} : pollData.model !== 'recraftv3' ? {
 							go_fast: pollData.input.go_fast,
 							guidance_scale: pollData.input.guidance_scale,
 							num_inference_steps: pollData.input.num_inference_steps,
@@ -1022,7 +1087,8 @@ export default function Component() {
 						}),
 						timestamp: new Date().toISOString(),
 						isImg2Img: !!selectedImage,
-						sourceImageUrl: selectedImage?.url || undefined,
+						//sourceImageUrl: selectedImage?.url || undefined,
+						sourceImageUrl: sourceImageDataUri || undefined,
 						maskDataUrl: maskDataUrl || undefined,
 						prompt_strength: pollData.input.prompt_strength
 					}
@@ -1090,13 +1156,13 @@ export default function Component() {
 		try {
 
 			const userHash = createHash('sha256')
-			.update(apiKey + (process.env.TELEMETRY_SALT || 'default-salt'))
-			.digest('hex');
-	  
-		  const telemetryWithHash = {
-			...finalTelemetryData,
-			user_hash: userHash
-		  };
+				.update(apiKey + (process.env.TELEMETRY_SALT || 'default-salt'))
+				.digest('hex');
+
+			const telemetryWithHash = {
+				...finalTelemetryData,
+				user_hash: userHash
+			};
 
 			const response = await fetch('/api/telemetry', {
 				method: 'POST',

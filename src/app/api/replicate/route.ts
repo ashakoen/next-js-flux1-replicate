@@ -94,6 +94,9 @@ export async function POST(req: Request): Promise<Response> {
 				case 'ideogram':
 					urlToFetch = 'https://api.replicate.com/v1/models/ideogram-ai/ideogram-v2/predictions';
 					break;
+				case 'luma':
+						urlToFetch = 'https://api.replicate.com/v1/models/luma/photon/predictions';
+						break;
 				default: // 'dev'
 					urlToFetch = 'https://api.replicate.com/v1/models/black-forest-labs/flux-dev/predictions';
 			}
@@ -109,6 +112,40 @@ export async function POST(req: Request): Promise<Response> {
 					size: `${width}x${height}`,
 					style: style || 'any'
 				};
+			}
+
+			if (model === 'luma') {
+				const { 
+					prompt, 
+					aspect_ratio,
+					image_reference_url,
+					style_reference_url,
+					character_reference_url,
+					image_reference_weight,
+					style_reference_weight,
+					seed
+				} = fetchBodyObj.input;
+			
+				fetchBodyObj.input = {
+					prompt,
+					aspect_ratio,
+					seed: seed || Math.floor(Math.random() * 1000000)
+				};
+			
+				// Add reference images and weights only if they exist
+				if (image_reference_url) {
+					fetchBodyObj.input.image_reference_url = image_reference_url;
+					fetchBodyObj.input.image_reference_weight = image_reference_weight;
+				}
+			
+				if (style_reference_url) {
+					fetchBodyObj.input.style_reference_url = style_reference_url;
+					fetchBodyObj.input.style_reference_weight = style_reference_weight;
+				}
+			
+				if (character_reference_url) {
+					fetchBodyObj.input.character_reference_url = character_reference_url;
+				}
 			}
 
 			fetchBody = JSON.stringify(fetchBodyObj);

@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sun, Moon, Star, AlertCircle, Loader2, Gift } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { FormData, Recraftv3Size, Recraftv3Style, IdeogramStyleType, IdeogramMagicPromptOption, ImagePackConfig } from '@/types/types';
+import { FormData, Recraftv3Size, Recraftv3Style, IdeogramStyleType, IdeogramMagicPromptOption, ImagePackConfig, LumaPhotonAspectRatio } from '@/types/types';
 import { ApiSettingsModal } from "@/components/modals/ApiSettingsModal";
 import { useEffect, useCallback } from 'react';
 import { useTheme } from "next-themes";
@@ -46,6 +46,8 @@ interface GenerationSettingsCardProps {
     setExtraLoraModels: (models: string[]) => void;
     setValidatedLoraModels: (models: string[]) => void;
     setFavoritePrompts: (prompts: string[]) => void;
+
+	handleReferenceUrlChange?: (name: string, url: string) => void;
 }
 
 export function GenerationSettingsCard({
@@ -89,6 +91,16 @@ export function GenerationSettingsCard({
 	const isRecraftv3 = isRecraftModel(formData.model);
 	const isSvgFormat = formData.output_format === 'svg';
 	const validAspectRatios = ["1:1", "16:9", "21:9", "2:3", "3:2", "4:5", "5:4", "9:16", "9:21", "custom"];
+
+	const isLumaModel = (model: string) => {
+		return model.includes('luma') || model.includes('photon');
+	};
+
+	const isLuma = isLumaModel(formData.model);
+
+	const lumaAspectRatios: LumaPhotonAspectRatio[] = [
+		"1:1", "3:4", "4:3", "9:16", "16:9", "9:21", "21:9"
+	];
 
 
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -291,7 +303,7 @@ export function GenerationSettingsCard({
 										</TooltipProvider>
 									</div>
 								)}
-								{!isRecraftv3 && !isIdeogram && (
+								{!isRecraftv3 && !isIdeogram  && !isLuma && (
 									<div className="flex items-center space-x-2">
 										<Switch
 											id="go_fast"
@@ -313,7 +325,7 @@ export function GenerationSettingsCard({
 								)}
 
 
-								{!isRecraftv3 && !isIdeogram && (
+								{!isRecraftv3 && !isIdeogram  && !isLuma && (
 									<>
 										<div>
 											<Label htmlFor="guidance_scale">Guidance Scale: {formData.guidance_scale}</Label>
@@ -403,13 +415,14 @@ export function GenerationSettingsCard({
 											<SelectItem value="pro-ultra">FLUX.1 Pro-Ultra</SelectItem>
 											<SelectItem value="recraftv3">Recraft v3</SelectItem>
 											<SelectItem value="ideogram">Ideogram v2</SelectItem>
+											<SelectItem value="luma">Luma Photon</SelectItem>
 										</SelectContent>
 									</Select>
 								</div>
 
 
 
-								{!isIdeogram && (
+								{!isIdeogram && !isLuma &&(
 									<div>
 										<Label htmlFor="output_format">Output Format</Label>
 										<Select
@@ -438,7 +451,7 @@ export function GenerationSettingsCard({
 									</div>
 								)}
 
-{!isRecraftv3 && !isIdeogram && (
+{!isRecraftv3 && !isIdeogram  && !isLuma && (
 									<div>
 										<Label>Number of Outputs</Label>
 										<div className="flex space-x-2">
@@ -460,7 +473,7 @@ export function GenerationSettingsCard({
 								)}
 
 
-								{!isRecraftv3 && !isIdeogram && (
+								{!isRecraftv3 && !isIdeogram  && !isLuma && (
 									<>
 
 										<div>
@@ -512,10 +525,16 @@ export function GenerationSettingsCard({
 													<SelectValue placeholder="Select an aspect ratio" />
 												</SelectTrigger>
 												<SelectContent>
-													{validAspectRatios.map((ratio) => (
-														<SelectItem key={ratio} value={ratio}>{ratio}</SelectItem>
-													))}
-												</SelectContent>
+            {isLuma ? (
+                lumaAspectRatios.map((ratio) => (
+                    <SelectItem key={ratio} value={ratio}>{ratio}</SelectItem>
+                ))
+            ) : (
+                validAspectRatios.map((ratio) => (
+                    <SelectItem key={ratio} value={ratio}>{ratio}</SelectItem>
+                ))
+            )}
+        </SelectContent>
 											</Select>
 										</div>
 										{formData.aspect_ratio === 'custom' && (
@@ -605,7 +624,7 @@ export function GenerationSettingsCard({
 										</div>
 									</>
 								)}
-								{!isRecraftv3 && !isIdeogram && (
+								{!isRecraftv3 && !isIdeogram && !isLuma && (
 									<>
 										<div className="pt-4">
 											<h6 className="text-md font-medium">Fine-tuned Model Settings</h6>
@@ -701,6 +720,82 @@ export function GenerationSettingsCard({
 										</div>
 									</>
 								)}
+
+
+{isLuma && (
+    <div className="space-y-4">
+		        <div className="pt-4">
+            <h6 className="text-md font-medium">Luma Generation Settings</h6>
+        </div>
+        <div>
+            <Label htmlFor="image_reference_url">Image Reference URL</Label>
+            <Input
+                id="image_reference_url"
+                name="image_reference_url"
+                value={formData.image_reference_url}
+                onChange={handleInputChange}
+                placeholder="Enter reference image URL"
+            />
+        </div>
+        
+        {formData.image_reference_url && (
+            <div>
+                <Label htmlFor="image_reference_weight">
+                    Reference Weight: {formData.image_reference_weight}
+                </Label>
+                <Slider
+                    id="image_reference_weight"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={[formData.image_reference_weight]}
+                    onValueChange={(value) => handleSliderChange('image_reference_weight', value)}
+                    className="custom-slider"
+                />
+            </div>
+        )}
+
+        <div>
+            <Label htmlFor="style_reference_url">Style Reference URL</Label>
+            <Input
+                id="style_reference_url"
+                name="style_reference_url"
+                value={formData.style_reference_url}
+                onChange={handleInputChange}
+                placeholder="Enter style reference URL"
+            />
+        </div>
+
+        {formData.style_reference_url && (
+            <div>
+                <Label htmlFor="style_reference_weight">
+                    Style Weight: {formData.style_reference_weight}
+                </Label>
+                <Slider
+                    id="style_reference_weight"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={[formData.style_reference_weight]}
+                    onValueChange={(value) => handleSliderChange('style_reference_weight', value)}
+                    className="custom-slider"
+                />
+            </div>
+        )}
+
+        <div>
+            <Label htmlFor="character_reference_url">Character Reference URL</Label>
+            <Input
+                id="character_reference_url"
+                name="character_reference_url"
+                value={formData.character_reference_url}
+                onChange={handleInputChange}
+                placeholder="Enter character reference URL"
+            />
+        </div>
+    </div>
+)}
+
 							</div>
 						</TabsContent>
 					</Tabs>

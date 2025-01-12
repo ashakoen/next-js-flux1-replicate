@@ -5,7 +5,7 @@ export type IdeogramMagicPromptOption = "Auto" | "On" | "Off";
 
 export type FormData = {
     seed: number;
-    model: 'dev' | 'schnell' | 'pro' | 'pro-ultra' | 'recraftv3' | 'recraftv3-svg' | 'ideogram';
+    model: 'dev' | 'schnell' | 'pro' | 'pro-ultra' | 'recraftv3' | 'recraftv3-svg' | 'ideogram' | 'luma';
     privateLoraName: string;
     privateLoraVersion: string;
     width: number;
@@ -28,6 +28,11 @@ export type FormData = {
     negative_prompt?: string;
     style_type?: IdeogramStyleType;
     magic_prompt_option?: IdeogramMagicPromptOption;
+    image_reference_url?: string;
+    style_reference_url?: string;
+    character_reference_url?: string;
+    image_reference_weight: number;
+    style_reference_weight: number;
 };
 
 export type GeneratedImage = {
@@ -59,6 +64,11 @@ export type GeneratedImage = {
     baseInputImage?: string;
     baseInputImageFormat?: string;
     generationType?: 'txt2img' | 'img2img' | 'inpainting';
+    image_reference_url?: string;
+    image_reference_weight?: number;
+    style_reference_url?: string;
+    style_reference_weight?: number;
+    character_reference_url?: string;
 }
 
 export type LogEntry = {
@@ -129,6 +139,12 @@ export type Recraftv3Style =
     | "realistic_image/enterprise"
     | "realistic_image/motion_blur";
 
+
+export type LumaPhotonAspectRatio =
+    | "1:1" | "3:4" | "4:3" | "9:16"
+    | "16:9" | "9:21" | "21:9";
+
+
 export interface CanvasDrawProps {
     onChange?: (canvas: CanvasDraw) => void;
     loadTimeOffset?: number;
@@ -178,6 +194,11 @@ export interface ImagePackConfig {
     maskDataUrl?: string;
     zipFile: File;
     previewImageUrl?: string;
+    image_reference_url?: string;
+    image_reference_weight?: number;
+    style_reference_url?: string;
+    style_reference_weight?: number;
+    character_reference_url?: string;
 }
 
 // Add this class declaration for CanvasDraw
