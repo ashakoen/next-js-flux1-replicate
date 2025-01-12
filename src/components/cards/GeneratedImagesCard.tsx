@@ -50,6 +50,7 @@ export function GeneratedImagesCard({
     const [faceEnhance, setFaceEnhance] = useState(true);
     const [isConfirming, setIsConfirming] = useState(false);
     const [openImageUrl, setOpenImageUrl] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Constants for timing
     const EXPIRY_TIME_MS = 3600000; // 1 hour
@@ -95,6 +96,20 @@ export function GeneratedImagesCard({
             model.includes('flux-pro-ultra') ||
             (model.includes('/') && !model.includes('recraft')));
     };
+
+    useEffect(() => {
+        // Only set loading to false if we have images or after a short delay
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 800); // Add a small delay to prevent flash
+
+        return () => clearTimeout(timer);
+    }, [images]);
+
+    useEffect(() => {
+        // Once images are loaded, set loading to false
+        setIsLoading(false);
+    }, [images]);
 
     useEffect(() => {
         let timeoutId: NodeJS.Timeout;
@@ -750,7 +765,7 @@ export function GeneratedImagesCard({
                                     </motion.p>
                                 </motion.div>
                             </>
-                        ) : (
+                        ) : !isLoading && images.length === 0 ? (
                             <>
                                 <div className="text-center space-y-4">
                                     <div className="text-center space-y-4">
@@ -767,10 +782,9 @@ export function GeneratedImagesCard({
                                             <p>or drop an image pack to restore settings</p>
                                         </div>
                                     </div>
-
                                 </div>
                             </>
-                        )}
+                         ) : null}
                     </div>
                 )}
             </CardContent>
