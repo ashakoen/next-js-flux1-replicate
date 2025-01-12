@@ -89,6 +89,7 @@ export default function Component() {
 	const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
 	const [pendingFormData, setPendingFormData] = useState<FormData | null>(null)
 	const [previewImageUrl, setPreviewImageUrl] = useState<string | undefined>();
+	const [isLoadingImages, setIsLoadingImages] = useState(true);
 
 
 	const getClientInfo = () => {
@@ -128,13 +129,15 @@ export default function Component() {
 	useEffect(() => {
 		const initializeStorage = async () => {
 			try {
-				// Only load images from IndexedDB
+				setIsLoadingImages(true);
 				const storedImages = await db.getImages();
 				if (storedImages?.length) {
 					setGeneratedImages(storedImages);
 				}
 			} catch (error) {
 				console.error('Storage initialization error:', error);
+			} finally {
+				setIsLoadingImages(false);
 			}
 		};
 	
@@ -1428,7 +1431,7 @@ export default function Component() {
 							onReusePrompt={handleReusePrompt}
 							onUpscaleImage={handleUpscaleImage}
 							onDownloadWithConfig={downloadImageWithConfig}
-
+							isLoadingImages={isLoadingImages}
 						/>
 
 					</div>

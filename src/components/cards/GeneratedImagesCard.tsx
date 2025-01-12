@@ -29,6 +29,7 @@ interface GeneratedImagesCardProps {
     onReusePrompt: (prompt: string) => void;
     onUpscaleImage: (params: { version: string; input: { image: string; scale: number; face_enhance: boolean; }; }) => void;
     onDownloadWithConfig: (imageUrl: string, image: GeneratedImage) => void;
+    isLoadingImages: boolean;
 }
 
 export function GeneratedImagesCard({
@@ -37,6 +38,7 @@ export function GeneratedImagesCard({
     onDownloadImage,
     onDeleteImage,
     clearGeneratedImages,
+    isLoadingImages,
     isGenerating,
     numberOfOutputs,
     onRegenerateWithSeed,
@@ -765,7 +767,7 @@ export function GeneratedImagesCard({
                                     </motion.p>
                                 </motion.div>
                             </>
-                        ) : !isLoading && images.length === 0 ? (
+                        ) : !isLoadingImages && images.length === 0 ? (
                             <>
                                 <div className="text-center space-y-4">
                                     <div className="text-center space-y-4">
