@@ -782,8 +782,8 @@ export default function Component() {
 
 		const [loraName, loraVersion] = submissionData.privateLoraName.split(':');
 
-		//console.log('LoRA Name:', loraName);
-		//console.log('LoRA Version:', loraVersion);
+		console.log('LoRA Name:', loraName);
+		console.log('LoRA Version:', loraVersion);
 
 		let imageData: string | undefined;
 
@@ -846,10 +846,9 @@ export default function Component() {
 				},
 				model: "luma"
 			};
+			
 		} else if (loraName && loraVersion) {
 
-
-		} else if (loraName && loraVersion) {
 			replicateParams = {
 				version: loraVersion,
 				input: {
@@ -877,7 +876,9 @@ export default function Component() {
 					} : {})
 				}
 			};
+
 		} else {
+
 			replicateParams = {
 				input: {
 					prompt: submissionData.prompt,
@@ -905,6 +906,7 @@ export default function Component() {
 		}
 
 		console.log('Replicate Params:', replicateParams);
+
 		if (selectedImage?.file && maskDataUrl) {
 			console.log('Sending inpainting request with:', {
 				imageSize: imageData ? imageData.length : 0,
