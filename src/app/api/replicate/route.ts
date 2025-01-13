@@ -4,13 +4,37 @@ export async function POST(req: Request): Promise<Response> {
 
 		const model = body?.model;
 
-		//console.log('Received model:', model);
-		//console.log('Received body:', body);
-
 		if (!apiKey) {
 			console.error('Error: API key is missing');
 			return new Response(JSON.stringify({ error: 'API key is required' }), { status: 400 });
 		}
+
+        if (body?.fetchImageForBucket) {
+            const imageUrl = body.imageUrl;
+            
+            if (!imageUrl) {
+                return new Response(JSON.stringify({ error: 'Image URL is required' }), { status: 400 });
+            }
+
+            const response = await fetch(imageUrl, {
+                headers: {
+                    'Authorization': `Token ${apiKey}`,
+                },
+            });
+
+            if (!response.ok) {
+                return new Response(JSON.stringify({ error: 'Failed to fetch image' }), { status: response.status });
+            }
+
+            // Get image data as blob and convert to base64
+            const imageBlob = await response.blob();
+            const base64String = await imageBlob.arrayBuffer();
+            
+            return new Response(JSON.stringify({ 
+                imageData: Buffer.from(base64String).toString('base64'),
+                contentType: response.headers.get('content-type')
+            }), { status: 200 });
+        }
 
 		// Add near the top with other conditions
 		if (body?.validateLora) {

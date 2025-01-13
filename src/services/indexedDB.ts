@@ -4,9 +4,10 @@ const DB_NAME = 'fluxImages';
 const STORES = {
     IMAGES: 'generatedImages',
     FORM_DATA: 'formData',
-    SETTINGS: 'settings'
+    SETTINGS: 'settings',
+    BUCKET: 'imageBucket'
 };
-const DB_VERSION = 1;
+const DB_VERSION = 3;
 const EXPIRY_TIME_MS = 60 * 60 * 1000; // 1 hour
 
 export const db = {
@@ -33,6 +34,9 @@ export const db = {
                 }
                 if (!db.objectStoreNames.contains(STORES.SETTINGS)) {
                     db.createObjectStore(STORES.SETTINGS, { keyPath: 'id' });
+                }
+                if (!db.objectStoreNames.contains(STORES.BUCKET)) { 
+                    db.createObjectStore(STORES.BUCKET, { keyPath: 'timestamp' });
                 }
             };
         });
@@ -139,5 +143,73 @@ export const db = {
             console.error('Error clearing IndexedDB:', error);
             return false;
         }
+    },
+
+    async saveToBucket(image: GeneratedImage) {
+        try {
+            const db = await this.init();
+            const tx = db.transaction(STORES.BUCKET, 'readwrite');
+            const store = tx.objectStore(STORES.BUCKET);
+            
+            if (!image.timestamp) {
+                image.timestamp = new Date().toISOString();
+            }
+
+            return new Promise<boolean>((resolve, reject) => {
+                const request = store.put(image);
+                
+                tx.oncomplete = () => {
+                    resolve(true);
+                };
+                
+                tx.onerror = () => {
+                    reject(tx.error);
+                };
+            });
+        } catch (error) {
+            console.error('Error saving to bucket:', error);
+            return false;
+        }
+    },
+
+    async getBucketImages(): Promise<GeneratedImage[]> {
+        try {
+            const db = await this.init();
+            const tx = db.transaction(STORES.BUCKET, 'readonly');
+            const store = tx.objectStore(STORES.BUCKET);
+
+            return new Promise((resolve, reject) => {
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (error) {
+            console.error('Error reading from bucket:', error);
+            return [];
+        }
+    },
+
+    async removeFromBucket(timestamp: string) {
+        try {
+            const db = await this.init();
+            const tx = db.transaction(STORES.BUCKET, 'readwrite');
+            const store = tx.objectStore(STORES.BUCKET);
+            
+            return new Promise<boolean>((resolve, reject) => {
+                const request = store.delete(timestamp);
+                
+                tx.oncomplete = () => {
+                    resolve(true);
+                };
+                
+                tx.onerror = () => {
+                    reject(tx.error);
+                };
+            });
+        } catch (error) {
+            console.error('Error removing from bucket:', error);
+            return false;
+        }
     }
+
 };

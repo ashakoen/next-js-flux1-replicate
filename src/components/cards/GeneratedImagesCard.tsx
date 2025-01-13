@@ -4,9 +4,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import Image from 'next/image';
-import { ArrowUpToLine, Download, Loader2, RefreshCw, Gift, Upload } from 'lucide-react';
+import { ArrowUpToLine, Download, Loader2, RefreshCw, Gift, Upload, Star } from 'lucide-react';
 import { GeneratedImage } from '@/types/types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { useState, useEffect, useCallback } from 'react';
 import { WandSparkles } from 'lucide-react';
 import { toast } from "sonner";
@@ -29,6 +29,8 @@ interface GeneratedImagesCardProps {
     onReusePrompt: (prompt: string) => void;
     onUpscaleImage: (params: { version: string; input: { image: string; scale: number; face_enhance: boolean; }; }) => void;
     onDownloadWithConfig: (imageUrl: string, image: GeneratedImage) => void;
+    onAddToBucket: (image: GeneratedImage) => void;
+    bucketImages: GeneratedImage[];
     isLoadingImages: boolean;
 }
 
@@ -46,7 +48,9 @@ export function GeneratedImagesCard({
     model,
     onReusePrompt,
     onUpscaleImage,
-    onDownloadWithConfig
+    onDownloadWithConfig,
+    onAddToBucket,
+    bucketImages
 }: GeneratedImagesCardProps & { onReusePrompt: (prompt: string) => void }) {
     const [showUpscaleDialog, setShowUpscaleDialog] = useState(false);
     const [faceEnhance, setFaceEnhance] = useState(true);
@@ -163,7 +167,7 @@ export function GeneratedImagesCard({
 
                 {images.length > 0 ? (
                     <div className="h-full overflow-y-auto">
-                        <div className="grid grid-cols-2 md:grid-cols-3 3xl:grid-cols-4 gap-8 p-2">
+                        <div className="grid grid-cols-2 md:grid-cols-3 3xl:grid-cols-4 gap-8 p-2 overflow-x-hidden">
                             <AnimatePresence mode="popLayout">
                                 {/* Loading Placeholders */}
                                 {isGenerating && Array.from({ length: numberOfOutputs }).map((_, index) => (
@@ -223,8 +227,30 @@ export function GeneratedImagesCard({
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0, scale: 0.9 }}
                                         transition={{ duration: 0.2 }}
-                                        className="relative group aspect-square w-full "
+                                        className="relative group aspect-square w-full"
                                     >
+
+                                        <Button
+                                            variant="secondary"
+                                            size="icon"
+                                            className="absolute top-2 left-1/2 -translate-x-1/2 z-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={() => {
+                                                // Check if image is already in bucket
+                                                const isAlreadyInBucket = bucketImages.some(
+                                                    bucketImage => bucketImage.url === image.url
+                                                );
+
+                                                if (isAlreadyInBucket) {
+                                                    toast.error('Image is already in bucket');
+                                                    return;
+                                                }
+
+                                                onAddToBucket(image);
+                                                //toast.success('Added to bucket');
+                                            }}
+                                        >
+                                            <Star className="h-4 w-4" />
+                                        </Button>
 
                                         <Dialog open={openImageUrl === image.url} onOpenChange={(open) => setOpenImageUrl(open ? image.url : null)}>
                                             <DialogTrigger asChild>
@@ -399,49 +425,49 @@ export function GeneratedImagesCard({
                                                                 </div>
                                                             )}
 
-{(image.sourceImageUrl || image.maskDataUrl) && (
-    <div className="space-y-4 border-t pt-4">
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Source Images</h3>
-        
-        {image.sourceImageUrl && (
-            <div className="space-y-1.5">
-                <h4 className="text-sm font-medium text-gray-400">Input Image</h4>
-                <div className="relative h-20 w-20 rounded overflow-hidden">
-                    <Image
-                        src={image.sourceImageUrl}
-                        alt="Source image"
-                        layout="fill"
-                        objectFit="cover"
-                        className="rounded"
-                    />
-                </div>
-                {image.prompt_strength && (
-                    <p className="text-xs text-gray-500">Strength: {image.prompt_strength}</p>
-                )}
-            </div>
-        )}
+                                                            {(image.sourceImageUrl || image.maskDataUrl) && (
+                                                                <div className="space-y-4 border-t pt-4">
+                                                                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Source Images</h3>
 
-{image.maskDataUrl && (
-    <div className="space-y-1.5">
-        <h4 className="text-sm font-medium text-gray-400">Inpainting Mask</h4>
-        <div className="relative h-20 w-20 rounded overflow-hidden">
-            <div className="absolute inset-0 bg-gray-800/20" /> {/* Semi-transparent background */}
-            <Image
-                src={image.maskDataUrl}
-                alt="Inpainting mask"
-                layout="fill"
-                objectFit="cover"
-                className="rounded border border-white/40 dark:border-white/25" // Added border
-                style={{ 
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Light background to show white masks
-                    mixBlendMode: 'normal' 
-                }}
-            />
-        </div>
-    </div>
-)}
-    </div>
-)}
+                                                                    {image.sourceImageUrl && (
+                                                                        <div className="space-y-1.5">
+                                                                            <h4 className="text-sm font-medium text-gray-400">Input Image</h4>
+                                                                            <div className="relative h-20 w-20 rounded overflow-hidden">
+                                                                                <Image
+                                                                                    src={image.sourceImageUrl}
+                                                                                    alt="Source image"
+                                                                                    layout="fill"
+                                                                                    objectFit="cover"
+                                                                                    className="rounded"
+                                                                                />
+                                                                            </div>
+                                                                            {image.prompt_strength && (
+                                                                                <p className="text-xs text-gray-500">Strength: {image.prompt_strength}</p>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+
+                                                                    {image.maskDataUrl && (
+                                                                        <div className="space-y-1.5">
+                                                                            <h4 className="text-sm font-medium text-gray-400">Inpainting Mask</h4>
+                                                                            <div className="relative h-20 w-20 rounded overflow-hidden">
+                                                                                <div className="absolute inset-0 bg-gray-800/20" /> {/* Semi-transparent background */}
+                                                                                <Image
+                                                                                    src={image.maskDataUrl}
+                                                                                    alt="Inpainting mask"
+                                                                                    layout="fill"
+                                                                                    objectFit="cover"
+                                                                                    className="rounded border border-white/40 dark:border-white/25" // Added border
+                                                                                    style={{
+                                                                                        backgroundColor: 'rgba(255, 255, 255, 0.1)', // Light background to show white masks
+                                                                                        mixBlendMode: 'normal'
+                                                                                    }}
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
 
 
                                                             {/* Luma Reference Images Section */}
@@ -786,7 +812,7 @@ export function GeneratedImagesCard({
                                     </div>
                                 </div>
                             </>
-                         ) : null}
+                        ) : null}
                     </div>
                 )}
             </CardContent>

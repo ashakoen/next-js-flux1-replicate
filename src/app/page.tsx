@@ -20,6 +20,7 @@ import { FavoritePromptsDrawer } from "@/components/FavoritePromptsDrawer";
 import { LoraModelsDrawer } from '@/components/LoraModelsDrawer';
 import { ExtraLoraModelsDrawer } from "@/components/ExtraLoraModelsDrawer";
 import { GenerateConfirmModal } from "@/components/modals/GenerateConfirmModal";
+import { ImageBucketCard } from "@/components/cards/ImageBucketCard";
 import { Toaster, toast } from "sonner";
 import { createHash } from 'crypto';
 
@@ -90,6 +91,7 @@ export default function Component() {
 	const [pendingFormData, setPendingFormData] = useState<FormData | null>(null)
 	const [previewImageUrl, setPreviewImageUrl] = useState<string | undefined>();
 	const [isLoadingImages, setIsLoadingImages] = useState(true);
+	const [bucketImages, setBucketImages] = useState<GeneratedImage[]>([]);
 
 
 	const getClientInfo = () => {
@@ -221,6 +223,21 @@ export default function Component() {
 		}
 	}, [isInpaintingEnabled]);
 
+	useEffect(() => {
+		const initializeBucket = async () => {
+			try {
+				const storedBucketImages = await db.getBucketImages();
+				if (storedBucketImages?.length) {
+					setBucketImages(storedBucketImages);
+				}
+			} catch (error) {
+				console.error('Bucket initialization error:', error);
+			}
+		};
+	
+		initializeBucket();
+	}, []);
+
 	const handleNumOutputsChange = (value: number) => {
 		setFormData((prev) => ({
 			...prev,
@@ -238,6 +255,133 @@ export default function Component() {
 		await db.deleteImage(timestamp);
 		setGeneratedImages(prev => prev.filter(img => img.timestamp !== timestamp));
 	}, []);
+
+	const handleAddToBucket = async (image: GeneratedImage) => {
+		try {
+
+			const isDuplicate = bucketImages.some(
+				existingImage => 
+					existingImage.url === image.url || 
+					existingImage.timestamp === image.timestamp
+			);
+	
+			if (isDuplicate) {
+				toast.error('This image is already in your bucket');
+				return;
+			}
+
+			const response = await fetch('/api/replicate', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					apiKey,
+					body: {
+						fetchImageForBucket: true,
+						imageUrl: image.url
+					}
+				})
+			});
+	
+			if (!response.ok) throw new Error('Failed to fetch image');
+			
+			const { imageData, contentType } = await response.json();
+			
+			// Create data URL from base64 and content type
+			const dataUrl = `data:${contentType};base64,${imageData}`;
+	
+			// Create new image object with data URL instead of remote URL
+			const bucketImage: GeneratedImage = {
+				...image,
+				url: dataUrl
+			};
+	
+			// Save to IndexedDB
+			await db.saveToBucket(bucketImage);
+			setBucketImages(prev => [...prev, bucketImage]);
+			toast.success('Image added to bucket');
+		} catch (error) {
+			console.error('Error adding to bucket:', error);
+			toast.error('Failed to add image to bucket');
+		}
+	};
+	
+	const handleRemoveFromBucket = async (timestamp: string) => {
+		try {
+			await db.removeFromBucket(timestamp);
+			setBucketImages(prev => prev.filter(img => img.timestamp !== timestamp));
+			toast.success('Image removed from bucket');
+		} catch (error) {
+			console.error('Error removing from bucket:', error);
+			toast.error('Failed to remove image from bucket');
+		}
+	};
+	
+	const handleDownloadAllBucket = async () => {
+		try {
+			if (bucketImages.length === 0) {
+				toast.error('No images in bucket to download');
+				return;
+			}
+	
+			const MAX_IMAGES = 100;
+			// Sort by timestamp (newest first) and take only the most recent MAX_IMAGES
+			const imagesToDownload = [...bucketImages]
+				.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+				.slice(0, MAX_IMAGES);
+	
+			// Create a zip file containing all images
+			const JSZip = (await import('jszip')).default;
+			const zip = new JSZip();
+	
+			// Add each image to the zip
+			for (const image of imagesToDownload) {
+				try {
+					// Fetch the data URL and convert to blob
+					const response = await fetch(image.url);
+					const blob = await response.blob();
+					
+					// Sanitize the timestamp for the filename
+					const safeTimestamp = image.timestamp.replace(/[/:]/g, '-');
+					
+					// Add to zip with a sanitized filename
+					zip.file(`bucket-image-${safeTimestamp}.png`, blob);
+				} catch (error) {
+					console.error(`Failed to add image ${image.timestamp} to zip:`, error);
+					toast.error(`Failed to add one or more images to zip`);
+				}
+			}
+	
+			// Generate the zip file
+			const zipBlob = await zip.generateAsync({ type: 'blob' });
+			
+			// Create download link with sanitized timestamp
+			const blobUrl = window.URL.createObjectURL(zipBlob);
+			const a = document.createElement('a');
+			a.style.display = 'none';
+			a.href = blobUrl;
+			a.download = `bucket-images-${Date.now()}.zip`;
+			
+			// Trigger download
+			document.body.appendChild(a);
+			a.click();
+			
+			// Cleanup
+			window.URL.revokeObjectURL(blobUrl);
+			document.body.removeChild(a);
+			
+			// Show appropriate success message
+			if (bucketImages.length > MAX_IMAGES) {
+				toast.success(`Downloaded most recent ${MAX_IMAGES} images from bucket`);
+			} else {
+				toast.success('Downloaded all bucket images');
+			}
+		} catch (error) {
+			console.error('Failed to download all bucket images:', error);
+			toast.error('Failed to download images');
+		}
+	};
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		const { name, value, type } = e.target;
@@ -1242,6 +1386,34 @@ export default function Component() {
 		localStorage.removeItem('validatedLoraModels');
 	};
 
+	const downloadBucketImage = async (dataUrl: string, timestamp: string) => {
+		try {
+			// Create a blob from the data URL
+			const response = await fetch(dataUrl);
+			const blob = await response.blob();
+			
+			// Create a temporary URL for the blob
+			const blobUrl = window.URL.createObjectURL(blob);
+			
+			// Create download link
+			const a = document.createElement('a');
+			a.style.display = 'none';
+			a.href = blobUrl;
+			a.download = `bucket-image-${timestamp}.png`; // You can customize the filename
+			
+			// Trigger download
+			document.body.appendChild(a);
+			a.click();
+			
+			// Cleanup
+			window.URL.revokeObjectURL(blobUrl);
+			document.body.removeChild(a);
+		} catch (error) {
+			console.error('Failed to download bucket image:', error);
+			toast.error('Failed to download image from bucket');
+		}
+	};
+
 	const downloadImage = async (imageUrl: string) => {
 		try {
 			const response = await fetch('/api/download', {
@@ -1382,7 +1554,7 @@ export default function Component() {
 						setFormData={setFormData}
 					/>
 
-					<div className="middle-column order-2 xl:order-1">
+<div className="middle-column order-2 xl:order-1 xl:w-1/4">
 						<GenerationSettingsCard
 							formData={formData}
 							isLoading={isLoading}
@@ -1415,7 +1587,7 @@ export default function Component() {
 
 
 					{/* Generated Images Card - Right 2/3 */}
-					<div className="right-column order-1 xl:order-2">
+					<div className="right-column order-1 xl:order-2 xl:w-1/2">
 
 						<GeneratedImagesCard
 							images={generatedImages}
@@ -1432,9 +1604,20 @@ export default function Component() {
 							onUpscaleImage={handleUpscaleImage}
 							onDownloadWithConfig={downloadImageWithConfig}
 							isLoadingImages={isLoadingImages}
+							onAddToBucket={handleAddToBucket}
+							bucketImages={bucketImages}
 						/>
 
 					</div>
+
+					<div className="order-3 xl:w-1/4">
+        <ImageBucketCard
+            bucketImages={bucketImages}
+            onRemoveFromBucket={handleRemoveFromBucket}
+			onDownloadImage={downloadBucketImage}
+            onDownloadAll={handleDownloadAllBucket}
+        />
+    </div>
 				</div>
 
 				{/* Keep the logs button at the bottom */}
