@@ -31,7 +31,7 @@ export function ImageBucketCard({
             </CardHeader>
             <CardContent className="flex-1 min-h-0 overflow-y-auto">
                 {bucketImages.length > 0 ? (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 auto-rows-fr">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1 sm:gap-2 auto-rows-fr">
                         <AnimatePresence mode="popLayout">
                             {bucketImages.map((image) => (
                                 <motion.div
@@ -47,22 +47,24 @@ export function ImageBucketCard({
                                         alt={image.prompt || 'Generated image'}
                                         fill
                                         className="rounded-lg object-cover"
-                                        sizes="(max-width: 768px) 33vw, 25vw"
+                                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                     />
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-1 sm:gap-2">
                                         <Button
                                             variant="secondary"
                                             size="icon"
+                                            className="h-6 w-6 sm:h-8 sm:w-8"
                                             onClick={() => onDownloadImage(image.url, image.timestamp)}
                                         >
-                                            <Download className="h-4 w-4" />
+                                            <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                                         </Button>
                                         <Button
                                             variant="destructive"
                                             size="icon"
+                                            className="h-6 w-6 sm:h-8 sm:w-8"
                                             onClick={() => onRemoveFromBucket(image.timestamp)}
                                         >
-                                            <Trash2 className="h-4 w-4" />
+                                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                                         </Button>
                                     </div>
                                 </motion.div>
