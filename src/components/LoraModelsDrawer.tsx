@@ -142,26 +142,27 @@ export function LoraModelsDrawer({
         )}
     </div>
     <span
-        className="text-base font-medium text-transparent bg-clip-text 
-        bg-gradient-to-b from-purple-500 to-indigo-500
-        dark:from-purple-400 dark:to-indigo-400"
+        className="text-base font-medium bg-gradient-to-b from-purple-500 to-pink-500 
+            dark:from-purple-400 dark:to-pink-400 
+            text-transparent bg-clip-text"
         style={{ writingMode: 'vertical-rl' }}
     >
         {isOpen ? 'Close' : 'Private LoRAs'}
     </span>
 </Button>
                 </SheetTrigger>
-                <SheetContent className="w-[400px] fixed left-0 h-[calc(100vh-8rem)] mt-[2rem] p-4 flex flex-col slide-in-from-left rounded-r-xl">
-                    <SheetHeader>
-                        <SheetTitle className="flex items-center gap-2">
-                            <Wand2 className="h-5 w-5 text-purple-500 dark:text-purple-400" />
-                            <span className="bg-gradient-to-r from-purple-500 to-indigo-500 
-                                dark:from-purple-400 dark:to-indigo-400 
-                                text-transparent bg-clip-text font-semibold">
-                                Private LoRA Models ({validatedLoraModels.length})
-                            </span>
-                        </SheetTitle>
-                    </SheetHeader>
+                <SheetContent className="w-[400px] fixed left-0 h-[calc(100vh-8rem)] mt-[2rem] p-4 flex flex-col slide-in-from-left rounded-r-xl
+    bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
+    <SheetHeader>
+        <SheetTitle className="flex items-center gap-2">
+            <FolderLock className="h-5 w-5 text-purple-500 dark:text-purple-400" />
+            <span className="bg-gradient-to-r from-purple-500 to-pink-500 
+                dark:from-purple-400 dark:to-pink-400 
+                text-transparent bg-clip-text font-semibold">
+                Private LoRA Models ({validatedLoraModels.length})
+            </span>
+        </SheetTitle>
+    </SheetHeader>
 
                     <div className="mt-4 space-y-2">
 
@@ -174,17 +175,18 @@ export function LoraModelsDrawer({
                                 onChange={(e) => setNewModelInput(e.target.value)}
                                 className="flex-1"
                             />
-                            <Button
-                                onClick={handleAddModel}
-                                disabled={isValidatingLora}
-                                className="bg-purple-500 hover:bg-purple-600 text-white"
-                            >
-                                {isValidatingLora ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                    'Add'
-                                )}
-                            </Button>
+    <Button
+        onClick={handleAddModel}
+        disabled={isValidatingLora}
+        className="bg-purple-500 hover:bg-purple-600 text-white
+            dark:bg-purple-600 dark:hover:bg-purple-700"
+    >
+        {isValidatingLora ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+            'Add'
+        )}
+    </Button>
                         </div>
                         {loraValidationError && (
                             <p className="text-sm text-red-500">{loraValidationError}</p>
@@ -198,10 +200,11 @@ export function LoraModelsDrawer({
                                     <TooltipProvider key={index}>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <div className="group relative p-3 rounded-lg border border-gray-200 
-    dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800
-    ${model === selectedLoraModel ? 'border-purple-500 dark:border-purple-400 bg-purple-50/50 dark:bg-purple-900/20' : ''}"
-                                                >
+                                            <div className={`group relative p-3 rounded-lg border 
+        ${model === selectedLoraModel 
+            ? 'border-purple-500 dark:border-purple-400 bg-purple-50/50 dark:bg-purple-900/20' 
+            : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}
+    >
                                                     <div className="flex items-start gap-2">
                                                         {model === selectedLoraModel && (
                                                             <div className="flex-shrink-0 w-2 h-2 mt-1.5 bg-purple-500 dark:bg-purple-400 rounded-full animate-pulse" />
