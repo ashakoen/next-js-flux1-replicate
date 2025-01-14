@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ImageIcon,X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ImageUploadCard } from "./cards/ImageUploadCard";
 import { DrawingCard } from "./cards/DrawingCard";
 import {
@@ -28,6 +28,8 @@ interface SourceImageDrawerProps {
     currentMaskDataUrl?: string | null;
 }
 
+
+
 export function SourceImageDrawer({
     onImageSelect,
     selectedImage,
@@ -40,6 +42,16 @@ export function SourceImageDrawer({
     currentMaskDataUrl = null
 }: SourceImageDrawerProps) {
     const [isOpen, setIsOpen] = useState(false);
+
+    useEffect(() => {
+        if (!selectedImage) {
+            // Only update if there's actually a mask to clear
+            if (currentMaskDataUrl) {
+                onMaskGenerated('');
+                onInpaintingChange(false);
+            }
+        }
+    }, [selectedImage]);
 
     return (
 <div className="fixed left-0 top-[2rem] z-30">

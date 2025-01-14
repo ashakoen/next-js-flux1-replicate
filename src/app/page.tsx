@@ -541,6 +541,8 @@ export default function Component() {
 			URL.revokeObjectURL(selectedImage.url);
 		}
 		setSelectedImage(null);
+		setMaskDataUrl(null);  // Clear the mask data
+		setIsInpaintingEnabled(false);  // Disable inpainting
 	};
 
 	const clearExtraModels = () => {
@@ -670,6 +672,11 @@ export default function Component() {
 				/\.(png|jpg|webp)$/i.test(file.name)
 			);
 
+			const maskFile = Object.values(zip.files).find(file =>
+				file.name.includes('mask') &&
+				/\.(png|jpg|webp)$/i.test(file.name)
+			);
+
 			let width = formData.width;
 			let height = formData.height;
 
@@ -776,8 +783,20 @@ export default function Component() {
 					file
 				});
 
-				if (config.maskDataUrl) {
-					setMaskDataUrl(config.maskDataUrl);
+				if (maskFile) {
+					const maskBlob = await maskFile.async('blob');
+					const reader = new FileReader();
+					const maskDataUrl = await new Promise<string>((resolve) => {
+						reader.onloadend = () => resolve(reader.result as string);
+						reader.readAsDataURL(maskBlob);
+					});
+					
+					// Convert to proper URI format
+					//const response = await fetch(maskDataUrl);
+					//const blob = await response.blob();
+					//const finalMaskDataUrl = URL.createObjectURL(blob);
+					
+					setMaskDataUrl(maskDataUrl);
 					setIsInpaintingEnabled(true);
 				}
 
@@ -791,20 +810,7 @@ export default function Component() {
 		}
 	};
 
-	const simplifyAspectRatio = (width: number, height: number): string => {
-		// Common aspect ratios
-		if (Math.abs(width/height - 2/3) < 0.01) return '2:3';
-		if (Math.abs(width/height - 3/4) < 0.01) return '3:4';
-		if (Math.abs(width/height - 1) < 0.01) return '1:1';
-		if (Math.abs(width/height - 4/3) < 0.01) return '4:3';
-		if (Math.abs(width/height - 3/2) < 0.01) return '3:2';
-		if (Math.abs(width/height - 16/9) < 0.01) return '16:9';
-		
-		// If no standard ratio matches, return simplified custom ratio
-		const gcd = (a: number, b: number): number => b ? gcd(b, a % b) : a;
-		const divisor = gcd(width, height);
-		return `${width/divisor}:${height/divisor}`;
-	};
+
 
 	const downloadImageWithConfig = async (imageUrl: string, image: GeneratedImage) => {
 		//console.log('Image object received:', image);
