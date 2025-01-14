@@ -81,7 +81,11 @@ export default function Component() {
 
 	const abortController = useRef<AbortController | null>(null);
 	const [telemetryData, setTelemetryData] = useState<TelemetryData | null>(null)
-	const [selectedImage, setSelectedImage] = useState<{ url: string; file: File | null } | null>(null);
+	const [selectedImage, setSelectedImage] = useState<{ 
+		url: string; 
+		file: File | null;
+		dimensions?: { width: number; height: number; }
+	} | null>(null);
 	const [maskDataUrl, setMaskDataUrl] = useState<string | null>(null);
 	const [isInpaintingEnabled, setIsInpaintingEnabled] = useState(false);
 	const [extraLoraModels, setExtraLoraModels] = useState<string[]>([]);
@@ -481,7 +485,53 @@ export default function Component() {
 		localStorage.setItem('replicateApiKey', newApiKey);
 	};
 
-	const handleImageSelect = (imageData: { url: string; file: File | null }) => {
+	const getValidAspectRatio = (width: number, height: number, model: string): string => {
+		const ratio = width / height;
+		const tolerance = 0.03; // Smaller tolerance for more precise matching
+		
+		if (model === 'luma') {
+			if (Math.abs(ratio - 1) < tolerance) return '1:1';
+			if (Math.abs(ratio - 3/4) < tolerance) return '3:4';
+			if (Math.abs(ratio - 4/3) < tolerance) return '4:3';
+			if (Math.abs(ratio - 9/16) < tolerance) return '9:16';
+			if (Math.abs(ratio - 16/9) < tolerance) return '16:9';
+			if (Math.abs(ratio - 9/21) < tolerance) return '9:21';
+			if (Math.abs(ratio - 21/9) < tolerance) return '21:9';
+			return '1:1';
+		}
+		
+		// For all other models
+		if (Math.abs(ratio - 2/3) < tolerance) return '2:3';  // Check 2:3 first
+		if (Math.abs(ratio - 1) < tolerance) return '1:1';
+		if (Math.abs(ratio - 16/9) < tolerance) return '16:9';
+		if (Math.abs(ratio - 21/9) < tolerance) return '21:9';
+		if (Math.abs(ratio - 3/2) < tolerance) return '3:2';
+		if (Math.abs(ratio - 4/5) < tolerance) return '4:5';
+		if (Math.abs(ratio - 5/4) < tolerance) return '5:4';
+		if (Math.abs(ratio - 9/16) < tolerance) return '9:16';
+		if (Math.abs(ratio - 9/21) < tolerance) return '9:21';
+		return '1:1';
+	};
+
+	const handleImageSelect = async (imageData: { 
+		url: string; 
+		file: File | null;
+		dimensions?: { width: number; height: number; }
+	}) => {
+		// Get dimensions from the image
+		const img = new Image();
+		img.src = imageData.url;
+		await new Promise((resolve) => {
+			img.onload = () => {
+				imageData.dimensions = {
+					width: img.width,
+					height: img.height
+				};
+				resolve(null);
+			};
+		});
+		
+		console.log('handleImageSelect dimensions:', imageData.dimensions);
 		setSelectedImage(imageData);
 	};
 
@@ -620,11 +670,30 @@ export default function Component() {
 				/\.(png|jpg|webp)$/i.test(file.name)
 			);
 
+			let width = formData.width;
+			let height = formData.height;
+
 			if (imageFile) {
 				const blob = await imageFile.async('blob');
 				const previewUrl = URL.createObjectURL(blob);
+				
+				// Get dimensions from the actual image
+				const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
+					const img = new Image();
+					img.onload = () => {
+						resolve({
+							width: img.width,
+							height: img.height
+						});
+					};
+					img.src = previewUrl;
+				});
+				
+				width = dimensions.width;
+				height = dimensions.height;
 				setPreviewImageUrl(previewUrl);
 			}
+
 
 			let modelType: FormData['model'];
 			let privateLoraName = '';
@@ -666,9 +735,9 @@ export default function Component() {
 				lora_scale: config.lora_scale || 1,
 				extra_lora: config.extra_lora || '',
 				extra_lora_scale: config.extra_lora_scale || 0.8,
-				width: config.width || formData.width,
-				height: config.height || formData.height,
-				aspect_ratio: config.aspect_ratio || '1:1',
+				width,
+				height,
+				aspect_ratio: getValidAspectRatio(width, height, modelType),
 				guidance_scale: config.guidance_scale,
 				num_inference_steps: config.num_inference_steps,
 				num_outputs: 1,
@@ -722,6 +791,21 @@ export default function Component() {
 		}
 	};
 
+	const simplifyAspectRatio = (width: number, height: number): string => {
+		// Common aspect ratios
+		if (Math.abs(width/height - 2/3) < 0.01) return '2:3';
+		if (Math.abs(width/height - 3/4) < 0.01) return '3:4';
+		if (Math.abs(width/height - 1) < 0.01) return '1:1';
+		if (Math.abs(width/height - 4/3) < 0.01) return '4:3';
+		if (Math.abs(width/height - 3/2) < 0.01) return '3:2';
+		if (Math.abs(width/height - 16/9) < 0.01) return '16:9';
+		
+		// If no standard ratio matches, return simplified custom ratio
+		const gcd = (a: number, b: number): number => b ? gcd(b, a % b) : a;
+		const divisor = gcd(width, height);
+		return `${width/divisor}:${height/divisor}`;
+	};
+
 	const downloadImageWithConfig = async (imageUrl: string, image: GeneratedImage) => {
 		//console.log('Image object received:', image);
 		try {
@@ -741,14 +825,43 @@ export default function Component() {
 			// Add generated image
 			zip.file(`${baseFilename}.${image.output_format || (image.model === 'recraftv3' ? 'webp' : 'png')}`, imageBlob);
 
-			// If it's img2img, add the source image from data URI
+			let imageDimensions: { width: number; height: number; aspect_ratio: string } = {
+				width: 512,
+				height: 512,
+				aspect_ratio: '1:1'
+			};
+
+			// In the downloadImageWithConfig function
 			if (image.isImg2Img && image.sourceImageUrl) {
 				try {
-					// Convert data URI to blob
-					const sourceImageBlob = await fetch(image.sourceImageUrl).then(r => r.blob());
-					zip.file(`${baseFilename}-source.png`, sourceImageBlob);
+					// For base64 data URI stored in IndexedDB
+					const base64Data = image.sourceImageUrl.split(',')[1];
+					const mimeType = image.sourceImageUrl.split(';')[0].split(':')[1];
+					
+					// Convert base64 to binary while preserving original format
+					const binaryStr = atob(base64Data);
+					const bytes = new Uint8Array(binaryStr.length);
+					for (let i = 0; i < binaryStr.length; i++) {
+						bytes[i] = binaryStr.charCodeAt(i);
+					}
+					
+					// Create blob with original mime type
+					const sourceImageBlob = new Blob([bytes], { type: mimeType });
+					const extension = mimeType.split('/')[1];
+					
+					// Add to zip with original format
+					zip.file(`${baseFilename}-source.${extension}`, sourceImageBlob);
+			
+					// Use source dimensions for aspect ratio if available
+					if (image.sourceDimensions) {
+						imageDimensions = {
+							width: image.sourceDimensions.width,
+							height: image.sourceDimensions.height,
+							aspect_ratio: `${image.sourceDimensions.width}:${image.sourceDimensions.height}`
+						};
+					}
 				} catch (error) {
-					console.warn('Failed to process source image:', error);
+					console.error(`Failed to process source image:`, error);
 				}
 			}
 
@@ -785,9 +898,7 @@ export default function Component() {
 				output_format: image.output_format,
 				output_quality: image.output_quality,
 				disable_safety_checker: image.disable_safety_checker,
-				width: image.width,
-				height: image.height,
-				aspect_ratio: image.aspect_ratio,
+				...imageDimensions,
 				style: image.style,
 				isImg2Img: image.isImg2Img,
 				prompt_strength: image.prompt_strength,
@@ -799,6 +910,11 @@ export default function Component() {
 				style_reference_url: image.style_reference_url,
 				style_reference_weight: image.style_reference_weight,
 				character_reference_url: image.character_reference_url,
+				aspect_ratio: getValidAspectRatio(
+					imageDimensions.width,
+					imageDimensions.height,
+					image.model
+				),
 				timestamp: image.timestamp
 			};
 
@@ -848,18 +964,19 @@ export default function Component() {
 		try {
 			const response = await fetch(blobUrl);
 			const blob = await response.blob();
-			// Create a compressed version for storage
+			
+			// Create a canvas with original dimensions
 			const canvas = document.createElement('canvas');
 			const ctx = canvas.getContext('2d');
 			const img = new Image();
 			
 			return new Promise((resolve, reject) => {
 				img.onload = () => {
-					// Resize to smaller dimensions
-					canvas.width = 400;  // Reduced size
-					canvas.height = 400;
-					ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-					resolve(canvas.toDataURL('image/jpeg', 0.7)); // Compressed JPEG
+					// Use original dimensions
+					canvas.width = img.width;
+					canvas.height = img.height;
+					ctx?.drawImage(img, 0, 0, img.width, img.height);
+					resolve(canvas.toDataURL('image/jpeg', 0.7)); // Still compress quality but keep dimensions
 				};
 				img.onerror = reject;
 				img.src = URL.createObjectURL(blob);
@@ -1209,6 +1326,8 @@ export default function Component() {
 				currentTelemetryData.generationParameters.seed = seed;
 				currentTelemetryData.outputImageSizes = [];
 
+				console.log('pollForResult dimensions:', selectedImage?.dimensions);
+
 				const outputUrls = Array.isArray(pollData.output) ? pollData.output : [pollData.output];
 
 				let sourceImageDataUri: string | undefined;
@@ -1248,6 +1367,7 @@ export default function Component() {
 						isImg2Img: !!selectedImage,
 						//sourceImageUrl: selectedImage?.url || undefined,
 						sourceImageUrl: sourceImageDataUri || undefined,
+						sourceDimensions: selectedImage?.dimensions,
 						maskDataUrl: maskDataUrl || undefined,
 						prompt_strength: pollData.input.prompt_strength
 					}

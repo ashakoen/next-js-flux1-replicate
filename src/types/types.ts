@@ -69,6 +69,11 @@ export type GeneratedImage = {
     style_reference_url?: string;
     style_reference_weight?: number;
     character_reference_url?: string;
+    sourceFile?: File;
+    sourceDimensions?: {
+        width: number;
+        height: number;
+    };
 }
 
 export type LogEntry = {
