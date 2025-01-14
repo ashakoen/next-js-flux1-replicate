@@ -30,13 +30,14 @@ export function GenerateConfirmModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] max-h-[90vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle>Confirm Generation</DialogTitle>
                     <DialogDescription>
                         Generate image with these settings?
                     </DialogDescription>
                 </DialogHeader>
+                <div className="flex-1 overflow-y-auto pr-2">
                 <div className="grid gap-4 py-4">
                     {previewImageUrl && (
                         <div className="relative w-full aspect-square rounded-lg overflow-hidden">
@@ -66,6 +67,7 @@ export function GenerateConfirmModal({
                             <p className="text-sm text-muted-foreground">
                                 {formData.width}x{formData.height}
                             </p>
+                        </div>
                         </div>
                     </div>
                 </div>
