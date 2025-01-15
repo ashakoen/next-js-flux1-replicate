@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Terminal } from 'lucide-react';
 import { GenerationSettingsCard } from '@/components/cards/GenerationSettingsCard';
+import { GenerationActions } from '@/components/GenerationActions';
 import { db } from '@/services/indexedDB';
 
 import ServerLogModal from '../components/modals/serverLogModal';
@@ -81,8 +82,8 @@ export default function Component() {
 
 	const abortController = useRef<AbortController | null>(null);
 	const [telemetryData, setTelemetryData] = useState<TelemetryData | null>(null)
-	const [selectedImage, setSelectedImage] = useState<{ 
-		url: string; 
+	const [selectedImage, setSelectedImage] = useState<{
+		url: string;
 		file: File | null;
 		dimensions?: { width: number; height: number; }
 	} | null>(null);
@@ -146,7 +147,7 @@ export default function Component() {
 				setIsLoadingImages(false);
 			}
 		};
-	
+
 		initializeStorage();
 	}, []);
 
@@ -238,7 +239,7 @@ export default function Component() {
 				console.error('Bucket initialization error:', error);
 			}
 		};
-	
+
 		initializeBucket();
 	}, []);
 
@@ -264,11 +265,11 @@ export default function Component() {
 		try {
 
 			const isDuplicate = bucketImages.some(
-				existingImage => 
-					existingImage.url === image.url || 
+				existingImage =>
+					existingImage.url === image.url ||
 					existingImage.timestamp === image.timestamp
 			);
-	
+
 			if (isDuplicate) {
 				toast.error('This image is already in your bucket');
 				return;
@@ -287,20 +288,20 @@ export default function Component() {
 					}
 				})
 			});
-	
+
 			if (!response.ok) throw new Error('Failed to fetch image');
-			
+
 			const { imageData, contentType } = await response.json();
-			
+
 			// Create data URL from base64 and content type
 			const dataUrl = `data:${contentType};base64,${imageData}`;
-	
+
 			// Create new image object with data URL instead of remote URL
 			const bucketImage: GeneratedImage = {
 				...image,
 				url: dataUrl
 			};
-	
+
 			// Save to IndexedDB
 			await db.saveToBucket(bucketImage);
 			setBucketImages(prev => [...prev, bucketImage]);
@@ -310,7 +311,7 @@ export default function Component() {
 			toast.error('Failed to add image to bucket');
 		}
 	};
-	
+
 	const handleRemoveFromBucket = async (timestamp: string) => {
 		try {
 			await db.removeFromBucket(timestamp);
@@ -321,34 +322,34 @@ export default function Component() {
 			toast.error('Failed to remove image from bucket');
 		}
 	};
-	
+
 	const handleDownloadAllBucket = async () => {
 		try {
 			if (bucketImages.length === 0) {
 				toast.error('No images in bucket to download');
 				return;
 			}
-	
+
 			const MAX_IMAGES = 100;
 			// Sort by timestamp (newest first) and take only the most recent MAX_IMAGES
 			const imagesToDownload = [...bucketImages]
 				.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 				.slice(0, MAX_IMAGES);
-	
+
 			// Create a zip file containing all images
 			const JSZip = (await import('jszip')).default;
 			const zip = new JSZip();
-	
+
 			// Add each image to the zip
 			for (const image of imagesToDownload) {
 				try {
 					// Fetch the data URL and convert to blob
 					const response = await fetch(image.url);
 					const blob = await response.blob();
-					
+
 					// Sanitize the timestamp for the filename
 					const safeTimestamp = image.timestamp.replace(/[/:]/g, '-');
-					
+
 					// Add to zip with a sanitized filename
 					zip.file(`bucket-image-${safeTimestamp}.png`, blob);
 				} catch (error) {
@@ -356,25 +357,25 @@ export default function Component() {
 					toast.error(`Failed to add one or more images to zip`);
 				}
 			}
-	
+
 			// Generate the zip file
 			const zipBlob = await zip.generateAsync({ type: 'blob' });
-			
+
 			// Create download link with sanitized timestamp
 			const blobUrl = window.URL.createObjectURL(zipBlob);
 			const a = document.createElement('a');
 			a.style.display = 'none';
 			a.href = blobUrl;
 			a.download = `bucket-images-${Date.now()}.zip`;
-			
+
 			// Trigger download
 			document.body.appendChild(a);
 			a.click();
-			
+
 			// Cleanup
 			window.URL.revokeObjectURL(blobUrl);
 			document.body.removeChild(a);
-			
+
 			// Show appropriate success message
 			if (bucketImages.length > MAX_IMAGES) {
 				toast.success(`Downloaded most recent ${MAX_IMAGES} images from bucket`);
@@ -488,33 +489,33 @@ export default function Component() {
 	const getValidAspectRatio = (width: number, height: number, model: string): string => {
 		const ratio = width / height;
 		const tolerance = 0.03; // Smaller tolerance for more precise matching
-		
+
 		if (model === 'luma') {
 			if (Math.abs(ratio - 1) < tolerance) return '1:1';
-			if (Math.abs(ratio - 3/4) < tolerance) return '3:4';
-			if (Math.abs(ratio - 4/3) < tolerance) return '4:3';
-			if (Math.abs(ratio - 9/16) < tolerance) return '9:16';
-			if (Math.abs(ratio - 16/9) < tolerance) return '16:9';
-			if (Math.abs(ratio - 9/21) < tolerance) return '9:21';
-			if (Math.abs(ratio - 21/9) < tolerance) return '21:9';
+			if (Math.abs(ratio - 3 / 4) < tolerance) return '3:4';
+			if (Math.abs(ratio - 4 / 3) < tolerance) return '4:3';
+			if (Math.abs(ratio - 9 / 16) < tolerance) return '9:16';
+			if (Math.abs(ratio - 16 / 9) < tolerance) return '16:9';
+			if (Math.abs(ratio - 9 / 21) < tolerance) return '9:21';
+			if (Math.abs(ratio - 21 / 9) < tolerance) return '21:9';
 			return '1:1';
 		}
-		
+
 		// For all other models
-		if (Math.abs(ratio - 2/3) < tolerance) return '2:3';  // Check 2:3 first
+		if (Math.abs(ratio - 2 / 3) < tolerance) return '2:3';  // Check 2:3 first
 		if (Math.abs(ratio - 1) < tolerance) return '1:1';
-		if (Math.abs(ratio - 16/9) < tolerance) return '16:9';
-		if (Math.abs(ratio - 21/9) < tolerance) return '21:9';
-		if (Math.abs(ratio - 3/2) < tolerance) return '3:2';
-		if (Math.abs(ratio - 4/5) < tolerance) return '4:5';
-		if (Math.abs(ratio - 5/4) < tolerance) return '5:4';
-		if (Math.abs(ratio - 9/16) < tolerance) return '9:16';
-		if (Math.abs(ratio - 9/21) < tolerance) return '9:21';
+		if (Math.abs(ratio - 16 / 9) < tolerance) return '16:9';
+		if (Math.abs(ratio - 21 / 9) < tolerance) return '21:9';
+		if (Math.abs(ratio - 3 / 2) < tolerance) return '3:2';
+		if (Math.abs(ratio - 4 / 5) < tolerance) return '4:5';
+		if (Math.abs(ratio - 5 / 4) < tolerance) return '5:4';
+		if (Math.abs(ratio - 9 / 16) < tolerance) return '9:16';
+		if (Math.abs(ratio - 9 / 21) < tolerance) return '9:21';
 		return '1:1';
 	};
 
-	const handleImageSelect = async (imageData: { 
-		url: string; 
+	const handleImageSelect = async (imageData: {
+		url: string;
 		file: File | null;
 		dimensions?: { width: number; height: number; }
 	}) => {
@@ -530,7 +531,7 @@ export default function Component() {
 				resolve(null);
 			};
 		});
-		
+
 		console.log('handleImageSelect dimensions:', imageData.dimensions);
 		setSelectedImage(imageData);
 	};
@@ -683,7 +684,7 @@ export default function Component() {
 			if (imageFile) {
 				const blob = await imageFile.async('blob');
 				const previewUrl = URL.createObjectURL(blob);
-				
+
 				// Get dimensions from the actual image
 				const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
 					const img = new Image();
@@ -695,7 +696,7 @@ export default function Component() {
 					};
 					img.src = previewUrl;
 				});
-				
+
 				width = dimensions.width;
 				height = dimensions.height;
 				setPreviewImageUrl(previewUrl);
@@ -790,12 +791,12 @@ export default function Component() {
 						reader.onloadend = () => resolve(reader.result as string);
 						reader.readAsDataURL(maskBlob);
 					});
-					
+
 					// Convert to proper URI format
 					//const response = await fetch(maskDataUrl);
 					//const blob = await response.blob();
 					//const finalMaskDataUrl = URL.createObjectURL(blob);
-					
+
 					setMaskDataUrl(maskDataUrl);
 					setIsInpaintingEnabled(true);
 				}
@@ -843,21 +844,21 @@ export default function Component() {
 					// For base64 data URI stored in IndexedDB
 					const base64Data = image.sourceImageUrl.split(',')[1];
 					const mimeType = image.sourceImageUrl.split(';')[0].split(':')[1];
-					
+
 					// Convert base64 to binary while preserving original format
 					const binaryStr = atob(base64Data);
 					const bytes = new Uint8Array(binaryStr.length);
 					for (let i = 0; i < binaryStr.length; i++) {
 						bytes[i] = binaryStr.charCodeAt(i);
 					}
-					
+
 					// Create blob with original mime type
 					const sourceImageBlob = new Blob([bytes], { type: mimeType });
 					const extension = mimeType.split('/')[1];
-					
+
 					// Add to zip with original format
 					zip.file(`${baseFilename}-source.${extension}`, sourceImageBlob);
-			
+
 					// Use source dimensions for aspect ratio if available
 					if (image.sourceDimensions) {
 						imageDimensions = {
@@ -970,12 +971,12 @@ export default function Component() {
 		try {
 			const response = await fetch(blobUrl);
 			const blob = await response.blob();
-			
+
 			// Create a canvas with original dimensions
 			const canvas = document.createElement('canvas');
 			const ctx = canvas.getContext('2d');
 			const img = new Image();
-			
+
 			return new Promise((resolve, reject) => {
 				img.onload = () => {
 					// Use original dimensions
@@ -1517,20 +1518,20 @@ export default function Component() {
 			// Create a blob from the data URL
 			const response = await fetch(dataUrl);
 			const blob = await response.blob();
-			
+
 			// Create a temporary URL for the blob
 			const blobUrl = window.URL.createObjectURL(blob);
-			
+
 			// Create download link
 			const a = document.createElement('a');
 			a.style.display = 'none';
 			a.href = blobUrl;
 			a.download = `bucket-image-${timestamp}.png`; // You can customize the filename
-			
+
 			// Trigger download
 			document.body.appendChild(a);
 			a.click();
-			
+
 			// Cleanup
 			window.URL.revokeObjectURL(blobUrl);
 			document.body.removeChild(a);
@@ -1680,40 +1681,51 @@ export default function Component() {
 						setFormData={setFormData}
 					/>
 
-<div className="middle-column order-2 xl:order-1 xl:w-1/4">
-						<GenerationSettingsCard
-							formData={formData}
-							isLoading={isLoading}
-							isGenerating={isGenerating}
-							cancelUrl={cancelUrl}
-							validatedLoraModels={validatedLoraModels}
-							isValidatingLora={isValidatingLora}
-							loraValidationError={loraValidationError}
-							handleInputChange={handleInputChange}
-							handleBlur={handleBlur}
-							handleSelectChange={handleSelectChange}
-							handleSwitchChange={handleSwitchChange}
-							handleSliderChange={handleSliderChange}
-							handleNumOutputsChange={handleNumOutputsChange}
-							handleSubmit={handleSubmit}
-							handleCancel={handleCancel}
-							apiKey={apiKey}
-							showApiKeyAlert={showApiKeyAlert}
-							handleApiKeyChange={handleApiKeyChange}
-							hasSourceImage={!!selectedImage}
-							onAddToFavorites={handleAddToFavorites}
-							favoritePrompts={favoritePrompts}
-							onImagePackUpload={handleImagePackUpload}
-							extraLoraModels={extraLoraModels}
-							setExtraLoraModels={setExtraLoraModels}
-							setValidatedLoraModels={setValidatedLoraModels}
-							setFavoritePrompts={setFavoritePrompts}
-						/>
+					<div className="middle-column order-2 xl:order-1 xl:w-1/5 h-[calc(100vh-8rem)]">
+						<div className="flex flex-col h-full justify-between">
+							<GenerationSettingsCard
+								className="flex-1 min-h-0 overflow-auto h-[calc(100vh-10rem)]"
+								formData={formData}
+								isLoading={isLoading}
+								isGenerating={isGenerating}
+								cancelUrl={cancelUrl}
+								validatedLoraModels={validatedLoraModels}
+								isValidatingLora={isValidatingLora}
+								loraValidationError={loraValidationError}
+								handleInputChange={handleInputChange}
+								handleBlur={handleBlur}
+								handleSelectChange={handleSelectChange}
+								handleSwitchChange={handleSwitchChange}
+								handleSliderChange={handleSliderChange}
+								handleNumOutputsChange={handleNumOutputsChange}
+								handleSubmit={handleSubmit}
+								handleCancel={handleCancel}
+								apiKey={apiKey}
+								showApiKeyAlert={showApiKeyAlert}
+								handleApiKeyChange={handleApiKeyChange}
+								hasSourceImage={!!selectedImage}
+								onAddToFavorites={handleAddToFavorites}
+								favoritePrompts={favoritePrompts}
+								onImagePackUpload={handleImagePackUpload}
+								extraLoraModels={extraLoraModels}
+								setExtraLoraModels={setExtraLoraModels}
+								setValidatedLoraModels={setValidatedLoraModels}
+								setFavoritePrompts={setFavoritePrompts}
+							/>
+
+							<GenerationActions  // New component
+								isGenerating={isGenerating}
+								isLoading={isLoading}
+								handleSubmit={handleSubmit}
+								handleCancel={handleCancel}
+							/>
+						</div>
 					</div>
 
 
+
 					{/* Generated Images Card - Right 2/3 */}
-					<div className="right-column order-1 xl:order-2 xl:w-1/2">
+					<div className="right-column order-1 xl:order-2 xl:w-[55%]">
 
 						<GeneratedImagesCard
 							images={generatedImages}
@@ -1737,13 +1749,13 @@ export default function Component() {
 					</div>
 
 					<div className="order-3 xl:w-1/4">
-        <ImageBucketCard
-            bucketImages={bucketImages}
-            onRemoveFromBucket={handleRemoveFromBucket}
-			onDownloadImage={downloadBucketImage}
-            onDownloadAll={handleDownloadAllBucket}
-        />
-    </div>
+						<ImageBucketCard
+							bucketImages={bucketImages}
+							onRemoveFromBucket={handleRemoveFromBucket}
+							onDownloadImage={downloadBucketImage}
+							onDownloadAll={handleDownloadAllBucket}
+						/>
+					</div>
 				</div>
 
 				{/* Keep the logs button at the bottom */}

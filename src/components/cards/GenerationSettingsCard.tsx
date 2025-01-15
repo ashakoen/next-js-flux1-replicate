@@ -20,6 +20,7 @@ import { useDropzone } from 'react-dropzone';
 
 
 interface GenerationSettingsCardProps {
+	className?: string; 
 	formData: FormData;
 	isLoading: boolean;
 	isGenerating: boolean;
@@ -202,7 +203,7 @@ export function GenerationSettingsCard({
 	const { theme, setTheme } = useTheme();
 
 	return (
-		<Card className="flex flex-col w-full h-[calc(100vh-8rem)] overflow-hidden">
+		<Card className="flex flex-col w-full h-[calc(100vh-14rem)] overflow-hidden">
 			<div className="absolute top-2 right-3 flex items-center gap-2 z-50">
 				<Button
 					variant="ghost"
@@ -358,33 +359,11 @@ export function GenerationSettingsCard({
 
 							</div>
 
-							<div className="flex w-full pt-8 pb-10">
-								<Button
-									type="submit"
-									disabled={isLoading || formData.prompt.length <= 1}
-									className="btn-theme flex-1 mr-2"
-								>
-									{isLoading ? (
-										<>
-											<Loader2 className="mr-2 h-5 w-5 animate-spin" />
-											Generating...
-										</>
-									) : (
-										`Generate Image${formData.num_outputs > 1 ? 's' : ''}`
-									)}
-								</Button>
-								<Button
-									onClick={handleCancel}
-									className="btn-cancel flex-1"
-									disabled={!isGenerating || !cancelUrl}
-								>
-									Cancel
-								</Button>
-							</div>
+
 
 							<div 
     {...getRootProps()} 
-    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+    className={`flex items-center justify-center gap-2 px-4 py-2 mt-12 pt-4 pb-4 rounded-lg transition-all duration-200 ${
         isDragActive 
             ? 'bg-primary/10 border-2 border-dashed border-primary' 
             : 'bg-transparent hover:bg-accent/10'
