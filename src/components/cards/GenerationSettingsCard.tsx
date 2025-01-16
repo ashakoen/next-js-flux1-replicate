@@ -9,11 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sun, Moon, Star, AlertCircle, Loader2, Gift } from 'lucide-react';
+import { Sun, Moon, Star, AlertCircle, Loader2, Box, Github } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FormData, Recraftv3Size, Recraftv3Style, IdeogramStyleType, IdeogramMagicPromptOption, ImagePackConfig, LumaPhotonAspectRatio } from '@/types/types';
 import { ApiSettingsModal } from "@/components/modals/ApiSettingsModal";
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { useDropzone } from 'react-dropzone';
@@ -205,6 +205,21 @@ export function GenerationSettingsCard({
 	return (
 		<Card className="flex flex-col w-full h-[calc(100vh-14rem)] overflow-hidden">
 			<div className="absolute top-2 right-3 flex items-center gap-2 z-50">
+			<Button
+        variant="ghost"
+        size="icon"
+        asChild
+        className="h-9 w-9 flex items-center justify-center"
+    >
+        <a
+            href="https://github.com/ashakoen/next-js-flux1-replicate"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            <Github className="h-[1.2rem] w-[1.2rem]" />
+            <span className="sr-only">View on GitHub</span>
+        </a>
+    </Button>
 				<Button
 					variant="ghost"
 					size="icon"
@@ -304,26 +319,6 @@ export function GenerationSettingsCard({
 										</TooltipProvider>
 									</div>
 								)}
-								{!isRecraftv3 && !isIdeogram && !isLuma && (
-									<div className="flex items-center space-x-2">
-										<Switch
-											id="go_fast"
-											checked={formData.go_fast}
-											onCheckedChange={(checked) => handleSwitchChange('go_fast', checked)}
-										/>
-										<Label htmlFor="go_fast">Go Fast</Label>
-										<TooltipProvider>
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<AlertCircle className="h-4 w-4 text-gray-500" />
-												</TooltipTrigger>
-												<TooltipContent>
-													<p>Enable for faster generation at the cost of some quality</p>
-												</TooltipContent>
-											</Tooltip>
-										</TooltipProvider>
-									</div>
-								)}
 
 
 								{!isRecraftv3 && !isIdeogram && !isLuma && (
@@ -355,6 +350,20 @@ export function GenerationSettingsCard({
 
 									</>
 								)}
+								{!isRecraftv3 && (
+									<>
+										<div>
+											<Label htmlFor="seed">Seed</Label>
+											<Input
+												id="seed"
+												name="seed"
+												type="number"
+												value={formData.seed}
+												onChange={handleInputChange}
+											/>
+										</div>
+										</>
+									)}
 
 
 							</div>
@@ -374,8 +383,8 @@ export function GenerationSettingsCard({
                     }`}
             >
                 <input {...getInputProps()} />
-                <Gift className="w-4 h-4 text-[#9b59b6] dark:text-[#fa71cd]" />
-                <span className="text-sm">Drop Image Pack</span>
+                <Box className="w-4 h-4 text-[#9b59b6] dark:text-[#fa71cd]" />
+                <span className="text-sm">Drop Image Pack Here</span>
             </div>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-[300px] text-sm">
@@ -409,6 +418,27 @@ export function GenerationSettingsCard({
 										</SelectContent>
 									</Select>
 								</div>
+
+								{!isRecraftv3 && !isIdeogram && !isLuma && (
+									<div className="flex items-center space-x-2">
+										<Switch
+											id="go_fast"
+											checked={formData.go_fast}
+											onCheckedChange={(checked) => handleSwitchChange('go_fast', checked)}
+										/>
+										<Label htmlFor="go_fast">Go Fast</Label>
+										<TooltipProvider>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<AlertCircle className="h-4 w-4 text-gray-500" />
+												</TooltipTrigger>
+												<TooltipContent>
+													<p>Enable for faster generation at the cost of some quality</p>
+												</TooltipContent>
+											</Tooltip>
+										</TooltipProvider>
+									</div>
+								)}
 
 
 

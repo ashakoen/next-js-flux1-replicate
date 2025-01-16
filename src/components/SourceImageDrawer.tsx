@@ -51,7 +51,7 @@ export function SourceImageDrawer({
                 onInpaintingChange(false);
             }
         }
-    }, [selectedImage]);
+    }, [selectedImage, currentMaskDataUrl, onMaskGenerated, onInpaintingChange]);
 
     return (
 <div className="fixed left-0 top-[2rem] z-30">

@@ -12,8 +12,8 @@ export const viewport = {
 }
 
 export const metadata = {
-  title: 'Replicate Image Generator',
-  description: 'Generate images using Replicate API',
+  title: "Asha's AI Image Generator",
+  description: 'Generate images using AI',
 };
 
 export default function RootLayout({
