@@ -21,11 +21,11 @@ export function GenerationActions({
 }: GenerationActionsProps) {
     return (
         <Card className={`w-full mt-4 ${className}`}> 
-        <CardContent className="p-4">
+        <CardContent className="p-6">
             <div className="flex gap-2">
                 <Button 
                     onClick={(e) => handleSubmit(e)}
-                    className="flex-1 h-12 bg-gradient-to-r from-purple-500 to-pink-500 
+                    className="flex-1 h-10 bg-gradient-to-r from-purple-500 to-pink-500 
                         hover:from-purple-600 hover:to-pink-600
                         text-white shadow-inner font-medium text-sm
                         transition-all duration-200" 
@@ -44,7 +44,7 @@ export function GenerationActions({
                     <Button 
                         variant="destructive" 
                         onClick={handleCancel}
-                        className="w-28 h-12 shadow-inner font-medium text-base
+                        className="w-28 h-10 shadow-inner font-medium text-sm
                             bg-gradient-to-r from-red-500 to-red-600
                             hover:from-red-600 hover:to-red-700
                             transition-all duration-200"

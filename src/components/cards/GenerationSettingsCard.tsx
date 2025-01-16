@@ -20,7 +20,7 @@ import { useDropzone } from 'react-dropzone';
 
 
 interface GenerationSettingsCardProps {
-	className?: string; 
+	className?: string;
 	formData: FormData;
 	isLoading: boolean;
 	isGenerating: boolean;
@@ -43,10 +43,10 @@ interface GenerationSettingsCardProps {
 	onAddToFavorites: (prompt: string) => void;
 	favoritePrompts: string[];
 	onImagePackUpload: (config: ImagePackConfig) => Promise<void>;
-    extraLoraModels: string[];
-    setExtraLoraModels: (models: string[]) => void;
-    setValidatedLoraModels: (models: string[]) => void;
-    setFavoritePrompts: (prompts: string[]) => void;
+	extraLoraModels: string[];
+	setExtraLoraModels: (models: string[]) => void;
+	setValidatedLoraModels: (models: string[]) => void;
+	setFavoritePrompts: (prompts: string[]) => void;
 
 	handleReferenceUrlChange?: (name: string, url: string) => void;
 }
@@ -76,8 +76,8 @@ export function GenerationSettingsCard({
 	onImagePackUpload,
 	extraLoraModels,
 	setExtraLoraModels,
-    setValidatedLoraModels,
-    setFavoritePrompts,
+	setValidatedLoraModels,
+	setFavoritePrompts,
 }: GenerationSettingsCardProps) {
 
 	const isPromptInFavorites = favoritePrompts.includes(formData.prompt);
@@ -104,66 +104,66 @@ export function GenerationSettingsCard({
 	];
 
 
-    const onDrop = useCallback(async (acceptedFiles: File[]) => {
-        const file = acceptedFiles[0];
-        if (!file || !file.name.endsWith('.zip')) {
-            toast.error('Please upload a valid image pack ZIP file');
-            return;
-        }
+	const onDrop = useCallback(async (acceptedFiles: File[]) => {
+		const file = acceptedFiles[0];
+		if (!file || !file.name.endsWith('.zip')) {
+			toast.error('Please upload a valid image pack ZIP file');
+			return;
+		}
 
-        try {
-            const JSZip = (await import('jszip')).default;
-            const zip = await JSZip.loadAsync(file);
-            
-            // Find and parse config file
-            const configFile = Object.values(zip.files).find(f => f.name.endsWith('.json'));
-            if (!configFile) throw new Error('No config file found in ZIP');
-            
-            const configText = await configFile.async('text');
-            const config = JSON.parse(configText) as ImagePackConfig;
+		try {
+			const JSZip = (await import('jszip')).default;
+			const zip = await JSZip.loadAsync(file);
 
-            config.zipFile = file;
+			// Find and parse config file
+			const configFile = Object.values(zip.files).find(f => f.name.endsWith('.json'));
+			if (!configFile) throw new Error('No config file found in ZIP');
 
-            const imageFile = Object.values(zip.files).find(f => 
-                !f.name.includes('-source') && 
-                !f.name.includes('-mask') && 
-                /\.(png|jpg|webp)$/i.test(f.name)
-            );
-    
-            if (imageFile) {
-                const imageBlob = await imageFile.async('blob');
-                config.previewImageUrl = URL.createObjectURL(imageBlob);
-            }
-            
-            // Handle source image if present
-            if (config.isImg2Img) {
-                const sourceFile = Object.values(zip.files).find(f => f.name.includes('-source'));
-                if (sourceFile) {
-                    const sourceBlob = await sourceFile.async('blob');
-                    config.sourceImageUrl = URL.createObjectURL(sourceBlob);
-                }
-                
-                // Handle mask if present
-                const maskFile = Object.values(zip.files).find(f => f.name.includes('-mask'));
-                if (maskFile) {
-                    const maskBlob = await maskFile.async('blob');
-                    config.maskDataUrl = URL.createObjectURL(maskBlob);
-                }
-            }
+			const configText = await configFile.async('text');
+			const config = JSON.parse(configText) as ImagePackConfig;
 
-            await onImagePackUpload(config);
-            toast.success('Image pack loaded successfully!');
-        } catch (error) {
-            console.error('Error processing ZIP:', error);
-            toast.error('Failed to process image pack');
-        }
-    }, [onImagePackUpload]);
+			config.zipFile = file;
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
-        onDrop,
-        accept: { 'application/zip': ['.zip'] },
-        multiple: false
-    });
+			const imageFile = Object.values(zip.files).find(f =>
+				!f.name.includes('-source') &&
+				!f.name.includes('-mask') &&
+				/\.(png|jpg|webp)$/i.test(f.name)
+			);
+
+			if (imageFile) {
+				const imageBlob = await imageFile.async('blob');
+				config.previewImageUrl = URL.createObjectURL(imageBlob);
+			}
+
+			// Handle source image if present
+			if (config.isImg2Img) {
+				const sourceFile = Object.values(zip.files).find(f => f.name.includes('-source'));
+				if (sourceFile) {
+					const sourceBlob = await sourceFile.async('blob');
+					config.sourceImageUrl = URL.createObjectURL(sourceBlob);
+				}
+
+				// Handle mask if present
+				const maskFile = Object.values(zip.files).find(f => f.name.includes('-mask'));
+				if (maskFile) {
+					const maskBlob = await maskFile.async('blob');
+					config.maskDataUrl = URL.createObjectURL(maskBlob);
+				}
+			}
+
+			await onImagePackUpload(config);
+			toast.success('Image pack loaded successfully!');
+		} catch (error) {
+			console.error('Error processing ZIP:', error);
+			toast.error('Failed to process image pack');
+		}
+	}, [onImagePackUpload]);
+
+	const { getRootProps, getInputProps, isDragActive } = useDropzone({
+		onDrop,
+		accept: { 'application/zip': ['.zip'] },
+		multiple: false
+	});
 
 
 
@@ -304,7 +304,7 @@ export function GenerationSettingsCard({
 										</TooltipProvider>
 									</div>
 								)}
-								{!isRecraftv3 && !isIdeogram  && !isLuma && (
+								{!isRecraftv3 && !isIdeogram && !isLuma && (
 									<div className="flex items-center space-x-2">
 										<Switch
 											id="go_fast"
@@ -326,7 +326,7 @@ export function GenerationSettingsCard({
 								)}
 
 
-								{!isRecraftv3 && !isIdeogram  && !isLuma && (
+								{!isRecraftv3 && !isIdeogram && !isLuma && (
 									<>
 										<div>
 											<Label htmlFor="guidance_scale">Guidance Scale: {formData.guidance_scale}</Label>
@@ -360,19 +360,30 @@ export function GenerationSettingsCard({
 							</div>
 
 
-
-							<div 
-    {...getRootProps()} 
-    className={`flex items-center justify-center gap-2 px-4 py-2 mt-12 pt-4 pb-4 rounded-lg transition-all duration-200 ${
-        isDragActive 
-            ? 'bg-primary/10 border-2 border-dashed border-primary' 
-            : 'bg-transparent hover:bg-accent/10'
-    }`}
->
-    <input {...getInputProps()} />
-    <Gift className="w-4 h-4 text-[#9b59b6] dark:text-[#fa71cd]" />
-    <span className="text-sm">Drop Image Pack</span>
-</div>
+							<TooltipProvider>
+    <Tooltip>
+        <TooltipTrigger asChild>
+            <div
+                {...getRootProps()}
+                className={`flex items-center justify-center gap-2 px-4 py-2 mt-12 pt-4 pb-4 
+                    rounded-lg transition-all duration-200 cursor-pointer
+                    bg-gradient-to-r from-primary/[0.05] to-accent/[0.05]
+                    ${isDragActive
+                        ? 'bg-primary/10 border-2 border-dashed border-primary'
+                        : 'hover:bg-accent/10'
+                    }`}
+            >
+                <input {...getInputProps()} />
+                <Gift className="w-4 h-4 text-[#9b59b6] dark:text-[#fa71cd]" />
+                <span className="text-sm">Drop Image Pack</span>
+            </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[300px] text-sm">
+            <p>Upload a ZIP file containing images and a config file to quickly set up image generation settings. 
+            Perfect for img2img and style transfer tasks.</p>
+        </TooltipContent>
+    </Tooltip>
+</TooltipProvider>
 
 						</TabsContent>
 						<TabsContent value="advanced" className="mt-4 overflow-y-auto scrollbar-hide overscroll-none touch-pan-y">
@@ -401,7 +412,7 @@ export function GenerationSettingsCard({
 
 
 
-								{!isIdeogram && !isLuma &&(
+								{!isIdeogram && !isLuma && (
 									<div>
 										<Label htmlFor="output_format">Output Format</Label>
 										<Select
@@ -430,7 +441,7 @@ export function GenerationSettingsCard({
 									</div>
 								)}
 
-{!isRecraftv3 && !isIdeogram  && !isLuma && (
+								{!isRecraftv3 && !isIdeogram && !isLuma && (
 									<div>
 										<Label>Number of Outputs</Label>
 										<div className="flex space-x-2">
@@ -452,7 +463,7 @@ export function GenerationSettingsCard({
 								)}
 
 
-								{!isRecraftv3 && !isIdeogram  && !isLuma && (
+								{!isRecraftv3 && !isIdeogram && !isLuma && (
 									<>
 
 										<div>
@@ -504,16 +515,16 @@ export function GenerationSettingsCard({
 													<SelectValue placeholder="Select an aspect ratio" />
 												</SelectTrigger>
 												<SelectContent>
-            {isLuma ? (
-                lumaAspectRatios.map((ratio) => (
-                    <SelectItem key={ratio} value={ratio}>{ratio}</SelectItem>
-                ))
-            ) : (
-                validAspectRatios.map((ratio) => (
-                    <SelectItem key={ratio} value={ratio}>{ratio}</SelectItem>
-                ))
-            )}
-        </SelectContent>
+													{isLuma ? (
+														lumaAspectRatios.map((ratio) => (
+															<SelectItem key={ratio} value={ratio}>{ratio}</SelectItem>
+														))
+													) : (
+														validAspectRatios.map((ratio) => (
+															<SelectItem key={ratio} value={ratio}>{ratio}</SelectItem>
+														))
+													)}
+												</SelectContent>
 											</Select>
 										</div>
 										{formData.aspect_ratio === 'custom' && (
@@ -701,79 +712,79 @@ export function GenerationSettingsCard({
 								)}
 
 
-{isLuma && (
-    <div className="space-y-4">
-		        <div className="pt-4">
-            <h6 className="text-md font-medium">Luma Generation Settings</h6>
-        </div>
-        <div>
-            <Label htmlFor="image_reference_url">Image Reference URL</Label>
-            <Input
-                id="image_reference_url"
-                name="image_reference_url"
-                value={formData.image_reference_url}
-                onChange={handleInputChange}
-                placeholder="Enter reference image URL"
-            />
-        </div>
-        
-        {formData.image_reference_url && (
-            <div>
-                <Label htmlFor="image_reference_weight">
-                    Reference Weight: {formData.image_reference_weight}
-                </Label>
-                <Slider
-                    id="image_reference_weight"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={[formData.image_reference_weight]}
-                    onValueChange={(value) => handleSliderChange('image_reference_weight', value)}
-                    className="custom-slider"
-                />
-            </div>
-        )}
+								{isLuma && (
+									<div className="space-y-4">
+										<div className="pt-4">
+											<h6 className="text-md font-medium">Luma Generation Settings</h6>
+										</div>
+										<div>
+											<Label htmlFor="image_reference_url">Image Reference URL</Label>
+											<Input
+												id="image_reference_url"
+												name="image_reference_url"
+												value={formData.image_reference_url}
+												onChange={handleInputChange}
+												placeholder="Enter reference image URL"
+											/>
+										</div>
 
-        <div>
-            <Label htmlFor="style_reference_url">Style Reference URL</Label>
-            <Input
-                id="style_reference_url"
-                name="style_reference_url"
-                value={formData.style_reference_url}
-                onChange={handleInputChange}
-                placeholder="Enter style reference URL"
-            />
-        </div>
+										{formData.image_reference_url && (
+											<div>
+												<Label htmlFor="image_reference_weight">
+													Reference Weight: {formData.image_reference_weight}
+												</Label>
+												<Slider
+													id="image_reference_weight"
+													min={0}
+													max={1}
+													step={0.01}
+													value={[formData.image_reference_weight]}
+													onValueChange={(value) => handleSliderChange('image_reference_weight', value)}
+													className="custom-slider"
+												/>
+											</div>
+										)}
 
-        {formData.style_reference_url && (
-            <div>
-                <Label htmlFor="style_reference_weight">
-                    Style Weight: {formData.style_reference_weight}
-                </Label>
-                <Slider
-                    id="style_reference_weight"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={[formData.style_reference_weight]}
-                    onValueChange={(value) => handleSliderChange('style_reference_weight', value)}
-                    className="custom-slider"
-                />
-            </div>
-        )}
+										<div>
+											<Label htmlFor="style_reference_url">Style Reference URL</Label>
+											<Input
+												id="style_reference_url"
+												name="style_reference_url"
+												value={formData.style_reference_url}
+												onChange={handleInputChange}
+												placeholder="Enter style reference URL"
+											/>
+										</div>
 
-        <div>
-            <Label htmlFor="character_reference_url">Character Reference URL</Label>
-            <Input
-                id="character_reference_url"
-                name="character_reference_url"
-                value={formData.character_reference_url}
-                onChange={handleInputChange}
-                placeholder="Enter character reference URL"
-            />
-        </div>
-    </div>
-)}
+										{formData.style_reference_url && (
+											<div>
+												<Label htmlFor="style_reference_weight">
+													Style Weight: {formData.style_reference_weight}
+												</Label>
+												<Slider
+													id="style_reference_weight"
+													min={0}
+													max={1}
+													step={0.01}
+													value={[formData.style_reference_weight]}
+													onValueChange={(value) => handleSliderChange('style_reference_weight', value)}
+													className="custom-slider"
+												/>
+											</div>
+										)}
+
+										<div>
+											<Label htmlFor="character_reference_url">Character Reference URL</Label>
+											<Input
+												id="character_reference_url"
+												name="character_reference_url"
+												value={formData.character_reference_url}
+												onChange={handleInputChange}
+												placeholder="Enter character reference URL"
+											/>
+										</div>
+									</div>
+								)}
 
 							</div>
 						</TabsContent>
