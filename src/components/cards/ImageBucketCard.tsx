@@ -21,6 +21,7 @@ export default function ImageBucketCard({
     onDownloadImage,
     onDownloadAll
 }: ImageBucketCardProps) {
+
     return (
         <Card className="flex flex-col w-full h-[calc(100vh-8rem)] md:overflow-hidden">
             <CardHeader>
@@ -86,15 +87,12 @@ export default function ImageBucketCard({
                 )}
             </CardContent>
             {bucketImages.length > 0 && (
-                <CardFooter className="border-t pt-4">
-                    <Button
-                        className="w-full"
-                        onClick={onDownloadAll}
-                    >
-                        <Download className="mr-2 h-4 w-4" />
-                        Download All Images
-                    </Button>
-                </CardFooter>
+                <CardFooter className="border-t pt-6">
+    <Button className="w-full" onClick={onDownloadAll}>
+        <Download className="mr-2 h-4 w-4" />
+        Download Images
+    </Button>
+</CardFooter>
             )}
         </Card>
     );

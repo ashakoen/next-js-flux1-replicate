@@ -31,6 +31,16 @@ export default function ImageBucketCard({
     onDownloadAll
 }: ImageBucketCardProps) {
     const [storageUsage, setStorageUsage] = useState<number>(0);
+    const [isDownloading, setIsDownloading] = useState(false);
+
+    const handleDownload = async () => {
+        setIsDownloading(true);
+        try {
+            await onDownloadAll();
+        } finally {
+            setIsDownloading(false);
+        }
+    };
 
     useEffect(() => {
         const getStorageEstimate = async () => {
@@ -55,17 +65,22 @@ export default function ImageBucketCard({
                         Image Bucket
                     </CardTitle>
                     <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger>
-                                <div className="flex items-center text-xs text-muted-foreground">
-                                    <Database className="h-3 w-3 mr-1" />
-                                    {formatBytes(storageUsage)}
-                                </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Storage used by IndexedDB</p>
-                            </TooltipContent>
-                        </Tooltip>
+                    <Tooltip>
+    <TooltipTrigger>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center">
+                <Database className="h-3 w-3 mr-1" />
+                {formatBytes(storageUsage)}
+            </div>
+            <div className="flex items-center">
+                {bucketImages.length} {bucketImages.length === 1 ? 'image' : 'images'}
+            </div>
+        </div>
+    </TooltipTrigger>
+    <TooltipContent>
+        <p>Storage used by IndexedDB</p>
+    </TooltipContent>
+</Tooltip>
                     </TooltipProvider>
                 </div>
                 <CardDescription>Save your favorite generations here</CardDescription>
@@ -95,11 +110,19 @@ export default function ImageBucketCard({
             </CardContent>
             {bucketImages.length > 0 && (
                 <CardFooter className="border-t pt-6">
-                    <Button className="w-full" onClick={onDownloadAll}>
-                        <Download className="mr-2 h-4 w-4" />
-                        Download All Images
-                    </Button>
-                </CardFooter>
+    <Button 
+        className="w-full" 
+        onClick={handleDownload}
+        disabled={isDownloading}
+    >
+        {isDownloading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+            <Download className="mr-2 h-4 w-4" />
+        )}
+        {isDownloading ? 'Downloading...' : 'Download Images'}
+    </Button>
+</CardFooter>
             )}
         </Card>
     );

@@ -330,7 +330,7 @@ export default function Component() {
 				return;
 			}
 
-			const MAX_IMAGES = 100;
+			const MAX_IMAGES = 300;
 			// Sort by timestamp (newest first) and take only the most recent MAX_IMAGES
 			const imagesToDownload = [...bucketImages]
 				.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
