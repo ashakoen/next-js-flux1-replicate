@@ -246,7 +246,7 @@ export function GeneratedImagesCard({
                                         <Button
                                             variant="secondary"
                                             size="icon"
-                                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 opacity-0 group-hover:opacity-100 transition-opacity"
+    className="absolute top-2 left-1/2 -translate-x-1/2 z-50 opacity-0 group-hover:opacity-100 transition-opacity"
                                             onClick={() => {
                                                 // Check if image is already in bucket
                                                 const isAlreadyInBucket = bucketImages.some(
@@ -264,6 +264,15 @@ export function GeneratedImagesCard({
                                         >
                                             <Star className="h-4 w-4" />
                                         </Button>
+
+                                        <Button
+        variant="secondary"
+        size="icon"
+        className="absolute bottom-2 left-1/2 -translate-x-1/2 z-50 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={() => onDownloadWithConfig(image.url, image)}
+    >
+        <Box className="h-4 w-4" />
+    </Button>
 
                                         <Dialog open={openImageUrl === image.url} onOpenChange={(open) => setOpenImageUrl(open ? image.url : null)}>
                                             <DialogTrigger asChild>
