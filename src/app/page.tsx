@@ -21,7 +21,7 @@ import { FavoritePromptsDrawer } from "@/components/FavoritePromptsDrawer";
 import { LoraModelsDrawer } from '@/components/LoraModelsDrawer';
 import { ExtraLoraModelsDrawer } from "@/components/ExtraLoraModelsDrawer";
 import { GenerateConfirmModal } from "@/components/modals/GenerateConfirmModal";
-import { ImageBucketCard } from "@/components/cards/ImageBucketCard";
+import ImageBucketWrapper from "@/components/ImageBucketWrapper";
 import { Toaster, toast } from "sonner";
 import { createHash } from 'crypto';
 
@@ -1749,7 +1749,7 @@ export default function Component() {
 					</div>
 
 					<div className="order-3 xl:w-1/4">
-						<ImageBucketCard
+						<ImageBucketWrapper
 							bucketImages={bucketImages}
 							onRemoveFromBucket={handleRemoveFromBucket}
 							onDownloadImage={downloadBucketImage}

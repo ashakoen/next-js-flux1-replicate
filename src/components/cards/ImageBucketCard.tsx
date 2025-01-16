@@ -15,7 +15,7 @@ interface ImageBucketCardProps {
     onDownloadAll: () => void;
 }
 
-export function ImageBucketCard({
+export default function ImageBucketCard({
     bucketImages,
     onRemoveFromBucket,
     onDownloadImage,
