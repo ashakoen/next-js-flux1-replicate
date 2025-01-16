@@ -441,26 +441,7 @@ export function GenerationSettingsCard({
 									</div>
 								)}
 
-								{!isRecraftv3 && !isIdeogram && !isLuma && (
-									<div>
-										<Label>Number of Outputs</Label>
-										<div className="flex space-x-2">
-											{[1, 2, 3, 4].map((value) => (
-												<button
-													key={value}
-													type="button"
-													onClick={() => handleNumOutputsChange(value)}
-													className={`w-12 h-12 flex items-center justify-center rounded-lg ${formData.num_outputs === value
-														? 'btn-theme'
-														: 'bg-gray-200 text-gray-700 border border-gray-300'
-														}`}
-												>
-													{value}
-												</button>
-											))}
-										</div>
-									</div>
-								)}
+
 
 
 								{!isRecraftv3 && !isIdeogram && !isLuma && (
