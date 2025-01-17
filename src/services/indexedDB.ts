@@ -1,3 +1,4 @@
+import { STORAGE } from '../constants/storage';
 import { GeneratedImage } from '@/types/types';
 
 const DB_NAME = 'fluxImages';
@@ -8,7 +9,6 @@ const STORES = {
     BUCKET: 'imageBucket'
 };
 const DB_VERSION = 3;
-const EXPIRY_TIME_MS = 60 * 60 * 1000; // 1 hour
 
 export const db = {
 
@@ -66,32 +66,46 @@ export const db = {
                 if (!image.timestamp) {
                     image.timestamp = new Date().toISOString();
                 }
-
-                const imageTime = new Date(image.timestamp).getTime();
-                if (currentTime - imageTime < EXPIRY_TIME_MS) {
-                    await new Promise((resolve, reject) => {
-                        const request = store.put(image);
-                        request.onsuccess = () => resolve(request);
-                        request.onerror = () => reject(request.error);
-                    });
-                }
+                await new Promise((resolve, reject) => {
+                    const request = store.put(image);
+                    request.onsuccess = () => resolve(request);
+                    request.onerror = () => reject(request.error);
+                });
             }
             return true;
         } catch (error) {
             console.error('Error saving to IndexedDB:', error);
-            // Only save to localStorage if IndexedDB fails
-            try {
-                // Save minimal data to localStorage as fallback
-                const minimalImages = images.map(img => ({
-                    timestamp: img.timestamp,
-                    prompt: img.prompt
-                    // Exclude the actual image data
-                }));
-                localStorage.setItem('generatedImages', JSON.stringify(minimalImages));
-            } catch (e) {
-                console.error('Failed to save to localStorage:', e);
-            }
             return false;
+        }
+    },
+
+    async cleanupExpiredImages() {
+        try {
+            const db = await this.init();
+            const tx = db.transaction(STORES.IMAGES, 'readwrite');
+            const store = tx.objectStore(STORES.IMAGES);
+
+            const currentTime = Date.now();
+            const request = store.openCursor();
+
+            return new Promise<void>((resolve, reject) => {
+                request.onsuccess = (event) => {
+                    const cursor = (event.target as IDBRequest).result;
+                    if (cursor) {
+                        const image = cursor.value;
+                        const imageTime = new Date(image.timestamp).getTime();
+                        if (currentTime - imageTime >= STORAGE.EXPIRY_TIME_MS) {
+                            cursor.delete();
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve();
+                    }
+                };
+                request.onerror = () => reject(request.error);
+            });
+        } catch (error) {
+            console.error('Error cleaning up expired images:', error);
         }
     },
 
@@ -109,7 +123,7 @@ export const db = {
                     const currentTime = Date.now();
                     const validImages = images.filter(image => {
                         const imageTime = new Date(image.timestamp).getTime();
-                        return currentTime - imageTime < EXPIRY_TIME_MS;
+                        return currentTime - imageTime < STORAGE.EXPIRY_TIME_MS;
                     });
                     resolve(validImages);
                 };
@@ -117,9 +131,7 @@ export const db = {
             });
         } catch (error) {
             console.error('Error reading from IndexedDB:', error);
-            // Fallback to localStorage
-            const stored = localStorage.getItem('generatedImages');
-            return stored ? JSON.parse(stored) : [];
+            return [];
         }
     },
 
