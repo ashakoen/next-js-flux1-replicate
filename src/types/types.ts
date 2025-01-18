@@ -150,6 +150,45 @@ export type LumaPhotonAspectRatio =
     | "16:9" | "9:21" | "21:9";
 
 
+    export interface GenerationParams {
+        prompt: string;
+        seed: number;
+        model: "dev" | "schnell" | "pro" | "pro-ultra" | "recraftv3" | "recraftv3-svg" | "ideogram" | "luma";
+        width: number;
+        height: number;
+        sourceImage?: {
+            url: string;
+            file: File | null;
+        };
+    }
+
+export interface UpscaleParams {
+    version: string;
+    input: {
+        image: string;
+        scale?: number;
+        face_enhance?: boolean;
+        jpeg?: number;
+        noise?: number;
+        task_type?: string;
+    };
+}
+
+export interface PexelsImage {
+    id: string;
+    width: number;
+    height: number;
+    photographer: string;
+    src: {
+        original: string;
+        large2x: string;
+        large: string;
+        medium: string;
+        small: string;
+        tiny: string;
+    };
+}
+
 export interface CanvasDrawProps {
     onChange?: (canvas: CanvasDraw) => void;
     loadTimeOffset?: number;

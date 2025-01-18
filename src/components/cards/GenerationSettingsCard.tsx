@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sun, Moon, Star, AlertCircle, Loader2, Box, Github } from 'lucide-react';
+import { Sun, Moon, Star, AlertCircle, Loader2, Box, Github, RefreshCw } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FormData, Recraftv3Size, Recraftv3Style, IdeogramStyleType, IdeogramMagicPromptOption, ImagePackConfig, LumaPhotonAspectRatio } from '@/types/types';
 import { ApiSettingsModal } from "@/components/modals/ApiSettingsModal";
@@ -205,21 +205,21 @@ export function GenerationSettingsCard({
 	return (
 		<Card className="flex flex-col w-full h-[calc(100vh-14rem)] overflow-hidden">
 			<div className="absolute top-2 right-3 flex items-center gap-2 z-50">
-			<Button
-        variant="ghost"
-        size="icon"
-        asChild
-        className="h-9 w-9 flex items-center justify-center"
-    >
-        <a
-            href="https://github.com/ashakoen/next-js-flux1-replicate"
-            target="_blank"
-            rel="noopener noreferrer"
-        >
-            <Github className="h-[1.2rem] w-[1.2rem]" />
-            <span className="sr-only">View on GitHub</span>
-        </a>
-    </Button>
+				<Button
+					variant="ghost"
+					size="icon"
+					asChild
+					className="h-9 w-9 flex items-center justify-center"
+				>
+					<a
+						href="https://github.com/ashakoen/next-js-flux1-replicate"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<Github className="h-[1.2rem] w-[1.2rem]" />
+						<span className="sr-only">View on GitHub</span>
+					</a>
+				</Button>
 				<Button
 					variant="ghost"
 					size="icon"
@@ -254,46 +254,57 @@ export function GenerationSettingsCard({
 							<TabsTrigger value="advanced">Advanced</TabsTrigger>
 						</TabsList>
 						<TabsContent value="basic" className="mt-4">
-							<div className="space-y-4 px-2">
-								<div className="relative group">
-									<Label htmlFor="prompt">Prompt</Label>
-									<div className="relative">
-										<Textarea
-											id="prompt"
-											name="prompt"
-											value={formData.prompt}
-											onChange={handleInputChange}
-											placeholder="Enter your prompt here"
-											required
-											className="min-h-[100px] pr-10"
-										/>
-										<Button
-											type="button"
-											variant="ghost"
-											size="icon"
-											className={`absolute top-[0.18rem] right-[0.18rem] opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-background/50 hover:bg-background/80 
-												${isPromptInFavorites ? 'cursor-not-allowed' : ''}`}
-											onClick={() => {
-												if (!isPromptInFavorites) {
-													onAddToFavorites(formData.prompt);
-													toast.success("Prompt added to favorites!");
-												}
-											}}
-											disabled={isPromptInFavorites}
-										>
-											<Star
-												className={`h-5 w-5 hover:h-6 hover:w-6 transition-all ${isPromptInFavorites ? 'text-green-500' : 'text-yellow-400'
-													}`}
-												fill="currentColor"
-											/>
-											<span className="sr-only">
-												{isPromptInFavorites ? 'Already in favorites' : 'Add to favorites'}
-											</span>
-										</Button>
-									</div>
+						<div className="space-y-1"> 
+								<div className="flex items-center justify-between">
+									<Label>Prompt</Label>
+									<div className="flex items-center gap-1">  {/* Added flex container for buttons */}
+    <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6"
+        onClick={() => {
+            // Add recycle functionality here
+        }}
+        title="Regenerate prompt"
+    >
+        <RefreshCw className="h-4 w-4" />  {/* Using RefreshCw icon from lucide-react */}
+    </Button>
+    <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className={`h-6 w-6 ${isPromptInFavorites ? 'cursor-not-allowed' : ''}`}
+        onClick={() => {
+            if (!isPromptInFavorites) {
+                onAddToFavorites(formData.prompt);
+                toast.success("Prompt added to favorites!");
+            }
+        }}
+        disabled={isPromptInFavorites || !formData.prompt.trim()}
+        title={isPromptInFavorites ? 'Already in favorites' : 'Add to favorites'}
+    >
+        <Star
+            className={`h-4 w-4 ${isPromptInFavorites ? 'fill-yellow-400 stroke-yellow-400' : ''}`}
+        />
+    </Button>
+</div>
 								</div>
+
+								<div className="relative group pb-2">
+									<Textarea
+										id="prompt"
+										name="prompt"
+										value={formData.prompt}
+										onChange={handleInputChange}
+										placeholder="Enter your prompt here"
+										required
+										className="min-h-[100px] pr-0"
+									/>
+								</div>
+
 								{hasSourceImage && (
-									<div>
+									<div className="space-y-2 pt-2">
 										<Label htmlFor="prompt_strength">
 											Prompt Strength: {formData.prompt_strength}
 										</Label>
@@ -312,8 +323,8 @@ export function GenerationSettingsCard({
 														/>
 													</div>
 												</TooltipTrigger>
-												<TooltipContent>
-													<p>Controls how much to transform the source image. Lower values preserve more of the original image.</p>
+												<TooltipContent side="bottom" className="mb-2">
+													<p>How strongly prompt overrides source image. Lower value preserves source image.</p>
 												</TooltipContent>
 											</Tooltip>
 										</TooltipProvider>
@@ -323,76 +334,110 @@ export function GenerationSettingsCard({
 
 								{!isRecraftv3 && !isIdeogram && !isLuma && (
 									<>
-										<div>
-											<Label htmlFor="guidance_scale">Guidance Scale: {formData.guidance_scale}</Label>
-											<Slider
-												id="guidance_scale"
-												min={0}
-												max={10}
-												step={0.1}
-												value={[formData.guidance_scale]}
-												onValueChange={(value) => handleSliderChange('guidance_scale', value)}
-												className="custom-slider"
-											/>
-										</div>
-										<div>
-											<Label htmlFor="num_inference_steps">Inference Steps: {formData.num_inference_steps}</Label>
-											<Slider
-												id="num_inference_steps"
-												min={1}
-												max={formData.model === 'schnell' && !formData.privateLoraName ? 4 : 50}
-												step={1}
-												value={[formData.num_inference_steps]}
-												onValueChange={(value) => handleSliderChange('num_inference_steps', value)}
-												className="custom-slider"
-											/>
-										</div>
+<div className="space-y-1 pt-2">
+    <Label htmlFor="guidance_scale">Guidance Scale: {formData.guidance_scale}</Label>
+    <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div>
+                    <Slider
+                        id="guidance_scale"
+                        min={0}
+                        max={10}
+                        step={0.1}
+                        value={[formData.guidance_scale]}
+                        onValueChange={(value) => handleSliderChange('guidance_scale', value)}
+                        className="custom-slider"
+                    />
+                </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="mb-2">
+                <p>Controls how closely the image follows the prompt. Higher values produce images that match the prompt more closely.</p>
+            </TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
+</div>
+
+<div className="space-y-1 pt-2">
+    <Label htmlFor="num_inference_steps">Inference Steps: {formData.num_inference_steps}</Label>
+    <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div>
+                    <Slider
+                        id="num_inference_steps"
+                        min={1}
+                        max={formData.model === 'schnell' && !formData.privateLoraName ? 4 : 50}
+                        step={1}
+                        value={[formData.num_inference_steps]}
+                        onValueChange={(value) => handleSliderChange('num_inference_steps', value)}
+                        className="custom-slider"
+                    />
+                </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="mb-2">
+                <p>Number of denoising steps. Higher values generally produce better quality but take longer to generate.</p>
+            </TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
+</div>
 
 									</>
 								)}
 								{!isRecraftv3 && (
 									<>
-										<div>
-											<Label htmlFor="seed">Seed</Label>
-											<Input
-												id="seed"
-												name="seed"
-												type="number"
-												value={formData.seed}
-												onChange={handleInputChange}
-											/>
-										</div>
-										</>
-									)}
+<div className="pt-4">
+    <Label htmlFor="seed">Seed</Label>
+    <TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div>
+                    <Input
+                        id="seed"
+                        name="seed"
+                        type="number"
+                        value={formData.seed}
+                        onChange={handleInputChange}
+                    />
+                </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="mb-2">
+                <p>Controls the random noise used to generate the image. Use the same seed to reproduce similar results.</p>
+            </TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
+</div>
+									</>
+								)}
 
 
 							</div>
 
 
 							<TooltipProvider>
-    <Tooltip>
-        <TooltipTrigger asChild>
-            <div
-                {...getRootProps()}
-                className={`flex items-center justify-center gap-2 px-4 py-2 mt-12 pt-4 pb-4 
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<div
+											{...getRootProps()}
+											className={`flex items-center justify-center gap-2 px-4 py-2 mt-12 pt-4 pb-4 
                     rounded-lg transition-all duration-200 cursor-pointer
                     bg-gradient-to-r from-primary/[0.05] to-accent/[0.05]
                     ${isDragActive
-                        ? 'bg-primary/10 border-2 border-dashed border-primary'
-                        : 'hover:bg-accent/10'
-                    }`}
-            >
-                <input {...getInputProps()} />
-                <Box className="w-4 h-4 text-[#9b59b6] dark:text-[#fa71cd]" />
-                <span className="text-sm">Drop Image Pack Here</span>
-            </div>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-[300px] text-sm">
-            <p>Upload a ZIP file containing images and a config file to quickly set up image generation settings. 
-            Perfect for img2img and style transfer tasks.</p>
-        </TooltipContent>
-    </Tooltip>
-</TooltipProvider>
+													? 'bg-primary/10 border-2 border-dashed border-primary'
+													: 'hover:bg-accent/10'
+												}`}
+										>
+											<input {...getInputProps()} />
+											<Box className="w-4 h-4 text-[#9b59b6] dark:text-[#fa71cd]" />
+											<span className="text-sm">Drop Image Pack Here</span>
+										</div>
+									</TooltipTrigger>
+									<TooltipContent side="top" className="max-w-[300px] text-sm">
+										<p>Upload a ZIP file containing images and a config file to quickly set up image generation settings.
+											Perfect for img2img and style transfer tasks.</p>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
 
 						</TabsContent>
 						<TabsContent value="advanced" className="mt-4 overflow-y-auto scrollbar-hide overscroll-none touch-pan-y">

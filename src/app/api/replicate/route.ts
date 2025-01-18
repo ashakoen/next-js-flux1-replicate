@@ -9,32 +9,32 @@ export async function POST(req: Request): Promise<Response> {
 			return new Response(JSON.stringify({ error: 'API key is required' }), { status: 400 });
 		}
 
-        if (body?.fetchImageForBucket) {
-            const imageUrl = body.imageUrl;
-            
-            if (!imageUrl) {
-                return new Response(JSON.stringify({ error: 'Image URL is required' }), { status: 400 });
-            }
+		if (body?.fetchImageForBucket) {
+			const imageUrl = body.imageUrl;
 
-            const response = await fetch(imageUrl, {
-                headers: {
-                    'Authorization': `Token ${apiKey}`,
-                },
-            });
+			if (!imageUrl) {
+				return new Response(JSON.stringify({ error: 'Image URL is required' }), { status: 400 });
+			}
 
-            if (!response.ok) {
-                return new Response(JSON.stringify({ error: 'Failed to fetch image' }), { status: response.status });
-            }
+			const response = await fetch(imageUrl, {
+				headers: {
+					'Authorization': `Token ${apiKey}`,
+				},
+			});
 
-            // Get image data as blob and convert to base64
-            const imageBlob = await response.blob();
-            const base64String = await imageBlob.arrayBuffer();
-            
-            return new Response(JSON.stringify({ 
-                imageData: Buffer.from(base64String).toString('base64'),
-                contentType: response.headers.get('content-type')
-            }), { status: 200 });
-        }
+			if (!response.ok) {
+				return new Response(JSON.stringify({ error: 'Failed to fetch image' }), { status: response.status });
+			}
+
+			// Get image data as blob and convert to base64
+			const imageBlob = await response.blob();
+			const base64String = await imageBlob.arrayBuffer();
+
+			return new Response(JSON.stringify({
+				imageData: Buffer.from(base64String).toString('base64'),
+				contentType: response.headers.get('content-type')
+			}), { status: 200 });
+		}
 
 		// Add near the top with other conditions
 		if (body?.validateLora) {
@@ -43,14 +43,14 @@ export async function POST(req: Request): Promise<Response> {
 			if (!body.modelPath || !body.version) {
 				console.error('Missing required LoRA validation parameters');
 				return new Response(
-					JSON.stringify({ error: 'Missing modelPath or version' }), 
+					JSON.stringify({ error: 'Missing modelPath or version' }),
 					{ status: 400 }
 				);
 			}
 
 			try {
 				const urlToFetch = `https://api.replicate.com/v1/models/${body.modelPath}/versions`;
-				
+
 				const response = await fetch(urlToFetch, {
 					method: 'GET',
 					headers: {
@@ -58,21 +58,21 @@ export async function POST(req: Request): Promise<Response> {
 						'Content-Type': 'application/json',
 					}
 				});
-		
+
 				const data = await response.json();
 				console.log('LoRA Validation Response:', response.status, data);
-		
+
 				if (!response.ok) {
 					console.error('Error validating LoRA:', data);
 					return new Response(JSON.stringify(data), { status: response.status });
 				}
-		
+
 				return new Response(JSON.stringify(data), { status: 200 });
-		
+
 			} catch (error) {
 				console.error('Error during LoRA validation:', error);
 				return new Response(
-					JSON.stringify({ error: 'Failed to validate LoRA model' }), 
+					JSON.stringify({ error: 'Failed to validate LoRA model' }),
 					{ status: 500 }
 				);
 			}
@@ -119,8 +119,8 @@ export async function POST(req: Request): Promise<Response> {
 					urlToFetch = 'https://api.replicate.com/v1/models/ideogram-ai/ideogram-v2/predictions';
 					break;
 				case 'luma':
-						urlToFetch = 'https://api.replicate.com/v1/models/luma/photon/predictions';
-						break;
+					urlToFetch = 'https://api.replicate.com/v1/models/luma/photon/predictions';
+					break;
 				default: // 'dev'
 					urlToFetch = 'https://api.replicate.com/v1/models/black-forest-labs/flux-dev/predictions';
 			}
@@ -139,8 +139,8 @@ export async function POST(req: Request): Promise<Response> {
 			}
 
 			if (model === 'luma') {
-				const { 
-					prompt, 
+				const {
+					prompt,
 					aspect_ratio,
 					image_reference_url,
 					style_reference_url,
@@ -149,24 +149,24 @@ export async function POST(req: Request): Promise<Response> {
 					style_reference_weight,
 					seed
 				} = fetchBodyObj.input;
-			
+
 				fetchBodyObj.input = {
 					prompt,
 					aspect_ratio,
 					seed: seed || Math.floor(Math.random() * 1000000)
 				};
-			
+
 				// Add reference images and weights only if they exist
 				if (image_reference_url) {
 					fetchBodyObj.input.image_reference_url = image_reference_url;
 					fetchBodyObj.input.image_reference_weight = image_reference_weight;
 				}
-			
+
 				if (style_reference_url) {
 					fetchBodyObj.input.style_reference_url = style_reference_url;
 					fetchBodyObj.input.style_reference_weight = style_reference_weight;
 				}
-			
+
 				if (character_reference_url) {
 					fetchBodyObj.input.character_reference_url = character_reference_url;
 				}
