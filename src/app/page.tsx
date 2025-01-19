@@ -22,6 +22,7 @@ import { LoraModelsDrawer } from '@/components/LoraModelsDrawer';
 import { ExtraLoraModelsDrawer } from "@/components/ExtraLoraModelsDrawer";
 import { GenerateConfirmModal } from "@/components/modals/GenerateConfirmModal";
 import ImageBucketWrapper from "@/components/ImageBucketWrapper";
+import { STORAGE } from '@/constants/storage';
 import { Toaster, toast } from "sonner";
 import { createHash } from 'crypto';
 
@@ -264,6 +265,17 @@ export default function Component() {
 	const handleAddToBucket = async (image: GeneratedImage) => {
 		try {
 
+			if (bucketImages.length >= STORAGE.MAX_BUCKET_IMAGES) {
+				toast.error('Bucket is full', {
+					description: 'Please download your images before adding more.',
+					action: {
+						label: 'Download All',
+						onClick: () => handleDownloadAllBucket()
+					}
+				});
+				return;
+			}
+
 			const isDuplicate = bucketImages.some(
 				existingImage =>
 					existingImage.url === image.url ||
@@ -320,6 +332,17 @@ export default function Component() {
 		} catch (error) {
 			console.error('Error removing from bucket:', error);
 			toast.error('Failed to remove image from bucket');
+		}
+	};
+
+	const clearBucketImages = async () => {
+		try {
+			await db.clearBucket();
+			setBucketImages([]);
+			toast.success('Bucket cleared successfully');
+		} catch (error) {
+			console.error('Error clearing bucket:', error);
+			toast.error('Failed to clear bucket');
 		}
 	};
 
@@ -1779,6 +1802,7 @@ export default function Component() {
 							onRemoveFromBucket={handleRemoveFromBucket}
 							onDownloadImage={downloadBucketImage}
 							onDownloadAll={handleDownloadAllBucket}
+							onClearBucket={clearBucketImages}
 						/>
 					</div>
 				</div>

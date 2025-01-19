@@ -664,6 +664,29 @@ export function GeneratedImagesCard({
                                                                         Download Image
                                                                     </Button>
 
+                                                                    <Button
+                                                                        className="flex-1"
+                                                                        size="sm"
+                                                                        variant="outline"
+            onClick={() => {
+                // Check if image is already in bucket
+                const isAlreadyInBucket = bucketImages.some(
+                    bucketImage => bucketImage.url === image.url
+                );
+
+                if (isAlreadyInBucket) {
+                    toast.error('Image is already in bucket');
+                    return;
+                }
+
+                onAddToBucket(image);
+                //toast.success('Added to bucket');
+            }}
+        >
+            <Star className="w-3 h-3 mr-1" />
+            Add to Bucket
+        </Button>
+
 
                                                                     <Button
                                                                         className="flex-1"

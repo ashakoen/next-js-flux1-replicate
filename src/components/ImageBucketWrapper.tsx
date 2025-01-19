@@ -4,7 +4,7 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Download, Archive, Loader2, Database } from 'lucide-react';
+import { Download, Archive, Loader2, Database, Trash2 } from 'lucide-react';
 import { GeneratedImage } from '@/types/types';
 
 const BucketImageGrid = lazy(() => import('@/components/BucketImageGrid'));
@@ -14,6 +14,7 @@ interface ImageBucketCardProps {
     onRemoveFromBucket: (timestamp: string) => void;
     onDownloadImage: (dataUrl: string, timestamp: string) => void;
     onDownloadAll: () => void;
+    onClearBucket: () => void;
 }
 
 function formatBytes(bytes: number): string {
@@ -28,10 +29,12 @@ export default function ImageBucketCard({
     bucketImages,
     onRemoveFromBucket,
     onDownloadImage,
-    onDownloadAll
+    onDownloadAll,
+    onClearBucket
 }: ImageBucketCardProps) {
     const [storageUsage, setStorageUsage] = useState<number>(0);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [isConfirmingClear, setIsConfirmingClear] = useState(false);
 
     const sortedBucketImages = [...bucketImages].sort((b, a) => {
         return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
@@ -68,23 +71,52 @@ export default function ImageBucketCard({
                     <CardTitle className="text-[#9b59b6] dark:text-[#fa71cd]">
                         Image Bucket
                     </CardTitle>
+                    <div className="flex items-center gap-2">
+                        {bucketImages.length > 0 && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className={`h-8 w-8 ${isConfirmingClear ? 'text-destructive hover:text-destructive' : 'text-muted-foreground'}`}
+                                            onClick={() => {
+                                                if (isConfirmingClear) {
+                                                    onClearBucket();
+                                                    setIsConfirmingClear(false);
+                                                } else {
+                                                    setIsConfirmingClear(true);
+                                                    setTimeout(() => setIsConfirmingClear(false), 3000);
+                                                }
+                                            }}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        {isConfirmingClear ? 'Click again to confirm' : 'Clear bucket'}
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
+                    </div>
                     <TooltipProvider>
-                    <Tooltip>
-    <TooltipTrigger>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="flex items-center">
-                <Database className="h-3 w-3 mr-1" />
-                {formatBytes(storageUsage)}
-            </div>
-            <div className="flex items-center">
-                {bucketImages.length} {bucketImages.length === 1 ? 'image' : 'images'}
-            </div>
-        </div>
-    </TooltipTrigger>
-    <TooltipContent>
-        <p>Storage used by IndexedDB</p>
-    </TooltipContent>
-</Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                    <div className="flex items-center">
+                                        <Database className="h-3 w-3 mr-1" />
+                                        {formatBytes(storageUsage)}
+                                    </div>
+                                    <div className="flex items-center">
+                                        {bucketImages.length} {bucketImages.length === 1 ? 'image' : 'images'}
+                                    </div>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Storage used by IndexedDB</p>
+                            </TooltipContent>
+                        </Tooltip>
                     </TooltipProvider>
                 </div>
                 <CardDescription>Save your favorite generations here</CardDescription>
@@ -114,19 +146,19 @@ export default function ImageBucketCard({
             </CardContent>
             {bucketImages.length > 0 && (
                 <CardFooter className="border-t pt-6">
-    <Button 
-        className="w-full" 
-        onClick={handleDownload}
-        disabled={isDownloading}
-    >
-        {isDownloading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-            <Download className="mr-2 h-4 w-4" />
-        )}
-        {isDownloading ? 'Downloading...' : 'Download Images'}
-    </Button>
-</CardFooter>
+                    <Button
+                        className="w-full"
+                        onClick={handleDownload}
+                        disabled={isDownloading}
+                    >
+                        {isDownloading ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Download className="mr-2 h-4 w-4" />
+                        )}
+                        {isDownloading ? 'Downloading...' : 'Download Images'}
+                    </Button>
+                </CardFooter>
             )}
         </Card>
     );

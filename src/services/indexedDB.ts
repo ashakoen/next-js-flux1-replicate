@@ -178,6 +178,27 @@ export const db = {
         }
     },
 
+    async clearBucket() {
+        try {
+            const db = await this.init();
+            const tx = db.transaction(STORES.BUCKET, 'readwrite');
+            const store = tx.objectStore(STORES.BUCKET);
+    
+            return new Promise<boolean>((resolve, reject) => {
+                const request = store.clear();
+                
+                request.onsuccess = () => resolve(true);
+                request.onerror = () => {
+                    console.error('Error clearing bucket:', request.error);
+                    reject(request.error);
+                };
+            });
+        } catch (error) {
+            console.error('Error clearing bucket:', error);
+            return false;
+        }
+    },
+
     async saveToBucket(image: GeneratedImage) {
         try {
             const db = await this.init();
