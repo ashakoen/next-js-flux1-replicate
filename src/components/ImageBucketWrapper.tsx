@@ -33,6 +33,10 @@ export default function ImageBucketCard({
     const [storageUsage, setStorageUsage] = useState<number>(0);
     const [isDownloading, setIsDownloading] = useState(false);
 
+    const sortedBucketImages = [...bucketImages].sort((b, a) => {
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    });
+
     const handleDownload = async () => {
         setIsDownloading(true);
         try {
@@ -93,7 +97,7 @@ export default function ImageBucketCard({
                         </div>
                     }>
                         <BucketImageGrid
-                            bucketImages={bucketImages}
+                            bucketImages={sortedBucketImages}
                             onRemoveFromBucket={onRemoveFromBucket}
                             onDownloadImage={onDownloadImage}
                         />
