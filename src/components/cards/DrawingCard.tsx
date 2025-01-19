@@ -77,9 +77,15 @@ export function DrawingCard({
         if (sourceImage?.url) {
             const img = new Image();
             img.onload = () => {
+                // Calculate size maintaining aspect ratio
                 const aspectRatio = img.height / img.width;
-                const calculatedHeight = width * aspectRatio;
-                setImageHeight(calculatedHeight);
+                const maxWidth = width - 32; // Account for padding/margins
+                const calculatedHeight = maxWidth * aspectRatio;
+                
+                setCanvasSize({ 
+                    width: Math.round(maxWidth), 
+                    height: Math.round(calculatedHeight) 
+                });
             };
             img.src = sourceImage.url;
         }
@@ -124,9 +130,6 @@ export function DrawingCard({
         const ctx = canvas?.getContext('2d');
         if (!ctx || !canvas || !lastPos.current) return;
     
-        // Debug: Log drawing coordinates
-        console.log('Drawing at:', { x, y });
-    
         ctx.beginPath();
         ctx.moveTo(lastPos.current.x, lastPos.current.y);
         ctx.lineTo(x, y);
@@ -138,7 +141,7 @@ export function DrawingCard({
         // Debug: Verify pixel color after drawing
         const imageData = ctx.getImageData(x - 1, y - 1, 3, 3);
         const hasWhite = Array.from(imageData.data).some((value, index) => index % 4 === 0 && value === 255);
-        console.log('White pixels detected in drawn area:', hasWhite);
+        //console.log('White pixels detected in drawn area:', hasWhite);
     
         lastPos.current = { x, y };
     };
@@ -234,21 +237,20 @@ export function DrawingCard({
         const maskDataUrl = canvas.toDataURL('image/png');
         
         // Debug: Log the first part of the data URL
-        console.log('Mask data URL preview:', maskDataUrl.substring(0, 100));
+        //console.log('Mask data URL preview:', maskDataUrl.substring(0, 100));
     
         onMaskGenerated(maskDataUrl);
     };
 
     return (
-        <Card className={`flex flex-col w-full relative ${disabled ? 'opacity-50' : ''}`} 
-        style={{ height: `${cardHeight}px` }}>
-            <CardHeader className="p-3">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                    <Brush className="w-5 h-5" />
-                    Draw Mask
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-2 pr-6">
+<Card className={`flex flex-col w-full relative overflow-auto ${disabled ? 'opacity-50' : ''}`}>
+    <CardHeader className="p-3">
+        <CardTitle className="flex items-center gap-2 text-sm">
+            <Brush className="w-5 h-5" />
+            Draw Mask
+        </CardTitle>
+    </CardHeader>
+    <CardContent className="flex-1 overflow-y-auto p-2 pr-6">
                 <div className="flex flex-col h-full">
                     {sourceImage ? (
                         <>

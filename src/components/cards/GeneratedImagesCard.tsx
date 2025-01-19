@@ -859,9 +859,9 @@ export function GeneratedImagesCard({
                         </div>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center pt-10 space-y-4">
+                    <div className="flex flex-col items-center justify-center min-h-full pt-10 space-y-4">
                         {isGenerating ? (
-                            <>
+                            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-38rem)] space-y-4">
                                 <motion.div
                                     className="flex flex-col items-center justify-center gap-4"
                                 >
@@ -899,7 +899,7 @@ export function GeneratedImagesCard({
                                         Generating your image...
                                     </motion.p>
                                 </motion.div>
-                            </>
+                                </div>
                         ) : !isLoadingImages && images.length === 0 ? (
                             <>
                                 <div className="text-center space-y-4">

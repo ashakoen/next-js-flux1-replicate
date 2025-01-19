@@ -254,41 +254,41 @@ export function GenerationSettingsCard({
 							<TabsTrigger value="advanced">Advanced</TabsTrigger>
 						</TabsList>
 						<TabsContent value="basic" className="mt-4">
-						<div className="space-y-1"> 
+							<div className="space-y-1">
 								<div className="flex items-center justify-between">
 									<Label>Prompt</Label>
 									<div className="flex items-center gap-1">  {/* Added flex container for buttons */}
-    <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6"
-        onClick={() => {
-            // Add recycle functionality here
-        }}
-        title="Regenerate prompt"
-    >
-        <RefreshCw className="h-4 w-4" />  {/* Using RefreshCw icon from lucide-react */}
-    </Button>
-    <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className={`h-6 w-6 ${isPromptInFavorites ? 'cursor-not-allowed' : ''}`}
-        onClick={() => {
-            if (!isPromptInFavorites) {
-                onAddToFavorites(formData.prompt);
-                toast.success("Prompt added to favorites!");
-            }
-        }}
-        disabled={isPromptInFavorites || !formData.prompt.trim()}
-        title={isPromptInFavorites ? 'Already in favorites' : 'Add to favorites'}
-    >
-        <Star
-            className={`h-4 w-4 ${isPromptInFavorites ? 'fill-yellow-400 stroke-yellow-400' : ''}`}
-        />
-    </Button>
-</div>
+										<Button
+											type="button"
+											variant="ghost"
+											size="icon"
+											className="h-6 w-6"
+											onClick={() => {
+												// Add recycle functionality here
+											}}
+											title="Regenerate prompt"
+										>
+											<RefreshCw className="h-4 w-4" />  {/* Using RefreshCw icon from lucide-react */}
+										</Button>
+										<Button
+											type="button"
+											variant="ghost"
+											size="icon"
+											className={`h-6 w-6 ${isPromptInFavorites ? 'cursor-not-allowed' : ''}`}
+											onClick={() => {
+												if (!isPromptInFavorites) {
+													onAddToFavorites(formData.prompt);
+													toast.success("Prompt added to favorites!");
+												}
+											}}
+											disabled={isPromptInFavorites || !formData.prompt.trim()}
+											title={isPromptInFavorites ? 'Already in favorites' : 'Add to favorites'}
+										>
+											<Star
+												className={`h-4 w-4 ${isPromptInFavorites ? 'fill-yellow-400 stroke-yellow-400' : ''}`}
+											/>
+										</Button>
+									</div>
 								</div>
 
 								<div className="relative group pb-2">
@@ -334,79 +334,79 @@ export function GenerationSettingsCard({
 
 								{!isRecraftv3 && !isIdeogram && !isLuma && (
 									<>
-<div className="space-y-1 pt-2">
-    <Label htmlFor="guidance_scale">Guidance Scale: {formData.guidance_scale}</Label>
-    <TooltipProvider>
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <div>
-                    <Slider
-                        id="guidance_scale"
-                        min={0}
-                        max={10}
-                        step={0.1}
-                        value={[formData.guidance_scale]}
-                        onValueChange={(value) => handleSliderChange('guidance_scale', value)}
-                        className="custom-slider"
-                    />
-                </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="mb-2">
-                <p>Controls how closely the image follows the prompt. Higher values produce images that match the prompt more closely.</p>
-            </TooltipContent>
-        </Tooltip>
-    </TooltipProvider>
-</div>
+										<div className="space-y-1 pt-2">
+											<Label htmlFor="guidance_scale">Guidance Scale: {formData.guidance_scale}</Label>
+											<TooltipProvider>
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<div>
+															<Slider
+																id="guidance_scale"
+																min={0}
+																max={10}
+																step={0.1}
+																value={[formData.guidance_scale]}
+																onValueChange={(value) => handleSliderChange('guidance_scale', value)}
+																className="custom-slider"
+															/>
+														</div>
+													</TooltipTrigger>
+													<TooltipContent side="bottom" className="mb-2">
+														<p>Controls how closely the image follows the prompt. Higher values produce images that match the prompt more closely.</p>
+													</TooltipContent>
+												</Tooltip>
+											</TooltipProvider>
+										</div>
 
-<div className="space-y-1 pt-2">
-    <Label htmlFor="num_inference_steps">Inference Steps: {formData.num_inference_steps}</Label>
-    <TooltipProvider>
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <div>
-                    <Slider
-                        id="num_inference_steps"
-                        min={1}
-                        max={formData.model === 'schnell' && !formData.privateLoraName ? 4 : 50}
-                        step={1}
-                        value={[formData.num_inference_steps]}
-                        onValueChange={(value) => handleSliderChange('num_inference_steps', value)}
-                        className="custom-slider"
-                    />
-                </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="mb-2">
-                <p>Number of denoising steps. Higher values generally produce better quality but take longer to generate.</p>
-            </TooltipContent>
-        </Tooltip>
-    </TooltipProvider>
-</div>
+										<div className="space-y-1 pt-2">
+											<Label htmlFor="num_inference_steps">Inference Steps: {formData.num_inference_steps}</Label>
+											<TooltipProvider>
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<div>
+															<Slider
+																id="num_inference_steps"
+																min={1}
+																max={formData.model === 'schnell' && !formData.privateLoraName ? 4 : 50}
+																step={1}
+																value={[formData.num_inference_steps]}
+																onValueChange={(value) => handleSliderChange('num_inference_steps', value)}
+																className="custom-slider"
+															/>
+														</div>
+													</TooltipTrigger>
+													<TooltipContent side="bottom" className="mb-2">
+														<p>Number of denoising steps. Higher values generally produce better quality but take longer to generate.</p>
+													</TooltipContent>
+												</Tooltip>
+											</TooltipProvider>
+										</div>
 
 									</>
 								)}
 								{!isRecraftv3 && (
 									<>
-<div className="pt-4">
-    <Label htmlFor="seed">Seed</Label>
-    <TooltipProvider>
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <div>
-                    <Input
-                        id="seed"
-                        name="seed"
-                        type="number"
-                        value={formData.seed}
-                        onChange={handleInputChange}
-                    />
-                </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="mb-2">
-                <p>Controls the random noise used to generate the image. Use the same seed to reproduce similar results.</p>
-            </TooltipContent>
-        </Tooltip>
-    </TooltipProvider>
-</div>
+										<div className="pt-4">
+											<Label htmlFor="seed">Seed</Label>
+											<TooltipProvider>
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<div>
+															<Input
+																id="seed"
+																name="seed"
+																type="number"
+																value={formData.seed}
+																onChange={handleInputChange}
+															/>
+														</div>
+													</TooltipTrigger>
+													<TooltipContent side="bottom" className="mb-2">
+														<p>Controls the random noise used to generate the image. Use the same seed to reproduce similar results.</p>
+													</TooltipContent>
+												</Tooltip>
+											</TooltipProvider>
+										</div>
 									</>
 								)}
 
