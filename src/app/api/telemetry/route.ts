@@ -28,6 +28,8 @@ export async function POST(request: Request) {
       }, { status: 200 });
     }
 
+    const currentTimestamp = new Date().toISOString();
+
     // Insert into Supabase
     const { data, error } = await supabase
       .from('telemetry')
@@ -46,13 +48,14 @@ export async function POST(request: Request) {
         day_of_week: telemetryData.dayOfWeek,
         errors: telemetryData.errors,
         cancelled_by_user: telemetryData.cancelledByUser,
-        replicate_id: telemetryData.replicateId,
-        replicate_model: telemetryData.replicateModel,
-        replicate_version: telemetryData.replicateVersion,
-        replicate_created_at: telemetryData.replicateCreatedAt,
-        replicate_started_at: telemetryData.replicateStartedAt,
-        replicate_completed_at: telemetryData.replicateCompletedAt,
-        replicate_predict_time: telemetryData.replicatePredictTime
+        replicate_id: telemetryData.replicateId || `failed_${Date.now()}`,
+        replicate_model: telemetryData.replicateModel || 'unknown',
+        replicate_version: telemetryData.replicateVersion || 'unknown',
+        // Use current timestamp for missing values
+        replicate_created_at: telemetryData.replicateCreatedAt || currentTimestamp,
+        replicate_started_at: telemetryData.replicateStartedAt || currentTimestamp,
+        replicate_completed_at: telemetryData.replicateCompletedAt || currentTimestamp,
+        replicate_predict_time: telemetryData.replicatePredictTime || 0
       }]) as { data: TelemetryResponse[] | null, error: any };
 
       if (error) {

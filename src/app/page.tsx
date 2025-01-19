@@ -745,7 +745,26 @@ export default function Component() {
 				extra_lora_scale: config.extra_lora_scale || 0.8,
 				width,
 				height,
-				aspect_ratio: getValidAspectRatio(width, height, modelType),
+				aspect_ratio: (() => {
+					// Calculate the actual aspect ratio from dimensions
+					const calculatedAspectRatio = getValidAspectRatio(width, height, modelType);
+					
+					console.log('Image Pack Aspect Ratio Debug:');
+					console.log('- Width:', width);
+					console.log('- Height:', height);
+					console.log('- Stored aspect_ratio:', config.aspect_ratio);
+					console.log('- Calculated aspect_ratio:', calculatedAspectRatio);
+					
+					// If the stored aspect ratio matches the calculated one, use it
+					if (config.aspect_ratio && 
+						config.aspect_ratio === calculatedAspectRatio) {
+						console.log('✅ Using stored aspect ratio (matches calculated)');
+						return config.aspect_ratio;
+					}
+					
+					console.log('⚠️ Using calculated aspect ratio (mismatch or missing stored ratio)');
+					return calculatedAspectRatio;
+				})(),
 				guidance_scale: config.guidance_scale,
 				num_inference_steps: config.num_inference_steps,
 				num_outputs: 1,
@@ -1387,12 +1406,18 @@ export default function Component() {
 				stopStatuses()
 				finalizeTelemetryData(currentTelemetryData)
 				addCompletionMessage('Image generation complete.')
+
 			} else if (pollData.status === 'failed') {
-				console.error('Prediction failed')
+				console.error('Prediction failed:', pollData.error)
 				stopStatuses()
 				currentTelemetryData.errors.push('Prediction failed')
 				addCompletionMessage('Image generation failed.')
+				toast.error('Generation failed', {
+					description: pollData.error || 'The image generation failed. Please try again.',
+					duration: 4500
+				})
 				finalizeTelemetryData(currentTelemetryData)
+
 			} else if (['processing', 'starting'].includes(pollData.status)) {
 				if (pollData.logs && pollData.logs.includes('Loaded LoRAs in')) {
 					const loadTimeMatch = pollData.logs.match(/Loaded LoRAs in (\d+\.\d+)s/)
@@ -1592,6 +1617,10 @@ export default function Component() {
 
 				if (response.ok) {
 					console.log('Generation canceled successfully')
+					toast.error('Generation canceled', {
+						description: 'The image generation was canceled.',
+						duration: 4500
+					})
 					if (telemetryData) {
 						telemetryData.cancelledByUser = true
 						finalizeTelemetryData(telemetryData)
