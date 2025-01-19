@@ -962,7 +962,6 @@ export default function Component() {
 				output_format: image.output_format,
 				output_quality: image.output_quality,
 				disable_safety_checker: image.disable_safety_checker,
-				...imageDimensions,
 				style: image.style,
 				isImg2Img: image.isImg2Img,
 				prompt_strength: image.prompt_strength,
