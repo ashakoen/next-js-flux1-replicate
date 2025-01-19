@@ -59,6 +59,8 @@ const initialFormData: FormData = {
 	character_reference_url: ''
 };
 
+
+
 export default function Component() {
 	const [validatedLoraModels, setValidatedLoraModels] = useState<string[]>([]);
 	const [isValidatingLora, setIsValidatingLora] = useState(false);
@@ -97,7 +99,11 @@ export default function Component() {
 	const [pendingFormData, setPendingFormData] = useState<FormData | null>(null)
 	const [previewImageUrl, setPreviewImageUrl] = useState<string | undefined>();
 	const [isLoadingImages, setIsLoadingImages] = useState(true);
+
 	const [bucketImages, setBucketImages] = useState<GeneratedImage[]>([]);
+	const [showDownloadDialog, setShowDownloadDialog] = useState(false);
+	const [includeCaptionFiles, setIncludeCaptionFiles] = useState(false);
+	const [isDownloading, setIsDownloading] = useState(false);
 
 
 	const getClientInfo = () => {
@@ -346,8 +352,9 @@ export default function Component() {
 		}
 	};
 
-	const handleDownloadAllBucket = async () => {
+	const handleDownloadAllBucket = async (includeCaptionFiles: boolean = false) => {
 		try {
+			setIsDownloading(true);
 			if (bucketImages.length === 0) {
 				toast.error('No images in bucket to download');
 				return;
@@ -366,15 +373,19 @@ export default function Component() {
 			// Add each image to the zip
 			for (const image of imagesToDownload) {
 				try {
-					// Fetch the data URL and convert to blob
 					const response = await fetch(image.url);
 					const blob = await response.blob();
-
-					// Sanitize the timestamp for the filename
 					const safeTimestamp = image.timestamp.replace(/[/:]/g, '-');
-
-					// Add to zip with a sanitized filename
-					zip.file(`bucket-image-${safeTimestamp}.png`, blob);
+					const baseFilename = `bucket-image-${safeTimestamp}`;
+	
+					// Add image
+					zip.file(`${baseFilename}.png`, blob);
+	
+					// Add empty caption file if option selected
+					if (includeCaptionFiles) {
+						const caption = image.prompt || ''; // Use empty string as fallback if prompt is undefined
+						zip.file(`${baseFilename}.txt`, caption);
+					}
 				} catch (error) {
 					console.error(`Failed to add image ${image.timestamp} to zip:`, error);
 					toast.error(`Failed to add one or more images to zip`);
@@ -401,13 +412,17 @@ export default function Component() {
 
 			// Show appropriate success message
 			if (bucketImages.length > MAX_IMAGES) {
-				toast.success(`Downloaded most recent ${MAX_IMAGES} images from bucket`);
+				toast.success(`Downloaded most recent ${MAX_IMAGES} images${includeCaptionFiles ? ' with caption files' : ''}`);
 			} else {
-				toast.success('Downloaded all bucket images');
+				toast.success(`Downloaded all bucket images${includeCaptionFiles ? ' with caption files' : ''}`);
 			}
 		} catch (error) {
 			console.error('Failed to download all bucket images:', error);
 			toast.error('Failed to download images');
+		} finally {
+			setIsDownloading(false);
+			setShowDownloadDialog(false);
+			setIncludeCaptionFiles(false);
 		}
 	};
 

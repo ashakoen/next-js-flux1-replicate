@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Download, Archive, Loader2, Database, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { GeneratedImage } from '@/types/types';
 
 const BucketImageGrid = lazy(() => import('@/components/BucketImageGrid'));
@@ -13,7 +15,7 @@ interface ImageBucketCardProps {
     bucketImages: GeneratedImage[];
     onRemoveFromBucket: (timestamp: string) => void;
     onDownloadImage: (dataUrl: string, timestamp: string) => void;
-    onDownloadAll: () => void;
+    onDownloadAll: (includeCaptionFiles: boolean) => void; 
     onClearBucket: () => void;
 }
 
@@ -35,19 +37,14 @@ export default function ImageBucketCard({
     const [storageUsage, setStorageUsage] = useState<number>(0);
     const [isDownloading, setIsDownloading] = useState(false);
     const [isConfirmingClear, setIsConfirmingClear] = useState(false);
+    const [showDownloadDialog, setShowDownloadDialog] = useState(false);
+    const [includeCaptionFiles, setIncludeCaptionFiles] = useState(false);
 
     const sortedBucketImages = [...bucketImages].sort((b, a) => {
         return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
     });
 
-    const handleDownload = async () => {
-        setIsDownloading(true);
-        try {
-            await onDownloadAll();
-        } finally {
-            setIsDownloading(false);
-        }
-    };
+    const handleDownload = () => setShowDownloadDialog(true);
 
     useEffect(() => {
         const getStorageEstimate = async () => {
@@ -65,6 +62,7 @@ export default function ImageBucketCard({
     }, [bucketImages]);
 
     return (
+        <>
         <Card className="flex flex-col w-full h-[calc(100vh-8rem)] md:overflow-hidden">
             <CardHeader>
                 <div className="flex items-center justify-between">
@@ -161,5 +159,59 @@ export default function ImageBucketCard({
                 </CardFooter>
             )}
         </Card>
+
+<Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
+<DialogContent>
+    <DialogHeader>
+        <DialogTitle>Download Bucket Images</DialogTitle>
+        <DialogDescription>
+            Choose your download options
+        </DialogDescription>
+    </DialogHeader>
+    <div className="flex items-center space-x-2 py-4">
+        <Checkbox
+            id="caption-files"
+            checked={includeCaptionFiles}
+            onCheckedChange={(checked) => setIncludeCaptionFiles(checked as boolean)}
+        />
+        <label
+            htmlFor="caption-files"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+            Include caption files for LoRA training
+        </label>
+    </div>
+    <DialogFooter>
+        <Button
+            variant="outline"
+            onClick={() => setShowDownloadDialog(false)}
+        >
+            Cancel
+        </Button>
+        <Button
+            onClick={async () => {
+                setIsDownloading(true);
+                try {
+                    await onDownloadAll(includeCaptionFiles);
+                } finally {
+                    setIsDownloading(false);
+                    setShowDownloadDialog(false);
+                }
+            }}
+            disabled={isDownloading}
+        >
+            {isDownloading ? (
+                <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Downloading...
+                </>
+            ) : (
+                'Download'
+            )}
+        </Button>
+    </DialogFooter>
+</DialogContent>
+</Dialog>
+</>
     );
 }
