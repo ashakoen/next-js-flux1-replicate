@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { Download, Trash2, Archive } from 'lucide-react';
 import { GeneratedImage } from '@/types/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
 
 interface ImageBucketCardProps {
     bucketImages: GeneratedImage[];

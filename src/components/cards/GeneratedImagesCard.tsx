@@ -368,6 +368,12 @@ export function GeneratedImagesCard({
 
                                                                     {/* Generation Settings */}
                                                                     <div className="grid grid-cols-2 gap-3">
+                                                                        {image.aspect_ratio && (
+                                                                            <div>
+                                                                                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Aspect Ratio</h3>
+                                                                                <p className="text-sm mt-0.5">{image.aspect_ratio}</p>
+                                                                            </div>
+                                                                        )}
                                                                         {image.guidance_scale !== undefined && (
                                                                             <div>
                                                                                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Guidance Scale</h3>
@@ -415,7 +421,7 @@ export function GeneratedImagesCard({
                                                                                 <span className="text-sm">Go Fast</span>
                                                                             </div>
                                                                         )}
-                                                                        {(image.isImg2Img !== undefined || image.model?.includes('real-esrgan') || image.model?.includes('swinir')) && (
+                                                                        {((image.isImg2Img === true) || image.model?.includes('real-esrgan') || image.model?.includes('swinir')) && (
                                                                             <div className="flex items-center gap-1.5">
                                                                                 <div className="w-2 h-2 rounded-full bg-blue-500" />
                                                                                 <span className="text-sm">
@@ -899,7 +905,7 @@ export function GeneratedImagesCard({
                                         Generating your image...
                                     </motion.p>
                                 </motion.div>
-                                </div>
+                            </div>
                         ) : !isLoadingImages && images.length === 0 ? (
                             <>
                                 <div className="text-center space-y-4">

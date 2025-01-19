@@ -917,11 +917,7 @@ export default function Component() {
 				style_reference_url: image.style_reference_url,
 				style_reference_weight: image.style_reference_weight,
 				character_reference_url: image.character_reference_url,
-				aspect_ratio: getValidAspectRatio(
-					imageDimensions.width,
-					imageDimensions.height,
-					image.model
-				),
+				aspect_ratio: image.aspect_ratio,
 				timestamp: image.timestamp
 			};
 
@@ -1029,8 +1025,8 @@ export default function Component() {
 	const handleSubmit = async (e: React.FormEvent, overrideData?: Partial<FormData>) => {
 		e.preventDefault();
 
-		console.log('Submitting with formData:', formData);
-		console.log('Override data:', overrideData);
+		//console.log('Submitting with formData:', formData);
+		//console.log('Override data:', overrideData);
 
 		const submissionData = {
 			...formData,
@@ -1045,7 +1041,7 @@ export default function Component() {
 			maskDataUrl: undefined
 		};
 
-		console.log('Final submission data:', submissionData);
+		//console.log('Final submission data:', submissionData);
 
 		if (!apiKey) {
 			setShowApiKeyAlert(true);
@@ -1063,8 +1059,8 @@ export default function Component() {
 
 		const [loraName, loraVersion] = submissionData.privateLoraName.split(':');
 
-		console.log('LoRA Name:', loraName);
-		console.log('LoRA Version:', loraVersion);
+		//console.log('LoRA Name:', loraName);
+		//console.log('LoRA Version:', loraVersion);
 
 		let imageData: string | undefined;
 
@@ -1186,7 +1182,7 @@ export default function Component() {
 			};
 		}
 
-		console.log('Replicate Params:', replicateParams);
+		//console.log('Replicate Params:', replicateParams);
 
 		if (selectedImage?.file && maskDataUrl) {
 			console.log('Sending inpainting request with:', {
@@ -1333,7 +1329,7 @@ export default function Component() {
 				currentTelemetryData.generationParameters.seed = seed;
 				currentTelemetryData.outputImageSizes = [];
 
-				console.log('pollForResult dimensions:', selectedImage?.dimensions);
+				//console.log('pollForResult dimensions:', selectedImage?.dimensions);
 
 				const outputUrls = Array.isArray(pollData.output) ? pollData.output : [pollData.output];
 
