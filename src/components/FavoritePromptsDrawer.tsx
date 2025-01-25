@@ -1,10 +1,11 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { Star } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
-import { useState, useMemo } from "react";
+import { Search, Loader2, Star, X } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sparkles } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import {
     Sheet,
     SheetContent,
@@ -19,27 +20,101 @@ import {
     TooltipTrigger
 } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
+
+interface SemanticSearchResult {
+    prompt: string;
+    similarity: number;
+}
+
+interface CombinedPromptResult {
+    prompt: string;
+    isFavorite: boolean;
+    similarity?: number;
+}
 
 interface FavoritePromptsDrawerProps {
     favoritePrompts: string[];
     handleDeleteFavoritePrompt: (prompt: string) => void;
+    handleAddToFavorites: (prompt: string) => void;
     onUsePrompt: (prompt: string) => void;
 }
 
 export function FavoritePromptsDrawer({
     favoritePrompts,
     handleDeleteFavoritePrompt,
+    handleAddToFavorites,
     onUsePrompt
 }: FavoritePromptsDrawerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
+    const [semanticResults, setSemanticResults] = useState<SemanticSearchResult[]>([]);
+    const [searchMode, setSearchMode] = useState<'text' | 'semantic'>('text');
 
-    const filteredPrompts = useMemo(() => {
-        if (!searchQuery.trim()) return favoritePrompts;
-        return favoritePrompts.filter(prompt =>
-            prompt.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }, [favoritePrompts, searchQuery]);
+    const filteredPrompts = useMemo<CombinedPromptResult[]>(() => {
+        if (!searchQuery.trim()) {
+            return favoritePrompts.map(prompt => ({
+                prompt,
+                isFavorite: true
+            }));
+        }
+
+        if (searchMode === 'semantic') {
+            return semanticResults.map(result => ({
+                prompt: result.prompt,
+                similarity: result.similarity,
+                isFavorite: favoritePrompts.includes(result.prompt)
+            }));
+        }
+
+        // Text search mode
+        return favoritePrompts
+            .filter(prompt => prompt.toLowerCase().includes(searchQuery.toLowerCase()))
+            .map(prompt => ({
+                prompt,
+                isFavorite: true
+            }));
+    }, [favoritePrompts, searchQuery, semanticResults, searchMode]);
+
+    const clearSearch = () => {
+        setSearchQuery('');
+        setSemanticResults([]);
+        setSearchMode('text');
+    };
+
+    useEffect(() => {
+        const performSemanticSearch = async () => {
+            if (!searchQuery.trim() || searchMode !== 'semantic') {
+                setSemanticResults([]);
+                return;
+            }
+
+            setIsSearching(true);
+            try {
+                const response = await fetch('/api/semantic-search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        searchTerm: searchQuery,
+                        apiKey: localStorage.getItem('replicateApiKey')
+                    })
+                });
+
+                if (!response.ok) throw new Error('Search failed');
+                const { prompts } = await response.json();
+                setSemanticResults(prompts);
+            } catch (error) {
+                console.error('Semantic search failed:', error);
+                toast.error('Semantic search failed');
+            } finally {
+                setIsSearching(false);
+            }
+        };
+
+        const timeoutId = setTimeout(performSemanticSearch, 500); // Debounce
+        return () => clearTimeout(timeoutId);
+    }, [searchQuery, searchMode]);
 
     return (
         <div className="fixed left-0 top-[11rem] z-30">
@@ -93,58 +168,158 @@ export function FavoritePromptsDrawer({
 
                     <div className="relative mt-4">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search prompts..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-8 border border-muted-foreground rounded-lg focus:ring-2 focus:ring-primary"
-                        />
+                        <div className="flex flex-col gap-2">
+                            <div className="relative flex-1">
+                                <Input
+                                    placeholder="Search your prompts..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-8 pr-8 w-full border border-muted-foreground rounded-lg focus:ring-2 focus:ring-primary"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={clearSearch}
+                                        className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                                        aria-label="Clear search"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-2 px-1">
+                                <Tabs defaultValue="text" className="w-full">
+                                    <TabsList className="grid w-full grid-cols-2 h-8">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <TabsTrigger
+                                                        value="text"
+                                                        onClick={() => setSearchMode('text')}
+                                                        className={searchMode === 'text' ? 'bg-primary text-primary-foreground' : ''}
+                                                    >
+                                                        <Star className="h-3 w-3 mr-1" />
+                                                        Favorites
+                                                    </TabsTrigger>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="bottom">
+                                                    <p>Search within your saved favorite prompts</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <TabsTrigger
+                                                        value="semantic"
+                                                        onClick={() => setSearchMode('semantic')}
+                                                        className={searchMode === 'semantic' ? 'bg-primary text-primary-foreground' : ''}
+                                                    >
+                                                        <Search className="h-3 w-3 mr-1" />
+                                                        Past Prompts
+                                                    </TabsTrigger>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="bottom">
+                                                <p>Search through all prompts you&apos;ve ever used</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </TabsList>
+                                </Tabs>
+                                {isSearching && (
+                                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     <ScrollArea className="flex-1 mt-4 pr-4">
                         <div className="space-y-3">
                             {filteredPrompts.length > 0 ? (
-                                filteredPrompts.map((prompt, index) => (
+                                filteredPrompts.map((result, index) => (
                                     <TooltipProvider key={index} delayDuration={300}>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <div
-                                                    className="group relative p-4 rounded-lg border border-muted-foreground 
-                                                    bg-muted/50 hover:bg-muted/70 transition-all duration-200"
+                                                <div className={`group relative p-4 rounded-lg border 
+                        ${result.isFavorite
+                                                        ? 'border-amber-500 dark:border-amber-400 bg-amber-50/50 dark:bg-amber-950/20'
+                                                        : 'border-muted-foreground bg-muted/50'} 
+                        hover:bg-muted/70 transition-all duration-200`}
                                                 >
                                                     <div
                                                         className="cursor-pointer mb-8"
-                                                        onClick={() => onUsePrompt(prompt)}
+                                                        onClick={() => onUsePrompt(result.prompt)}
                                                     >
-                                                        <p className="text-sm line-clamp-2 pr-8 text-foreground">
-                                                            {prompt}
+                                                        {/* Favorite indicator */}
+                                                        {result.isFavorite && (
+                                                            <div className="absolute top-2 left-2">
+                                                                <Star className="h-4 w-4 text-amber-500 dark:text-amber-400" fill="currentColor" />
+                                                            </div>
+                                                        )}
+
+                                                        <p className={`text-sm line-clamp-2 ${result.isFavorite ? 'pl-7' : ''} pr-8 text-foreground`}>
+                                                            {result.prompt}
                                                         </p>
-                                                        <div className="absolute top-2 right-2 text-xs text-muted-foreground 
-                                                        bg-muted px-1.5 py-0.5 rounded-full">
-                                                            {prompt.length}c
+
+                                                        {/* Metadata badges */}
+                                                        <div className="absolute top-2 right-2 flex gap-2">
+                                                            {result.similarity !== undefined && (
+                                                                <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full
+                                        ${result.isFavorite 
+                                            ? 'text-amber-700 dark:text-amber-300' 
+                                            : 'text-muted-foreground'}"
+                                                                >
+                                                                    {Math.round(result.similarity * 100)}% match
+                                                                </span>
+                                                            )}
+                                                            <span className={`text-xs bg-muted px-1.5 py-0.5 rounded-full
+                                    ${result.isFavorite
+                                                                    ? 'text-amber-700 dark:text-amber-300'
+                                                                    : 'text-muted-foreground'}`}
+                                                            >
+                                                                {result.prompt.length}c
+                                                            </span>
                                                         </div>
                                                     </div>
+
+                                                    {/* Action buttons */}
                                                     <div className="absolute right-2 bottom-3 flex gap-1 
-                                                        opacity-0 group-hover:opacity-100 transition-opacity">
+                            opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => onUsePrompt(prompt)}
+                                                            onClick={() => onUsePrompt(result.prompt)}
                                                             className="h-7 px-2 text-xs text-accent hover:bg-accent/10"
                                                         >
                                                             Use
                                                         </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleDeleteFavoritePrompt(prompt);
-                                                            }}
-                                                            className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
-                                                        >
-                                                            Delete
-                                                        </Button>
+                                                        {result.isFavorite ? (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteFavoritePrompt(result.prompt);
+                                                                }}
+                                                                className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
+                                                            >
+                                                                Remove
+                                                            </Button>
+                                                        ) : (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleAddToFavorites(result.prompt);
+                                                                }}
+                                                                className="h-7 px-2 text-xs text-amber-600 hover:bg-amber-100/50
+                                        dark:text-amber-400 dark:hover:bg-amber-900/20"
+                                                            >
+                                                                Save
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </TooltipTrigger>
@@ -152,14 +327,19 @@ export function FavoritePromptsDrawer({
                                                 side="right"
                                                 className="max-w-[300px] p-3 text-xs bg-muted/90 text-foreground"
                                             >
-                                                <p className="whitespace-pre-wrap">{prompt}</p>
+                                                <p className="whitespace-pre-wrap">{result.prompt}</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
                                 ))
                             ) : (
                                 <div className="text-center text-muted-foreground py-8">
-                                    {searchQuery ? 'No matching prompts found' : 'No favorite prompts yet'}
+                                    {searchQuery
+                                        ? 'No matching prompts found'
+                                        : searchMode === 'semantic'
+                                            ? 'No semantic search results'
+                                            : 'No favorite prompts yet'
+                                    }
                                 </div>
                             )}
                         </div>

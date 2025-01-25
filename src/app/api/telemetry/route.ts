@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createHash } from 'crypto';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -15,10 +16,20 @@ type TelemetryResponse = {
 export async function POST(request: Request) {
   try {
     const telemetryData = await request.json();
-    console.log('Received telemetry data:', telemetryData);
+    //console.log('Received telemetry data:', telemetryData);
+
+    const userHash = createHash('sha256')
+      .update(telemetryData.apiKey + (process.env.TELEMETRY_SALT || 'default-salt'))
+      .digest('hex');
+
+    const { apiKey, ...safeData } = telemetryData;
+    const telemetryWithHash = {
+      ...safeData,
+      user_hash: userHash
+    };
 
     // Skip telemetry logging if API key is missing or invalid
-    if (!telemetryData.user_hash || telemetryData.errors?.some((error: string) => 
+    if (!telemetryWithHash.user_hash || telemetryWithHash.errors?.some((error: string) => 
       error.includes('API key') || error.includes('authentication')
     )) {
       console.log('Skipping telemetry due to API key issues');
@@ -34,28 +45,28 @@ export async function POST(request: Request) {
     const { data, error } = await supabase
       .from('telemetry')
       .insert([{
-        user_hash: telemetryData.user_hash,
-        request_id: telemetryData.requestId,
-        request_start_time: telemetryData.requestStartTime,
-        response_time: telemetryData.responseTime,
-        total_duration: telemetryData.totalDuration,
-        status_changes: telemetryData.statusChanges,
-        polling_steps: telemetryData.pollingSteps,
-        generation_parameters: telemetryData.generationParameters,
-        output_image_sizes: telemetryData.outputImageSizes,
-        client_info: telemetryData.clientInfo,
-        time_of_day: telemetryData.timeOfDay,
-        day_of_week: telemetryData.dayOfWeek,
-        errors: telemetryData.errors,
-        cancelled_by_user: telemetryData.cancelledByUser,
-        replicate_id: telemetryData.replicateId || `failed_${Date.now()}`,
-        replicate_model: telemetryData.replicateModel || 'unknown',
-        replicate_version: telemetryData.replicateVersion || 'unknown',
+        user_hash: userHash,
+        request_id: telemetryWithHash.requestId,
+        request_start_time: telemetryWithHash.requestStartTime,
+        response_time: telemetryWithHash.responseTime,
+        total_duration: telemetryWithHash.totalDuration,
+        status_changes: telemetryWithHash.statusChanges,
+        polling_steps: telemetryWithHash.pollingSteps,
+        generation_parameters: telemetryWithHash.generationParameters,
+        output_image_sizes: telemetryWithHash.outputImageSizes,
+        client_info: telemetryWithHash.clientInfo,
+        time_of_day: telemetryWithHash.timeOfDay,
+        day_of_week: telemetryWithHash.dayOfWeek,
+        errors: telemetryWithHash.errors,
+        cancelled_by_user: telemetryWithHash.cancelledByUser,
+        replicate_id: telemetryWithHash.replicateId || `failed_${Date.now()}`,
+        replicate_model: telemetryWithHash.replicateModel || 'unknown',
+        replicate_version: telemetryWithHash.replicateVersion || 'unknown',
         // Use current timestamp for missing values
-        replicate_created_at: telemetryData.replicateCreatedAt || currentTimestamp,
-        replicate_started_at: telemetryData.replicateStartedAt || currentTimestamp,
-        replicate_completed_at: telemetryData.replicateCompletedAt || currentTimestamp,
-        replicate_predict_time: telemetryData.replicatePredictTime || 0
+        replicate_created_at: telemetryWithHash.replicateCreatedAt || currentTimestamp,
+        replicate_started_at: telemetryWithHash.replicateStartedAt || currentTimestamp,
+        replicate_completed_at: telemetryWithHash.replicateCompletedAt || currentTimestamp,
+        replicate_predict_time: telemetryWithHash.replicatePredictTime || 0
       }]) as { data: TelemetryResponse[] | null, error: any };
 
       if (error) {

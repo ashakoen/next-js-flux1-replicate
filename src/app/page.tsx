@@ -1500,13 +1500,9 @@ export default function Component() {
 
 		try {
 
-			const userHash = createHash('sha256')
-				.update(apiKey + (process.env.TELEMETRY_SALT || 'default-salt'))
-				.digest('hex');
-
 			const telemetryWithHash = {
 				...finalTelemetryData,
-				user_hash: userHash
+				apiKey: apiKey
 			};
 
 			const response = await fetch('/api/telemetry', {
@@ -1720,6 +1716,7 @@ export default function Component() {
 					<FavoritePromptsDrawer
 						favoritePrompts={favoritePrompts}
 						handleDeleteFavoritePrompt={handleDeleteFavoritePrompt}
+						handleAddToFavorites={handleAddToFavorites}
 						onUsePrompt={(prompt) => setFormData(prev => ({ ...prev, prompt }))}
 					/>
 
