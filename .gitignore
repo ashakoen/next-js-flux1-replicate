@@ -76,3 +76,6 @@ next-env.d.ts
 *.pem
 
 fly.toml
+
+# But don't ignore Supabase functions
+!supabase/functions/
