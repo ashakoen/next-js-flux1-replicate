@@ -9,7 +9,6 @@ const supabase = createClient(
 
 export async function POST(request: Request) {
   try {
-
     const { searchTerm, apiKey } = await request.json();
 
     // Validate required environment variables
@@ -37,32 +36,70 @@ export async function POST(request: Request) {
       .update(apiKey + (process.env.TELEMETRY_SALT))
       .digest('hex');
 
-    // Log embedding request
-    console.log('Requesting embedding');
-    const embeddingResponse = await fetch(process.env.EMBEDDINGS_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: process.env.EMBEDDINGS_MODEL,
-        prompt: searchTerm
-      }),
-      // Add timeout
-      signal: AbortSignal.timeout(10000) // 10 second timeout
-    });
-
-    if (!embeddingResponse.ok) {
-      console.error('Embedding request failed:', await embeddingResponse.text());
-      throw new Error('Failed to generate embedding');
-    }
-
-    const { embedding } = await embeddingResponse.json();
+    // Create cache key from search term
+    const searchTermHash = createHash('md5')
+      .update(searchTerm.trim().toLowerCase())
+      .digest('hex');
     
-    if (!Array.isArray(embedding) || embedding.length === 0) {
-      throw new Error('Invalid embedding response');
+    // Check cache in database
+    const { data: cachedEmbedding, error: cacheError } = await supabase
+      .from('search_embedding_cache')
+      .select('embedding')
+      .eq('search_term_hash', searchTermHash)
+      .eq('model', process.env.EMBEDDINGS_MODEL)
+      .single();
+
+    let embedding: number[];
+    
+    if (cachedEmbedding) {
+      console.log('Using cached embedding for search term');
+      embedding = cachedEmbedding.embedding;
+      await supabase
+        .from('search_embedding_cache')
+        .update({ last_accessed: new Date().toISOString() })
+        .eq('search_term_hash', searchTermHash);
+    } else {
+      console.log('Requesting new embedding');
+      const embeddingResponse = await fetch(process.env.EMBEDDINGS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: process.env.EMBEDDINGS_MODEL,
+          prompt: searchTerm
+        }),
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (!embeddingResponse.ok) {
+        console.error('Embedding request failed:', await embeddingResponse.text());
+        throw new Error('Failed to generate embedding');
+      }
+
+      const { embedding: newEmbedding } = await embeddingResponse.json();
+      
+      if (!Array.isArray(newEmbedding) || newEmbedding.length === 0) {
+        throw new Error('Invalid embedding response');
+      }
+
+      // Store in cache
+      const { error: insertError } = await supabase
+        .from('search_embedding_cache')
+        .insert({
+          search_term_hash: searchTermHash,
+          search_term: searchTerm.trim().toLowerCase(),
+          embedding: newEmbedding,
+          model: process.env.EMBEDDINGS_MODEL
+        });
+
+      if (insertError) {
+        console.error('Failed to cache embedding:', insertError);
+      }
+      
+      embedding = newEmbedding;
+      console.log('Cached new embedding');
     }
 
-    console.log('Received embedding of length:', embedding.length);
-
+    console.log('Querying similar prompts');
     const { data: similarPrompts, error } = await supabase.rpc('match_user_prompts', {
       query_embedding: embedding,
       user_hash_param: userHash,

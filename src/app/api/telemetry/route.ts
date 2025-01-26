@@ -15,16 +15,24 @@ type TelemetryResponse = {
 
 export async function POST(request: Request) {
   try {
+
+    const apiKey = request.headers.get('X-API-Key');
+    if (!apiKey) {
+      return NextResponse.json({ 
+        message: 'API key is required',
+        skipped: true 
+      }, { status: 401 });
+    }
+
     const telemetryData = await request.json();
     //console.log('Received telemetry data:', telemetryData);
 
     const userHash = createHash('sha256')
-      .update(telemetryData.apiKey + (process.env.TELEMETRY_SALT || 'default-salt'))
+      .update(apiKey + (process.env.TELEMETRY_SALT || 'default-salt'))
       .digest('hex');
 
-    const { apiKey, ...safeData } = telemetryData;
     const telemetryWithHash = {
-      ...safeData,
+      ...telemetryData,
       user_hash: userHash
     };
 

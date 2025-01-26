@@ -1,13 +1,15 @@
 export async function POST(req: Request): Promise<Response> {
 	try {
-		const { apiKey, body, getUrl, cancelUrl } = await req.json();
+
+        const apiKey = req.headers.get('X-API-Key');
+        if (!apiKey) {
+            console.error('Error: API key is missing');
+            return new Response(JSON.stringify({ error: 'API key is required' }), { status: 400 });
+        }
+
+		const { body, getUrl, cancelUrl } = await req.json();
 
 		const model = body?.model;
-
-		if (!apiKey) {
-			console.error('Error: API key is missing');
-			return new Response(JSON.stringify({ error: 'API key is required' }), { status: 400 });
-		}
 
 		if (body?.fetchImageForBucket) {
 			const imageUrl = body.imageUrl;

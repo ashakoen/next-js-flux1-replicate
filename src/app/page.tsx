@@ -297,9 +297,9 @@ export default function Component() {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
+					'X-API-Key': apiKey
 				},
 				body: JSON.stringify({
-					apiKey,
 					body: {
 						fetchImageForBucket: true,
 						imageUrl: image.url
@@ -662,9 +662,9 @@ export default function Component() {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
+					'X-API-Key': apiKey
 				},
 				body: JSON.stringify({
-					apiKey,
 					body: params,
 				}),
 				signal: abortController.current?.signal,
@@ -1286,9 +1286,9 @@ export default function Component() {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
+					'X-API-Key': apiKey
 				},
 				body: JSON.stringify({
-					apiKey,
 					body: replicateParams,
 				}),
 			});
@@ -1332,9 +1332,9 @@ export default function Component() {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
+					'X-API-Key': apiKey
 				},
 				body: JSON.stringify({
-					apiKey,
 					getUrl: url,
 				}),
 				signal: abortController.current?.signal,
@@ -1501,14 +1501,14 @@ export default function Component() {
 		try {
 
 			const telemetryWithHash = {
-				...finalTelemetryData,
-				apiKey: apiKey
+				...finalTelemetryData
 			};
 
 			const response = await fetch('/api/telemetry', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
+					'X-API-Key': apiKey
 				},
 				body: JSON.stringify(telemetryWithHash),
 			})
@@ -1644,8 +1644,9 @@ export default function Component() {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
+						'X-API-Key': apiKey
 					},
-					body: JSON.stringify({ apiKey, cancelUrl }),
+					body: JSON.stringify({ cancelUrl }),
 				})
 
 				if (response.ok) {
