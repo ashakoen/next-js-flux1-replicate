@@ -452,15 +452,7 @@ export default function Component() {
 		}
 	};
 
-	const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-		const { name, value } = e.target;
-		if (name === 'privateLoraName') {
-			const fullModelName = value;
-			if (fullModelName && !validatedLoraModels.includes(fullModelName)) {
-				validateLoraModel(fullModelName);
-			}
-		}
-	};
+
 
 	const handleSelectChange = (name: string, value: string) => {
 		setFormData((prev) => {
@@ -1543,24 +1535,57 @@ export default function Component() {
 		isPolling.current = false;
 	};
 
-	const validateLoraModel = (modelName: string) => {
+	const validateLoraModel = async (modelName: string) => {
 		if (!apiKey) {
-			setShowApiKeyAlert(true);
-			return;
+			console.log('No API key available'); 
+		  setShowApiKeyAlert(true);
+		  return;
 		}
+	  
+
+		console.log('API Key available:', !!apiKey);  // Add this debug line
+		console.log('Model name:', modelName);  // Add this debug line
+
 		setIsValidatingLora(true);
 		setLoraValidationError(null);
-		setTimeout(() => {
-			setIsValidatingLora(false);
-			setValidatedLoraModels((prev) => {
-				const newModels = Array.from(new Set([...prev, modelName]));
-				localStorage.setItem('validatedLoraModels', JSON.stringify(newModels));
-				return newModels;
-			});
-			setLoraValidationError(null);
-			setFormData((prev) => ({ ...prev, privateLoraName: modelName }));
-		}, 2000);
-	};
+	  
+		try {
+		  const [loraPath, version] = modelName.split(':');
+		  
+		  const response = await fetch('/api/replicate', {
+			method: 'POST',
+			headers: {
+			  'Content-Type': 'application/json',
+			  'X-API-Key': apiKey  // Make sure apiKey is defined and not empty
+			},
+			body: JSON.stringify({
+				body: {  // Match the pattern used in other successful API calls
+				  validateLora: true,
+				  modelPath: loraPath,
+				  version: version
+				}
+			  }),
+		  });
+	  
+		  if (!response.ok) {
+			const errorData = await response.json();
+			throw new Error(errorData.error || 'Failed to validate LoRA model');
+		  }
+	  
+		  setValidatedLoraModels(prev => {
+			const newModels = Array.from(new Set([...prev, modelName]));
+			localStorage.setItem('validatedLoraModels', JSON.stringify(newModels));
+			return newModels;
+		  });
+		  setFormData(prev => ({ ...prev, privateLoraName: modelName }));
+	  
+		} catch (error) {
+		  console.error('LoRA validation error:', error);
+		  setLoraValidationError(error instanceof Error ? error.message : 'Validation failed');
+		} finally {
+		  setIsValidatingLora(false);
+		}
+	  };
 
 	const clearValidatedModels = () => {
 		setValidatedLoraModels([]);
@@ -1753,7 +1778,7 @@ export default function Component() {
 								isValidatingLora={isValidatingLora}
 								loraValidationError={loraValidationError}
 								handleInputChange={handleInputChange}
-								handleBlur={handleBlur}
+								//handleBlur={handleBlur}
 								handleSelectChange={handleSelectChange}
 								handleSwitchChange={handleSwitchChange}
 								handleSliderChange={handleSliderChange}

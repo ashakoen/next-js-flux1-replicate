@@ -69,9 +69,8 @@ export function LoraModelsDrawer({
         try {
             const response = await fetch('/api/replicate', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
                 body: JSON.stringify({
-                    apiKey,
                     body: {
                         validateLora: true,
                         modelPath,

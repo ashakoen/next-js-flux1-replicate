@@ -23,7 +23,10 @@
     "@radix-ui/react-switch": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.2",
+    "@react-three/drei": "^9.121.3",
+    "@react-three/fiber": "^8.17.12",
     "@supabase/supabase-js": "^2.47.10",
+    "@types/three": "^0.172.0",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -44,6 +47,7 @@
     "tailwind-merge": "^2.5.2",
     "tailwind-scrollbar-hide": "^1.1.7",
     "tailwindcss-animate": "^1.0.7",
+    "three": "^0.172.0",
     "vaul": "^0.9.1"
   },
   "devDependencies": {
