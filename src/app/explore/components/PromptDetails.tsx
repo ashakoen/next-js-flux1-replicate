@@ -3,7 +3,7 @@
 import { X, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import type { Point } from '../../page'
+import type { Point } from '../page'
 
 interface PromptDetailsProps {
   point: Point
