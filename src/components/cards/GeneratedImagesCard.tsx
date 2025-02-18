@@ -31,6 +31,7 @@ interface GeneratedImagesCardProps {
     onReusePrompt: (prompt: string) => void;
     onUpscaleImage: (params: UpscaleParams) => void;
     onDownloadWithConfig: (imageUrl: string, image: GeneratedImage) => void;
+    onSaveImagePack: (imageUrl: string, image: GeneratedImage) => void;
     onAddToBucket: (image: GeneratedImage) => void;
     bucketImages: GeneratedImage[];
     isLoadingImages: boolean;
@@ -51,6 +52,7 @@ export function GeneratedImagesCard({
     onReusePrompt,
     onUpscaleImage,
     onDownloadWithConfig,
+    onSaveImagePack,
     onAddToBucket,
     bucketImages
 }: GeneratedImagesCardProps & { onReusePrompt: (prompt: string) => void }) {
@@ -697,6 +699,17 @@ export function GeneratedImagesCard({
                                                                     >
                                                                         <Box className="w-3 h-3 mr-1" />
                                                                         Download IMG Pack
+                                                                    </Button>
+
+                                                                    <Button
+                                                                        className="flex-1"
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        onClick={() => onSaveImagePack(image.url, image)}
+                                                                        disabled={isUpscaledImage}
+                                                                    >
+                                                                        <Box className="w-3 h-3 mr-1" />
+                                                                        Save Image Pack
                                                                     </Button>
 
                                                                     <Button

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blob Storage API Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        #output {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            margin-top: 20px;
+        }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Blob Storage API Test</h1>
+    <input type="text" id="apiKey" placeholder="Enter your API key" style="width: 300px; padding: 5px;">
+    <button onclick="runTest()">Run Test</button>
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message, type = 'info') {
+            const line = document.createElement('div');
+            line.textContent = message;
+            line.className = type;
+            output.appendChild(line);
+        }
+
+        async function runTest() {
+            output.innerHTML = '';
+            const API_KEY = document.getElementById('apiKey').value;
+            
+            if (!API_KEY) {
+                log('Please enter an API key', 'error');
+                return;
+            }
+
+            // Test data
+            const testPack = {
+                prompt: "Test prompt",
+                seed: 12345,
+                timestamp: new Date().toISOString(),
+                model: "test-model"
+            };
+
+            try {
+                // 1. Test POST - Create a new pack
+                log('Testing POST...');
+                const createResponse = await fetch('/api/blob', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': API_KEY
+                    },
+                    body: JSON.stringify(testPack)
+                });
+                
+                if (!createResponse.ok) {
+                    throw new Error(`POST failed: ${createResponse.statusText}`);
+                }
+                
+                const { url } = await createResponse.json();
+                log('Pack created successfully: ' + url, 'success');
+
+                // 2. Test GET - List packs
+                log('\nTesting GET...');
+                const listResponse = await fetch('/api/blob', {
+                    headers: {
+                        'X-API-Key': API_KEY
+                    }
+                });
+                
+                if (!listResponse.ok) {
+                    throw new Error(`GET failed: ${listResponse.statusText}`);
+                }
+                
+                const { packs } = await listResponse.json();
+                log('Packs retrieved: ' + JSON.stringify(packs, null, 2), 'success');
+
+                // 3. Test DELETE - Remove the pack
+                log('\nTesting DELETE...');
+                const deleteResponse = await fetch('/api/blob', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': API_KEY
+                    },
+                    body: JSON.stringify({ url })
+                });
+                
+                if (!deleteResponse.ok) {
+                    throw new Error(`DELETE failed: ${deleteResponse.statusText}`);
+                }
+                
+                log('Pack deleted successfully', 'success');
+
+                // 4. Verify deletion
+                log('\nVerifying deletion...');
+                const verifyResponse = await fetch('/api/blob', {
+                    headers: {
+                        'X-API-Key': API_KEY
+                    }
+                });
+                
+                if (!verifyResponse.ok) {
+                    throw new Error(`Verification GET failed: ${verifyResponse.statusText}`);
+                }
+                
+                const { packs: remainingPacks } = await verifyResponse.json();
+                log('Remaining packs: ' + JSON.stringify(remainingPacks, null, 2), 'success');
+
+            } catch (error) {
+                log('Test failed: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

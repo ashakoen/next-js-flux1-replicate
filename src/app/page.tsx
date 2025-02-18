@@ -8,12 +8,13 @@ import { GenerationActions } from '@/components/GenerationActions';
 import { db } from '@/services/indexedDB';
 
 import ServerLogModal from '../components/modals/serverLogModal';
-import {
+import type {
 	FormData,
 	GeneratedImage,
 	LogEntry,
 	TelemetryData,
-	ImagePackConfig
+	ImagePackConfig,
+	StoredImagePack
 } from '@/types/types';
 import { GeneratedImagesCard } from "@/components/cards/GeneratedImagesCard";
 import { SourceImageDrawer } from "@/components/SourceImageDrawer";
@@ -22,6 +23,7 @@ import { LoraModelsDrawer } from '@/components/LoraModelsDrawer';
 import { ExtraLoraModelsDrawer } from "@/components/ExtraLoraModelsDrawer";
 import { GenerateConfirmModal } from "@/components/modals/GenerateConfirmModal";
 import ImageBucketWrapper from "@/components/ImageBucketWrapper";
+import { ImagePackStorageCard } from '@/components/cards/ImagePackStorageCard';
 import { STORAGE } from '@/constants/storage';
 import { Toaster, toast } from "sonner";
 import { createHash } from 'crypto';
@@ -104,6 +106,7 @@ export default function Component() {
 	const [showDownloadDialog, setShowDownloadDialog] = useState(false);
 	const [includeCaptionFiles, setIncludeCaptionFiles] = useState(false);
 	const [isDownloading, setIsDownloading] = useState(false);
+	const [storedPacks, setStoredPacks] = useState<StoredImagePack[]>([]);
 
 
 	const getClientInfo = () => {
@@ -250,6 +253,173 @@ export default function Component() {
 		initializeBucket();
 	}, []);
 
+	useEffect(() => {
+		if (apiKey) {
+			fetchStoredPacks();
+		}
+	}, [apiKey]);
+
+	const fetchStoredPacks = async () => {
+		try {
+			const response = await fetch('/api/blob', {
+				headers: {
+					'X-API-Key': apiKey
+				}
+			});
+			if (!response.ok) throw new Error('Failed to fetch packs');
+			const { packs } = await response.json();
+			setStoredPacks(packs);
+		} catch (error) {
+			console.error('Error fetching stored packs:', error);
+			toast.error('Failed to load stored image packs');
+		}
+	};
+
+	const handleSaveImagePack = async (imageUrl: string, image: GeneratedImage) => {
+		try {
+			console.log('Starting to save image pack...');
+			
+			// Create zip file
+			const JSZip = (await import('jszip')).default;
+			const zip = new JSZip();
+			
+			// Fetch and add the generated image
+			console.log('Fetching image from:', imageUrl);
+			const imageResponse = await fetch(imageUrl);
+			if (!imageResponse.ok) throw new Error('Failed to fetch image');
+			const imageBlob = await imageResponse.blob();
+			console.log('Image blob size:', imageBlob.size);
+			
+			const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+			const baseFilename = `generation-${timestamp}`;
+			
+			// Add image to zip with correct extension
+			const extension = image.output_format || (image.model === 'recraftv3' ? 'webp' : 'png');
+			const filename = `${baseFilename}.${extension}`;
+			console.log('Adding image to zip:', filename, 'Size:', imageBlob.size);
+			zip.file(filename, imageBlob);
+			
+			// Add config file
+			console.log('Creating config file...');
+			const config = {
+				prompt: image.prompt,
+				model: image.model,
+				seed: image.seed,
+				version: image.version,
+				privateLoraName: image.privateLoraName,
+				lora_scale: image.lora_scale,
+				extra_lora: image.extra_lora,
+				extra_lora_scale: image.extra_lora_scale,
+				guidance_scale: image.guidance_scale,
+				num_inference_steps: image.num_inference_steps,
+				go_fast: image.go_fast,
+				output_format: image.output_format,
+				output_quality: image.output_quality,
+				disable_safety_checker: image.disable_safety_checker,
+				style: image.style,
+				isImg2Img: image.isImg2Img,
+				prompt_strength: image.prompt_strength,
+				timestamp: timestamp
+			};
+			
+			zip.file(`${baseFilename}.json`, JSON.stringify(config, null, 2));
+			
+			// Generate zip blob
+			console.log('Generating zip blob...');
+			console.log('Files in zip:', Object.keys(zip.files));
+			const zipBlob = await zip.generateAsync({ 
+				type: 'blob',
+				compression: 'DEFLATE',
+				compressionOptions: { level: 6 }
+			});
+			console.log('Zip blob size:', zipBlob.size, 'bytes');
+			console.log('Zip blob type:', zipBlob.type);
+			
+			// Create FormData and append zip file
+			console.log('Creating FormData...');
+			const formData = new FormData();
+			const zipFilename = `${baseFilename}.zip`;
+			console.log('Zip filename:', zipFilename);
+			formData.append('file', zipBlob, zipFilename);
+			
+			// Upload to blob storage
+			console.log('Uploading to blob storage...');
+			const fileEntry = formData.get('file');
+			console.log('Request headers:', {
+				'X-API-Key': 'present',
+				'Content-Type': fileEntry instanceof File ? fileEntry.type : 'application/octet-stream'
+			});
+			const response = await fetch('/api/blob', {
+				method: 'POST',
+				headers: {
+					'X-API-Key': apiKey
+				},
+				body: formData
+			});
+			
+			if (!response.ok) throw new Error('Failed to save pack');
+			
+			// Refresh stored packs list
+			await fetchStoredPacks();
+			toast.success('Image pack saved successfully');
+		} catch (error) {
+			console.error('Error saving pack:', error);
+			toast.error('Failed to save image pack');
+		}
+	};
+
+	const handleDownloadPack = async (url: string) => {
+		try {
+			// Fetch the zip file
+			const response = await fetch(url);
+			if (!response.ok) throw new Error('Failed to fetch pack');
+			
+			// Get the zip blob
+			const zipBlob = await response.blob();
+			
+			// Create download link
+			const blobUrl = window.URL.createObjectURL(zipBlob);
+			const a = document.createElement('a');
+			a.style.display = 'none';
+			a.href = blobUrl;
+			a.download = `image-pack-${Date.now()}.zip`;
+			
+			// Trigger download
+			document.body.appendChild(a);
+			a.click();
+			
+			// Cleanup
+			window.URL.revokeObjectURL(blobUrl);
+			document.body.removeChild(a);
+			
+			toast.success('Image pack downloaded successfully');
+		} catch (error) {
+			console.error('Error downloading pack:', error);
+			toast.error('Failed to download image pack');
+		}
+	};
+
+	const handleDeletePack = async (url: string) => {
+		try {
+			const response = await fetch('/api/blob', {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-API-Key': apiKey
+				},
+				body: JSON.stringify({ url })
+			});
+
+			if (!response.ok) throw new Error('Failed to delete pack');
+
+			setStoredPacks(packs => packs.filter(pack => pack.url !== url));
+			toast.success('Image pack deleted successfully');
+		} catch (error) {
+			console.error('Error deleting pack:', error);
+			toast.error('Failed to delete image pack');
+		}
+	};
+
 	const handleNumOutputsChange = (value: number) => {
 		setFormData((prev) => ({
 			...prev,
@@ -377,10 +547,10 @@ export default function Component() {
 					const blob = await response.blob();
 					const safeTimestamp = image.timestamp.replace(/[/:]/g, '-');
 					const baseFilename = `bucket-image-${safeTimestamp}`;
-	
+
 					// Add image
 					zip.file(`${baseFilename}.png`, blob);
-	
+
 					// Add empty caption file if option selected
 					if (includeCaptionFiles) {
 						const caption = image.prompt || ''; // Use empty string as fallback if prompt is undefined
@@ -736,20 +906,18 @@ export default function Component() {
 			let modelType: FormData['model'];
 			let privateLoraName = '';
 
-			// Map the model from the config
+			// Map the model from the config with improved handling
 			if (config.model.includes('flux')) {
-				// Extract model type from full identifier
-				if (config.model.includes('pro-ultra')) {
-					modelType = 'pro-ultra';
-				} else if (config.model.includes('pro')) {
-					modelType = 'pro';
-				} else if (config.model.includes('schnell')) {
-					modelType = 'schnell';
-				} else {
-					modelType = 'dev';
-				}
+				if (config.model.includes('pro-ultra')) modelType = 'pro-ultra';
+				else if (config.model.includes('pro')) modelType = 'pro';
+				else if (config.model.includes('schnell')) modelType = 'schnell';
+				else modelType = 'dev';
 			} else if (config.model.includes('recraftv3')) {
 				modelType = 'recraftv3';
+			} else if (config.model.includes('ideogram')) {
+				modelType = 'ideogram';
+			} else if (config.model.includes('luma')) {
+				modelType = 'luma';
 			} else if (config.model.includes('/')) {
 				// It's a LoRA model
 				modelType = 'dev';
@@ -761,6 +929,13 @@ export default function Component() {
 				console.warn(`Unknown model type: ${config.model}, falling back to dev`);
 				modelType = 'dev';
 			}
+
+			console.log('Model mapping:', {
+				originalModel: config.model,
+				mappedType: modelType,
+				privateLoraName,
+				version: config.version
+			});
 
 			const newFormData: FormData = {
 				...formData, // Start with current form data as base
@@ -778,20 +953,20 @@ export default function Component() {
 				aspect_ratio: (() => {
 					// Calculate the actual aspect ratio from dimensions
 					const calculatedAspectRatio = getValidAspectRatio(width, height, modelType);
-					
+
 					console.log('Image Pack Aspect Ratio Debug:');
 					console.log('- Width:', width);
 					console.log('- Height:', height);
 					console.log('- Stored aspect_ratio:', config.aspect_ratio);
 					console.log('- Calculated aspect_ratio:', calculatedAspectRatio);
-					
+
 					// If the stored aspect ratio matches the calculated one, use it
-					if (config.aspect_ratio && 
+					if (config.aspect_ratio &&
 						config.aspect_ratio === calculatedAspectRatio) {
 						console.log('✅ Using stored aspect ratio (matches calculated)');
 						return config.aspect_ratio;
 					}
-					
+
 					console.log('⚠️ Using calculated aspect ratio (mismatch or missing stored ratio)');
 					return calculatedAspectRatio;
 				})(),
@@ -1537,55 +1712,55 @@ export default function Component() {
 
 	const validateLoraModel = async (modelName: string) => {
 		if (!apiKey) {
-			console.log('No API key available'); 
-		  setShowApiKeyAlert(true);
-		  return;
+			console.log('No API key available');
+			setShowApiKeyAlert(true);
+			return;
 		}
-	  
+
 
 		console.log('API Key available:', !!apiKey);  // Add this debug line
 		console.log('Model name:', modelName);  // Add this debug line
 
 		setIsValidatingLora(true);
 		setLoraValidationError(null);
-	  
+
 		try {
-		  const [loraPath, version] = modelName.split(':');
-		  
-		  const response = await fetch('/api/replicate', {
-			method: 'POST',
-			headers: {
-			  'Content-Type': 'application/json',
-			  'X-API-Key': apiKey  // Make sure apiKey is defined and not empty
-			},
-			body: JSON.stringify({
-				body: {  // Match the pattern used in other successful API calls
-				  validateLora: true,
-				  modelPath: loraPath,
-				  version: version
-				}
-			  }),
-		  });
-	  
-		  if (!response.ok) {
-			const errorData = await response.json();
-			throw new Error(errorData.error || 'Failed to validate LoRA model');
-		  }
-	  
-		  setValidatedLoraModels(prev => {
-			const newModels = Array.from(new Set([...prev, modelName]));
-			localStorage.setItem('validatedLoraModels', JSON.stringify(newModels));
-			return newModels;
-		  });
-		  setFormData(prev => ({ ...prev, privateLoraName: modelName }));
-	  
+			const [loraPath, version] = modelName.split(':');
+
+			const response = await fetch('/api/replicate', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-API-Key': apiKey  // Make sure apiKey is defined and not empty
+				},
+				body: JSON.stringify({
+					body: {  // Match the pattern used in other successful API calls
+						validateLora: true,
+						modelPath: loraPath,
+						version: version
+					}
+				}),
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || 'Failed to validate LoRA model');
+			}
+
+			setValidatedLoraModels(prev => {
+				const newModels = Array.from(new Set([...prev, modelName]));
+				localStorage.setItem('validatedLoraModels', JSON.stringify(newModels));
+				return newModels;
+			});
+			setFormData(prev => ({ ...prev, privateLoraName: modelName }));
+
 		} catch (error) {
-		  console.error('LoRA validation error:', error);
-		  setLoraValidationError(error instanceof Error ? error.message : 'Validation failed');
+			console.error('LoRA validation error:', error);
+			setLoraValidationError(error instanceof Error ? error.message : 'Validation failed');
 		} finally {
-		  setIsValidatingLora(false);
+			setIsValidatingLora(false);
 		}
-	  };
+	};
 
 	const clearValidatedModels = () => {
 		setValidatedLoraModels([]);
@@ -1766,7 +1941,7 @@ export default function Component() {
 						setFormData={setFormData}
 					/>
 
-					<div className="middle-column order-2 xl:order-1 xl:w-1/5 h-[calc(100vh-8rem)]">
+					<div className="middle-column order-2 xl:order-1 xl:w-[20%] h-[calc(100vh-8rem)]">
 						<div className="flex flex-col h-full justify-between">
 							<GenerationSettingsCard
 								className="flex-1 min-h-0 overflow-auto h-[calc(100vh-10rem)]"
@@ -1812,35 +1987,201 @@ export default function Component() {
 					{/* Generated Images Card - Right 2/3 */}
 					<div className="right-column order-1 xl:order-2 xl:w-[55%]">
 
-						<GeneratedImagesCard
-							images={generatedImages}
-							setImages={setGeneratedImages}
-							onDownloadImage={downloadImage}
-							onDeleteImage={handleDeleteImage}
-							clearGeneratedImages={clearGeneratedImages}
-							isGenerating={isGenerating}
-							numberOfOutputs={formData.num_outputs}
-							onRegenerateWithSeed={handleRegenerateWithSeed}
-							onUseAsInput={handleUseAsInput}
-							model={formData.model}
-							onReusePrompt={handleReusePrompt}
-							onUpscaleImage={handleUpscaleImage}
-							onDownloadWithConfig={downloadImageWithConfig}
-							isLoadingImages={isLoadingImages}
-							onAddToBucket={handleAddToBucket}
-							bucketImages={bucketImages}
-						/>
+							<GeneratedImagesCard
+								images={generatedImages}
+								setImages={setGeneratedImages}
+								onDownloadImage={downloadImage}
+								onDeleteImage={handleDeleteImage}
+								clearGeneratedImages={clearGeneratedImages}
+								isGenerating={isGenerating}
+								numberOfOutputs={formData.num_outputs}
+								onRegenerateWithSeed={handleRegenerateWithSeed}
+								onUseAsInput={handleUseAsInput}
+								model={formData.model}
+								onReusePrompt={handleReusePrompt}
+								onUpscaleImage={handleUpscaleImage}
+								onDownloadWithConfig={downloadImageWithConfig}
+								onSaveImagePack={handleSaveImagePack}
+								onAddToBucket={handleAddToBucket}
+								bucketImages={bucketImages}
+								isLoadingImages={isLoadingImages}
+							/>
 
 					</div>
 
-					<div className="order-3 xl:w-1/4">
-						<ImageBucketWrapper
-							bucketImages={bucketImages}
-							onRemoveFromBucket={handleRemoveFromBucket}
-							onDownloadImage={downloadBucketImage}
-							onDownloadAll={handleDownloadAllBucket}
-							onClearBucket={clearBucketImages}
-						/>
+					<div className="order-3 xl:w-1/4 h-[calc(100vh-8rem)]">
+						<div className="flex flex-col h-full justify-between">
+							<ImageBucketWrapper
+								className="flex-1 min-h-0 overflow-auto h-[calc(70vh-8rem)]"
+								bucketImages={bucketImages}
+								onRemoveFromBucket={handleRemoveFromBucket}
+								onDownloadImage={downloadBucketImage}
+								onDownloadAll={handleDownloadAllBucket}
+								onClearBucket={clearBucketImages}
+							/>
+
+							<ImagePackStorageCard
+								className="h-[calc(30vh-2rem)] min-h-[200px]"
+								storedPacks={storedPacks}
+								onGeneratePack={async (url) => {
+									try {
+										// Fetch the zip file
+										const response = await fetch(url);
+										if (!response.ok) throw new Error('Failed to fetch pack');
+										
+										// Get the zip blob
+										const zipBlob = await response.blob();
+										const JSZip = (await import('jszip')).default;
+										const zip = await JSZip.loadAsync(zipBlob);
+										
+										// Find the config file (ends with .json)
+										const configFile = Object.values(zip.files).find(f => f.name.endsWith('.json'));
+										if (!configFile) throw new Error('No config file found in pack');
+										
+										// Parse the config
+										const configText = await configFile.async('text');
+										const config = JSON.parse(configText);
+										
+										// Find the image file (not json, source, or mask)
+										const imageFile = Object.values(zip.files).find(f => 
+											!f.name.endsWith('.json') && 
+											!f.name.includes('source') && 
+											!f.name.includes('mask')
+										);
+										
+										// Handle source image if present
+										const sourceFile = Object.values(zip.files).find(f => 
+											f.name.includes('source') && 
+											/\.(png|jpg|webp)$/i.test(f.name)
+										);
+										
+										// Handle mask if present
+										const maskFile = Object.values(zip.files).find(f => 
+											f.name.includes('mask') && 
+											/\.(png|jpg|webp)$/i.test(f.name)
+										);
+										
+										let maskDataUrl: string | null = null;
+										
+										if (sourceFile) {
+											const sourceBlob = await sourceFile.async('blob');
+											const sourceImageFile = new File([sourceBlob], 'source-image.png', { type: 'image/png' });
+											const sourceUrl = URL.createObjectURL(sourceBlob);
+											
+											setSelectedImage({
+												url: sourceUrl,
+												file: sourceImageFile
+											});
+											
+											if (maskFile) {
+												const maskBlob = await maskFile.async('blob');
+												const reader = new FileReader();
+												maskDataUrl = await new Promise<string>((resolve) => {
+													reader.onloadend = () => resolve(reader.result as string);
+													reader.readAsDataURL(maskBlob);
+												});
+												
+												setMaskDataUrl(maskDataUrl);
+												setIsInpaintingEnabled(true);
+											}
+										}
+										
+										// Map the model from the config with improved handling
+										let modelType: FormData['model'];
+										let privateLoraName = '';
+
+										if (config.model.includes('flux')) {
+											if (config.model.includes('pro-ultra')) modelType = 'pro-ultra';
+											else if (config.model.includes('pro')) modelType = 'pro';
+											else if (config.model.includes('schnell')) modelType = 'schnell';
+											else modelType = 'dev';
+										} else if (config.model.includes('recraftv3')) {
+											modelType = 'recraftv3';
+										} else if (config.model.includes('ideogram')) {
+											modelType = 'ideogram';
+										} else if (config.model.includes('luma')) {
+											modelType = 'luma';
+										} else if (config.model.includes('/')) {
+											// It's a LoRA model
+											modelType = 'dev';
+											privateLoraName = config.model;
+											if (config.version) {
+												privateLoraName += `:${config.version}`;
+											}
+										} else {
+											console.warn(`Unknown model type: ${config.model}, falling back to dev`);
+											modelType = 'dev';
+										}
+
+										console.log('Model mapping:', {
+											originalModel: config.model,
+											mappedType: modelType,
+											privateLoraName,
+											version: config.version
+										});
+
+										// Set form data
+										setFormData(prev => ({
+											...prev,
+											...config,
+											model: modelType,
+											privateLoraName,
+											num_outputs: 1 // Always generate one output when using a pack
+										}));
+										
+										// Generate with complete parameter set
+										handleSubmit(
+											{ preventDefault: () => { } } as React.FormEvent,
+											{
+												num_outputs: 1,
+												model: modelType,
+												seed: config.seed,
+												guidance_scale: config.guidance_scale,
+												num_inference_steps: config.num_inference_steps,
+												lora_scale: config.lora_scale,
+												extra_lora: config.extra_lora,
+												extra_lora_scale: config.extra_lora_scale,
+												output_format: config.output_format,
+												output_quality: config.output_quality,
+												disable_safety_checker: config.disable_safety_checker,
+												go_fast: config.go_fast,
+												style: config.style,
+												prompt_strength: config.prompt_strength,
+												isImg2Img: config.isImg2Img,
+												negative_prompt: config.negative_prompt,
+												privateLoraName,
+												privateLoraVersion: config.version,
+												aspect_ratio: config.aspect_ratio,
+												width: config.width,
+												height: config.height,
+												style_type: config.style_type,
+												// Include mask-related data if this was an inpainting generation
+												...(config.generationType === 'inpainting' && {
+													maskDataUrl: maskDataUrl,
+													isInpaintingEnabled: true
+												})
+											}
+										);
+
+										console.log('Generation parameters:', {
+											model: modelType,
+											seed: config.seed,
+											privateLoraName,
+											version: config.version,
+											aspect_ratio: config.aspect_ratio,
+											width: config.width,
+											height: config.height
+										});
+										
+										toast.success('Generating from saved pack...');
+									} catch (error) {
+										console.error('Error generating from pack:', error);
+										toast.error('Failed to generate from pack');
+									}
+								}}
+								onDeletePack={handleDeletePack}
+							/>
+						</div>
 					</div>
 				</div>
 

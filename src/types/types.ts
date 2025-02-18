@@ -33,6 +33,7 @@ export type FormData = {
     character_reference_url?: string;
     image_reference_weight: number;
     style_reference_weight: number;
+    isImg2Img?: boolean;
 };
 
 export type GeneratedImage = {
@@ -172,6 +173,31 @@ export interface UpscaleParams {
         noise?: number;
         task_type?: string;
     };
+}
+
+export interface StoredImagePack {
+    url: string;
+    prompt: string;
+    timestamp: string;
+    seed: number;
+    model: string;
+    imageUrl: string;
+    version?: string;
+    privateLoraName?: string;
+    lora_scale?: number;
+    extra_lora?: string;
+    extra_lora_scale?: number;
+    guidance_scale?: number;
+    num_inference_steps?: number;
+    go_fast?: boolean;
+    output_format?: string;
+    output_quality?: number;
+    disable_safety_checker?: boolean;
+    style?: string;
+    isImg2Img?: boolean;
+    prompt_strength?: number;
+    generationType?: 'txt2img' | 'img2img' | 'inpainting';
+    aspect_ratio?: string;
 }
 
 export interface PexelsImage {

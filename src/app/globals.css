@@ -123,11 +123,7 @@
   }
   
   .middle-column {
-    @apply flex flex-col w-full xl:w-1/3 h-full;
-  }
-  
-  .right-column {
-    @apply flex flex-col w-full xl:flex-1 flex-grow h-full;
+    @apply flex flex-col w-full xl:w-1/5 h-full;
   }
 
   [data-overlay-backdrop] {

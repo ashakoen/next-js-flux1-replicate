@@ -12,6 +12,7 @@ import { GeneratedImage } from '@/types/types';
 const BucketImageGrid = lazy(() => import('@/components/BucketImageGrid'));
 
 interface ImageBucketCardProps {
+    className?: string; 
     bucketImages: GeneratedImage[];
     onRemoveFromBucket: (timestamp: string) => void;
     onDownloadImage: (dataUrl: string, timestamp: string) => void;
@@ -63,8 +64,8 @@ export default function ImageBucketCard({
 
     return (
         <>
-        <Card className="flex flex-col w-full h-[calc(100vh-8rem)] md:overflow-hidden">
-            <CardHeader>
+        <Card className="flex flex-col w-full flex-1 overflow-hidden">
+        <CardHeader className="flex-none">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-[#9b59b6] dark:text-[#fa71cd]">
                         Image Bucket
@@ -143,7 +144,7 @@ export default function ImageBucketCard({
                 )}
             </CardContent>
             {bucketImages.length > 0 && (
-                <CardFooter className="border-t pt-6">
+                <CardFooter className="flex-none border-t pt-6"> 
                     <Button
                         className="w-full"
                         onClick={handleDownload}
