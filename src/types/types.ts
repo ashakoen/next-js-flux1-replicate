@@ -74,6 +74,14 @@ export type GeneratedImage = {
         width: number;
         height: number;
     };
+    isEdited?: boolean;
+    originalUrl?: string;
+    cropData?: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    };
 }
 
 export type LogEntry = {

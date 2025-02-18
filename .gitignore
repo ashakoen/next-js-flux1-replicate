@@ -78,4 +78,4 @@ next-env.d.ts
 fly.toml
 
 # But don't ignore Supabase functions
-!supabase/functions/
+!supabase/functions/public/tests/

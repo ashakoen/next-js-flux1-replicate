@@ -5,13 +5,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import Image from 'next/image';
-import { ArrowUpToLine, Info, Download, Loader2, RefreshCw, Box, Upload, Star } from 'lucide-react';
+import { ArrowUpToLine, Info, Download, Loader2, RefreshCw, Box, Upload, Star, Crop } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { GeneratedImage, UpscaleParams } from '@/types/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
+import { CropModal } from '@/components/modals/CropModal';
+import type { Crop as CropType } from 'react-image-crop';
 import { WandSparkles } from 'lucide-react';
 import { toast } from "sonner";
+import { db } from '@/services/indexedDB';
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -20,7 +23,7 @@ import { Label } from "@/components/ui/label";
 interface GeneratedImagesCardProps {
     images: GeneratedImage[];
     setImages: React.Dispatch<React.SetStateAction<GeneratedImage[]>>;
-    onDownloadImage: (url: string) => void;
+    onDownloadImage: (url: string, isBlob?: boolean) => Promise<void>;
     onDeleteImage: (timestamp: string) => void;
     clearGeneratedImages: () => void;
     isGenerating: boolean;
@@ -59,6 +62,8 @@ export function GeneratedImagesCard({
     const [isConfirming, setIsConfirming] = useState(false);
     const [openImageUrl, setOpenImageUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [showCropModal, setShowCropModal] = useState(false);
+    const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
 
     const [upscaleModel, setUpscaleModel] = useState<'real-esrgan' | 'swinir'>('real-esrgan');
     const [swinirTaskType, setSwinirTaskType] = useState<'Real-World Image Super-Resolution-Large' | 'Real-World Image Super-Resolution-Medium'>('Real-World Image Super-Resolution-Large');
@@ -134,27 +139,17 @@ export function GeneratedImagesCard({
     }, [isConfirming]);
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setImages(prevImages => {
-                const filteredImages = prevImages.filter(image => {
-                    if (!image.timestamp) return true;
-                    const { shouldRemove } = getImageExpiry(image.timestamp);
-                    return !shouldRemove;
-                });
-
-                if (filteredImages.length !== prevImages.length) {
-                    localStorage.setItem('generatedImages', JSON.stringify(filteredImages));
-                }
-                return filteredImages;
-            });
+        const interval = setInterval(async () => {
+            await db.cleanupExpiredImages();
+            const images = await db.getImages();
+            setImages(images);
         }, CLEANUP_INTERVAL_MS);
 
         return () => clearInterval(interval);
-    }, [setImages, getImageExpiry]);
+    }, [setImages]);
 
     return (
-
-
+        <>
         <Card className="flex flex-col w-full h-[calc(100vh-8rem)] md:overflow-hidden">
             <CardHeader className="relative">
                 <div className="absolute top-4 right-4 opacity-60 h-0 overflow-visible">
@@ -254,32 +249,56 @@ export function GeneratedImagesCard({
                                             variant="secondary"
                                             size="icon"
                                             className="absolute top-2 left-1/2 -translate-x-1/2 z-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            onClick={() => {
-                                                // Check if image is already in bucket
-                                                const isAlreadyInBucket = bucketImages.some(
-                                                    bucketImage => bucketImage.url === image.url
-                                                );
+                                            onClick={async () => {
+                                                try {
+                                                    // Check if image is already in bucket
+                                                    const isAlreadyInBucket = bucketImages.some(
+                                                        bucketImage => bucketImage.url === image.url
+                                                    );
 
-                                                if (isAlreadyInBucket) {
-                                                    toast.error('Image is already in bucket');
-                                                    return;
+                                                    if (isAlreadyInBucket) {
+                                                        toast.error('Image is already in bucket');
+                                                        return;
+                                                    }
+
+                                                    // If it's a blob URL (cropped image), convert to base64
+                                                    if (image.url.startsWith('blob:')) {
+                                                        const response = await fetch(image.url);
+                                                        const blob = await response.blob();
+                                                        const reader = new FileReader();
+                                                        const base64Data = await new Promise<string>((resolve) => {
+                                                            reader.onloadend = () => resolve(reader.result as string);
+                                                            reader.readAsDataURL(blob);
+                                                        });
+                                                        
+                                                        // Create a new image object with the base64 URL
+                                                        const imageWithBase64 = {
+                                                            ...image,
+                                                            url: base64Data
+                                                        };
+                                                        onAddToBucket(imageWithBase64);
+                                                    } else {
+                                                        onAddToBucket(image);
+                                                    }
+                                                } catch (error) {
+                                                    console.error('Failed to add image to bucket:', error);
+                                                    toast.error('Failed to add image to bucket');
                                                 }
-
-                                                onAddToBucket(image);
-                                                //toast.success('Added to bucket');
                                             }}
                                         >
                                             <Star className="h-4 w-4" />
                                         </Button>
 
-                                        <Button
-                                            variant="secondary"
-                                            size="icon"
-                                            className="absolute bottom-2 left-1/2 -translate-x-1/2 z-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            onClick={() => onDownloadWithConfig(image.url, image)}
-                                        >
-                                            <Box className="h-4 w-4" />
-                                        </Button>
+                                        {!image.isEdited && (
+                                            <Button
+                                                variant="secondary"
+                                                size="icon"
+                                                className="absolute bottom-2 left-1/2 -translate-x-1/2 z-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={() => onDownloadWithConfig(image.url, image)}
+                                            >
+                                                <Box className="h-4 w-4" />
+                                            </Button>
+                                        )}
 
                                         <Dialog open={openImageUrl === image.url} onOpenChange={(open) => setOpenImageUrl(open ? image.url : null)}>
                                             <DialogTrigger asChild>
@@ -426,10 +445,16 @@ export function GeneratedImagesCard({
                                                                                 <div className="w-2 h-2 rounded-full bg-blue-500" />
                                                                                 <span className="text-sm">
                                                                                     {image.model?.includes('real-esrgan') || image.model?.includes('swinir')
-                                                                                        ? 'Upscaled'
-                                                                                        : 'Image to Image'
+                                                                                        ? `Upscaled${image.isEdited ? ' (cropped)' : ''}`
+                                                                                        : `Image to Image${image.isEdited ? ' (cropped)' : ''}`
                                                                                     }
                                                                                 </span>
+                                                                            </div>
+                                                                        )}
+                                                                        {image.isEdited && (
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <div className="w-2 h-2 rounded-full bg-purple-500" />
+                                                                                <span className="text-sm">Cropped</span>
                                                                             </div>
                                                                         )}
                                                                     </div>
@@ -591,7 +616,7 @@ export function GeneratedImagesCard({
                                                                         Reuse Prompt
                                                                     </Button>
 
-                                                                    {canUseAsInput(image.model, image.privateLoraName) && (
+                                                                    {canUseAsInput(image.model, image.privateLoraName) && !image.isEdited && (
                                                                         <Button
                                                                             className="flex-1"
                                                                             size="sm"
@@ -605,14 +630,14 @@ export function GeneratedImagesCard({
                                                                                     console.error('Failed to use image as input:', error);
                                                                                 }
                                                                             }}
-                                                                            disabled={isUpscaledImage}
+                                                                            disabled={isUpscaledImage || image.isEdited}
                                                                         >
                                                                             <Upload className="w-3 h-3 mr-1" />
                                                                             Use as Input
                                                                         </Button>
                                                                     )}
 
-                                                                    {canRegenerate(image.model, image.privateLoraName) && (
+                                                                    {canRegenerate(image.model, image.privateLoraName) && !image.isEdited && (
                                                                         <Button
                                                                             className="flex-1"
                                                                             size="sm"
@@ -644,7 +669,7 @@ export function GeneratedImagesCard({
                                                                                 setOpenImageUrl(null);
                                                                                 toast.success("Regenerating with a lower seed value");
                                                                             }}
-                                                                            disabled={isUpscaledImage}
+                                                                            disabled={isUpscaledImage || image.isEdited}
                                                                         >
                                                                             <RefreshCw className="w-3 h-3 mr-1" />
                                                                             Regenerate
@@ -654,9 +679,27 @@ export function GeneratedImagesCard({
                                                                         className="flex-1"
                                                                         size="sm"
                                                                         variant="outline"
-                                                                        onClick={() => {
-                                                                            onDownloadImage(image.url);
-                                                                            toast.success("Image downloading...");
+                                                                        onClick={async () => {
+                                                                            try {
+                                                                                if (image.url.startsWith('blob:')) {
+                                                                                    // For blob URLs, convert to base64
+                                                                                    const response = await fetch(image.url);
+                                                                                    const blob = await response.blob();
+                                                                                    const reader = new FileReader();
+                                                                                    const base64Data = await new Promise<string>((resolve) => {
+                                                                                        reader.onloadend = () => resolve(reader.result as string);
+                                                                                        reader.readAsDataURL(blob);
+                                                                                    });
+                                                                                    await onDownloadImage(base64Data);
+                                                                                } else {
+                                                                                    // For regular URLs, send as is
+                                                                                    await onDownloadImage(image.url);
+                                                                                }
+                                                                                toast.success("Image downloading...");
+                                                                            } catch (error) {
+                                                                                console.error('Failed to download image:', error);
+                                                                                toast.error('Failed to download image');
+                                                                            }
                                                                         }}
 
                                                                     >
@@ -668,35 +711,73 @@ export function GeneratedImagesCard({
                                                                         className="flex-1"
                                                                         size="sm"
                                                                         variant="outline"
-            onClick={() => {
-                // Check if image is already in bucket
-                const isAlreadyInBucket = bucketImages.some(
-                    bucketImage => bucketImage.url === image.url
-                );
+                                                                        onClick={async () => {
+                                                                            try {
+                                                                                // Check if image is already in bucket
+                                                                                const isAlreadyInBucket = bucketImages.some(
+                                                                                    bucketImage => bucketImage.url === image.url
+                                                                                );
 
-                if (isAlreadyInBucket) {
-                    toast.error('Image is already in bucket');
-                    return;
-                }
+                                                                                if (isAlreadyInBucket) {
+                                                                                    toast.error('Image is already in bucket');
+                                                                                    return;
+                                                                                }
 
-                onAddToBucket(image);
-                //toast.success('Added to bucket');
-            }}
-        >
-            <Star className="w-3 h-3 mr-1" />
-            Add to Bucket
-        </Button>
+                                                                                // If it's a blob URL (cropped image), convert to base64
+                                                                                if (image.url.startsWith('blob:')) {
+                                                                                    const response = await fetch(image.url);
+                                                                                    const blob = await response.blob();
+                                                                                    const reader = new FileReader();
+                                                                                    const base64Data = await new Promise<string>((resolve) => {
+                                                                                        reader.onloadend = () => resolve(reader.result as string);
+                                                                                        reader.readAsDataURL(blob);
+                                                                                    });
+                                                                                    
+                                                                                    // Create a new image object with the base64 URL
+                                                                                    const imageWithBase64 = {
+                                                                                        ...image,
+                                                                                        url: base64Data
+                                                                                    };
+                                                                                    onAddToBucket(imageWithBase64);
+                                                                                } else {
+                                                                                    onAddToBucket(image);
+                                                                                }
+                                                                            } catch (error) {
+                                                                                console.error('Failed to add image to bucket:', error);
+                                                                                toast.error('Failed to add image to bucket');
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <Star className="w-3 h-3 mr-1" />
+                                                                        Add to Bucket
+                                                                    </Button>
 
+
+                                                                    {!image.isEdited && (
+                                                                        <Button
+                                                                            className="flex-1"
+                                                                            size="sm"
+                                                                            variant="outline"
+                                                                            onClick={() => onDownloadWithConfig(image.url, image)}
+                                                                            disabled={isUpscaledImage || image.isEdited}
+                                                                        >
+                                                                            <Box className="w-3 h-3 mr-1" />
+                                                                            Download IMG Pack
+                                                                        </Button>
+                                                                    )}
 
                                                                     <Button
                                                                         className="flex-1"
                                                                         size="sm"
                                                                         variant="outline"
-                                                                        onClick={() => onDownloadWithConfig(image.url, image)}
-                                                                        disabled={isUpscaledImage}
+                                                                        onClick={() => {
+                                                                            setCropImageUrl(image.url);
+                                                                            setShowCropModal(true);
+                                                                            setOpenImageUrl(null);
+                                                                        }}
                                                                     >
-                                                                        <Box className="w-3 h-3 mr-1" />
-                                                                        Download IMG Pack
+                                                                        <Crop className="w-3 h-3 mr-1" />
+                                                                        Crop Image
                                                                     </Button>
 
                                                                     <Button
@@ -809,7 +890,7 @@ export function GeneratedImagesCard({
 
 
 
-                                        {canUseAsInput(image.model, image.privateLoraName) && (
+                                        {canUseAsInput(image.model, image.privateLoraName) && !image.isEdited && (
                                             <Button
                                                 variant="secondary"
                                                 size="icon"
@@ -830,13 +911,33 @@ export function GeneratedImagesCard({
                                             variant="secondary"
                                             size="icon"
                                             className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                            onClick={() => onDownloadImage(image.url)}
+                                            onClick={async () => {
+                                                try {
+                                                    if (image.url.startsWith('blob:')) {
+                                                        // For blob URLs, convert to base64
+                                                        const response = await fetch(image.url);
+                                                        const blob = await response.blob();
+                                                        const reader = new FileReader();
+                                                        const base64Data = await new Promise<string>((resolve) => {
+                                                            reader.onloadend = () => resolve(reader.result as string);
+                                                            reader.readAsDataURL(blob);
+                                                        });
+                                                        await onDownloadImage(base64Data);
+                                                    } else {
+                                                        // For regular URLs, send as is
+                                                        await onDownloadImage(image.url);
+                                                    }
+                                                } catch (error) {
+                                                    console.error('Failed to download image:', error);
+                                                    toast.error('Failed to download image');
+                                                }
+                                            }}
                                         >
                                             <Download className="h-4 w-4" />
                                             <span className="sr-only">Download image</span>
                                         </Button>
 
-                                        {canRegenerate(image.model, image.privateLoraName) && (
+                                        {canRegenerate(image.model, image.privateLoraName) && !image.isEdited && (
                                             <Button
                                                 variant="secondary"
                                                 size="icon"
@@ -882,6 +983,7 @@ export function GeneratedImagesCard({
                                             <span className="sr-only">Delete image</span>
                                             &times;
                                         </Button>
+
                                     </motion.div>
                                 ))}
                             </AnimatePresence>
@@ -970,5 +1072,56 @@ export function GeneratedImagesCard({
             </CardFooter>
         </Card>
 
+            <CropModal
+                isOpen={showCropModal}
+                onClose={() => {
+                    setShowCropModal(false);
+                    setCropImageUrl(null);
+                }}
+                imageUrl={cropImageUrl}
+                onCropComplete={async (croppedBlob, cropData) => {
+                    try {
+                        // Convert blob to base64
+                        const reader = new FileReader();
+                        const base64Data = await new Promise<string>((resolve) => {
+                            reader.onloadend = () => resolve(reader.result as string);
+                            reader.readAsDataURL(croppedBlob);
+                        });
+
+                        const originalImage = images.find(img => img.url === cropImageUrl);
+                        
+                        if (originalImage) {
+                            const newImage: GeneratedImage = {
+                                ...originalImage,
+                                url: base64Data,
+                                timestamp: new Date().toISOString(),
+                                isEdited: true,
+                                originalUrl: originalImage.url,
+                                sourceImageUrl: originalImage.url,
+                                cropData: {
+                                    x: cropData.x,
+                                    y: cropData.y,
+                                    width: cropData.width,
+                                    height: cropData.height
+                                }
+                            };
+
+                            // Save to IndexedDB
+                            await db.saveImages([newImage]);
+                            
+                            // Update state
+                            setImages(prev => [...prev, newImage]);
+                            
+                            setShowCropModal(false);
+                            setCropImageUrl(null);
+                            toast.success("Image cropped successfully");
+                        }
+                    } catch (error) {
+                        console.error('Failed to save cropped image:', error);
+                        toast.error('Failed to save cropped image');
+                    }
+                }}
+            />
+        </>
     );
 }

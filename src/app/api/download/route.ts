@@ -2,11 +2,27 @@ export async function POST(req: Request) {
     try {
         const { imageUrl } = await req.json();
         
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
+        let blob;
+        let contentType;
         
-        // Determine content type and extension
-        const contentType = response.headers.get('content-type') || 'image/png';
+        if (imageUrl.startsWith('data:')) {
+            // Handle base64 data
+            const [header, base64Data] = imageUrl.split(',');
+            const binaryStr = atob(base64Data);
+            const bytes = new Uint8Array(binaryStr.length);
+            for (let i = 0; i < binaryStr.length; i++) {
+                bytes[i] = binaryStr.charCodeAt(i);
+            }
+            contentType = header.split(';')[0].split(':')[1];
+            blob = new Blob([bytes], { type: contentType });
+        } else {
+            // Handle URL
+            const response = await fetch(imageUrl);
+            blob = await response.blob();
+            contentType = response.headers.get('content-type') || 'image/png';
+        }
+        
+        // Determine extension
         const isWebP = imageUrl.endsWith('webp') || contentType.includes('webp');
         const extension = isWebP ? 'webp' : contentType.split('/')[1];
         
