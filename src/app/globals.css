@@ -119,7 +119,7 @@
   }
 
   .main-layout {
-    @apply flex flex-col xl:flex-row gap-6 w-full min-h-screen overflow-hidden;
+    @apply flex flex-col xl:flex-row gap-6 w-full min-h-screen overflow-hidden 3xl:px-8;
   }
   
   .middle-column {

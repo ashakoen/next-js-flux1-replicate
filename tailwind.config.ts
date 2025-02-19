@@ -26,6 +26,7 @@ const config = {
         lg: "4rem",
         xl: "5rem",
         "2xl": "6rem",
+        "3xl": "8rem",
       },
       screens: {
         sm: '480px',
