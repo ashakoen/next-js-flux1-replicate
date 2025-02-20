@@ -299,7 +299,7 @@ export function GenerationSettingsCard({
 									<div className="relative">
 										{isInpaintingEnabled && inpaintingPrompt && (
 											<div className="absolute top-0 left-0 right-0 bg-gray-100 dark:bg-gray-800 rounded-t-md border-b border-gray-200 dark:border-gray-700">
-												<div className="p-2 pb-2.5">
+												<div className="p-2">
 													<div className="flex items-center gap-1.5 text-xs">
 														<span className="text-gray-500 font-medium">Inpainting Focus:</span>
 														<span className="text-gray-700 dark:text-gray-300">{inpaintingPrompt}</span>
@@ -314,9 +314,9 @@ export function GenerationSettingsCard({
 											onChange={handleInputChange}
 											placeholder="Enter your prompt here"
 											required
-											className={`min-h-[100px] pr-0 transition-all duration-200 ${
+											className={`min-h-[100px] transition-all duration-200 pr-6 ${
 												isInpaintingEnabled && inpaintingPrompt 
-													? 'pt-[3.75rem]'
+													? 'pt-[3rem]'
 													: 'pt-3'
 											}`}
 										/>
