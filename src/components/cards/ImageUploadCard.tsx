@@ -13,35 +13,34 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_DIMENSIONS = 4096; // Maximum width/height in pixels
 
+interface ImageState {
+  isFlipped: boolean;
+  isGeneratingDescription: boolean;
+}
+
 interface ImageUploadCardProps {
   onImageSelect: (imageData: { 
-      url: string; 
-      file: File | null;
-      dimensions: {
-          width: number;
-          height: number;
-      }
+    url: string; 
+    file: File | null;
+    dimensions: {
+      width: number;
+      height: number;
+    }
   }) => void;
   selectedImage: { 
-      url: string; 
-      file: File | null;
-      dimensions?: {
-          width: number;
-          height: number;
-      }
+    url: string; 
+    file: File | null;
+    dimensions?: {
+      width: number;
+      height: number;
+    }
   } | null;
   onClearImage: () => void;
   onError?: (error: string) => void;
   disabled?: boolean;
   apiKey: string;
   handleSelectChange: (name: string, value: string) => void;
-}
-
-interface ImageState {
-  isFlipped: boolean;
-  description: string | null;
-  isGeneratingDescription: boolean;
-  isPolling: boolean;
+  onDescriptionGenerated?: (description: string) => void;
 }
 
 export function ImageUploadCard({
@@ -51,66 +50,14 @@ export function ImageUploadCard({
     onError,
     disabled = false,
     apiKey,
-    handleSelectChange
+    handleSelectChange,
+    onDescriptionGenerated
 }: ImageUploadCardProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [imageState, setImageState] = useState<ImageState>({
       isFlipped: false,
-      description: null,
-      isGeneratingDescription: false,
-      isPolling: false
+      isGeneratingDescription: false
     });
-
-    const isPollingRef = useRef(false);
-
-    useEffect(() => {
-      return () => {
-        isPollingRef.current = false;
-      };
-    }, []);
-
-    const pollForDescription = async (url: string) => {
-      if (!isPollingRef.current) return;
-
-      try {
-        const response = await fetch('/api/replicate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': apiKey
-          },
-          body: JSON.stringify({
-            getUrl: url,
-          })
-        });
-
-        const data = await response.json();
-        
-        if (data.status === 'succeeded') {
-          setImageState(prev => ({ 
-            ...prev, 
-            description: data.output.join(' '),
-            isGeneratingDescription: false,
-            isPolling: false
-          }));
-          isPollingRef.current = false;
-        } else if (data.status === 'failed') {
-          throw new Error(data.error || 'Failed to generate description');
-        } else {
-          // Keep polling if still processing
-          setTimeout(() => pollForDescription(url), 2000);
-        }
-      } catch (error) {
-        console.error('Error polling for description:', error);
-        onError?.('Failed to generate image description');
-        setImageState(prev => ({ 
-          ...prev, 
-          isGeneratingDescription: false,
-          isPolling: false 
-        }));
-        isPollingRef.current = false;
-      }
-    };
 
     const handleDrag = (e: React.DragEvent) => {
         if (disabled) return;
@@ -200,11 +147,8 @@ const processImageFile = (file: File, dimensions: { width: number; height: numbe
   // Reset image state when new image is uploaded
   setImageState({
     isFlipped: false,
-    description: null,
-    isGeneratingDescription: false,
-    isPolling: false
+    isGeneratingDescription: false
   });
-  isPollingRef.current = false;
   onImageSelect({ url, file, dimensions });
 };
 
@@ -212,11 +156,8 @@ const processImageFile = (file: File, dimensions: { width: number; height: numbe
 const handleClearImage = () => {
   setImageState({
     isFlipped: false,
-    description: null,
-    isGeneratingDescription: false,
-    isPolling: false
+    isGeneratingDescription: false
   });
-  isPollingRef.current = false;
   onClearImage();
 };
 
@@ -313,40 +254,6 @@ const handleClearImage = () => {
       </div>
     ) : (
       <div className="flex flex-col h-full gap-4">
-        {imageState.description && (
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex-1">
-              <ScrollArea className="h-[100px]">
-                <div className="bg-muted/50 rounded-lg p-3 text-sm">
-                  <p className="text-muted-foreground whitespace-pre-wrap">{imageState.description}</p>
-                </div>
-              </ScrollArea>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => {
-                  navigator.clipboard.writeText(imageState.description || '');
-                  toast.success('Description copied to clipboard');
-                }}
-                title="Copy to clipboard"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => handleSelectChange('prompt', imageState.description || '')}
-                title="Use as prompt"
-              >
-                <MessageSquarePlus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
         <div className="relative flex-1">
           <div className="relative w-full h-full">
             <Image
@@ -367,10 +274,8 @@ const handleClearImage = () => {
                 
                 setImageState(prev => ({ 
                   ...prev, 
-                  isGeneratingDescription: true,
-                  isPolling: true 
+                  isGeneratingDescription: true
                 }));
-                isPollingRef.current = true;
 
                 try {
                   // Convert blob URL to base64
@@ -400,17 +305,58 @@ const handleClearImage = () => {
                   if (!initialResponse.ok) throw new Error('Failed to generate description');
                   
                   const data = await initialResponse.json();
-                  // Start polling with the getUrl
-                  pollForDescription(data.urls.get);
+                  
+                  // Poll for result
+                  const pollInterval = setInterval(async () => {
+                    try {
+                      const pollResponse = await fetch('/api/replicate', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'X-API-Key': apiKey
+                        },
+                        body: JSON.stringify({
+                          getUrl: data.urls.get,
+                        })
+                      });
+
+                      const pollData = await pollResponse.json();
+                      
+                      if (pollData.status === 'succeeded') {
+                        clearInterval(pollInterval);
+                        setImageState(prev => ({ 
+                          ...prev, 
+                          isGeneratingDescription: false
+                        }));
+                        const description = pollData.output
+                          .join(' ')
+                          .replace(/\s+/g, ' ')
+                          .trim();
+                        onDescriptionGenerated?.(description);
+                      } else if (pollData.status === 'failed') {
+                        clearInterval(pollInterval);
+                        throw new Error(pollData.error || 'Failed to generate description');
+                      }
+                    } catch (error) {
+                      clearInterval(pollInterval);
+                      console.error('Error polling for description:', error);
+                      onError?.('Failed to generate image description');
+                      setImageState(prev => ({ 
+                        ...prev, 
+                        isGeneratingDescription: false
+                      }));
+                    }
+                  }, 2000);
+
+                  // Cleanup interval on unmount
+                  return () => clearInterval(pollInterval);
                 } catch (error) {
                   console.error('Error generating description:', error);
                   onError?.('Failed to generate image description');
                   setImageState(prev => ({ 
                     ...prev, 
-                    isGeneratingDescription: false,
-                    isPolling: false 
+                    isGeneratingDescription: false
                   }));
-                  isPollingRef.current = false;
                 }
               }}
               disabled={disabled || imageState.isGeneratingDescription}

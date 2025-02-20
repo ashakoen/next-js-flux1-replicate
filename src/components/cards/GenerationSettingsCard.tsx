@@ -298,9 +298,13 @@ export function GenerationSettingsCard({
 								<div className="relative group pb-2">
 									<div className="relative">
 										{isInpaintingEnabled && inpaintingPrompt && (
-											<div className="absolute top-0 left-0 right-0 p-2 text-sm bg-gray-100 dark:bg-gray-800 rounded-t-md border-b border-gray-200 dark:border-gray-700">
-												<span className="text-gray-500">Inpainting Focus:</span>
-												<span className="text-gray-700 dark:text-gray-300 ml-1">{inpaintingPrompt}</span>
+											<div className="absolute top-0 left-0 right-0 bg-gray-100 dark:bg-gray-800 rounded-t-md border-b border-gray-200 dark:border-gray-700">
+												<div className="p-2 pb-2.5">
+													<div className="flex items-center gap-1.5 text-xs">
+														<span className="text-gray-500 font-medium">Inpainting Focus:</span>
+														<span className="text-gray-700 dark:text-gray-300">{inpaintingPrompt}</span>
+													</div>
+												</div>
 											</div>
 										)}
 										<Textarea
@@ -310,7 +314,11 @@ export function GenerationSettingsCard({
 											onChange={handleInputChange}
 											placeholder="Enter your prompt here"
 											required
-											className={`min-h-[100px] pr-0 ${isInpaintingEnabled && inpaintingPrompt ? 'pt-12' : ''}`}
+											className={`min-h-[100px] pr-0 transition-all duration-200 ${
+												isInpaintingEnabled && inpaintingPrompt 
+													? 'pt-[3.75rem]'
+													: 'pt-3'
+											}`}
 										/>
 									</div>
 								</div>

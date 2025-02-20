@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ImageIcon,X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ImageUploadCard } from "./cards/ImageUploadCard";
 import { DrawingCard } from "./cards/DrawingCard";
 import {
@@ -16,6 +16,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { InpaintingPromptSection } from "./InpaintingPromptSection";
+import { ImageDescriptionSection } from "./ImageDescriptionSection";
 
 interface SourceImageDrawerProps {
     onImageSelect: (imageData: { url: string; file: File | null }) => void;
@@ -52,6 +53,7 @@ export function SourceImageDrawer({
 }: SourceImageDrawerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [inpaintingPrompt, setInpaintingPrompt] = useState(inpaintingPromptValue);
+    const [imageDescription, setImageDescription] = useState<string | null>(null);
 
     // Sync with parent's inpainting state and value
     useEffect(() => {
@@ -123,12 +125,23 @@ export function SourceImageDrawer({
                 <ImageUploadCard
                     onImageSelect={onImageSelect}
                     selectedImage={selectedImage}
-                    onClearImage={onClearImage}
+                    onClearImage={() => {
+                        onClearImage();
+                        setImageDescription(null);
+                    }}
                     onError={onError}
                     disabled={disabled}
                     apiKey={apiKey}
                     handleSelectChange={handleSelectChange}
+                    onDescriptionGenerated={setImageDescription}
                 />
+
+                {selectedImage && imageDescription && (
+                    <ImageDescriptionSection
+                        description={imageDescription}
+                        onUseAsPrompt={() => handleSelectChange('prompt', imageDescription)}
+                    />
+                )}
                 
                 {selectedImage && (
                     <>
