@@ -736,7 +736,7 @@ export function GenerationSettingsCard({
 											{loraValidationError ? (
 												<p className="text-sm text-red-500 mt-1">{loraValidationError}</p>
 											) : formData.privateLoraName && validatedLoraModels.includes(`${formData.privateLoraName}${formData.privateLoraVersion ? ':' + formData.privateLoraVersion : ''}`) ? (
-												<p className="text-sm text-green-500 mt-1">LoRA model validated successfully!</p>
+												<p className="text-sm text-green-500 mt-1">Private AI model validated successfully!</p>
 											) : null}
 										</div>
 										<div>
