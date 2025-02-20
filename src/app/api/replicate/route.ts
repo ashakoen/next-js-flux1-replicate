@@ -11,6 +11,38 @@ export async function POST(req: Request): Promise<Response> {
 
 		const model = body?.model;
 
+		if (body?.generateDescription) {
+			const imageBase64 = body.image;
+
+			if (!imageBase64) {
+				return new Response(JSON.stringify({ error: 'Image data is required' }), { status: 400 });
+			}
+
+			if (!imageBase64.startsWith('data:')) {
+				return new Response(JSON.stringify({ error: 'Invalid image format. Expected base64 data URL.' }), { status: 400 });
+			}
+
+			const prediction = await fetch("https://api.replicate.com/v1/predictions", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Token ${apiKey}`,
+				},
+				body: JSON.stringify({
+					version: "80537f9eead1a5bfa72d5ac6ea6414379be41d4d4f6679fd776e9535d1eb58bb",
+					input: {
+						image: imageBase64,
+						prompt: "Describe this image in single-paragraph format, with as much creative and visual detail as possible, describing both the subject and the surroundings. Focus on the subject. Be descriptive and verbose using a minimum of 300 words when possible. If the subject is human, use extreme detail.",
+						max_tokens: 2048,
+						temperature: 0.7,
+						top_p: 1
+					}
+				})
+			});
+
+			return new Response(JSON.stringify(await prediction.json()));
+		}
+
 		if (body?.fetchImageForBucket) {
 			const imageUrl = body.imageUrl;
 

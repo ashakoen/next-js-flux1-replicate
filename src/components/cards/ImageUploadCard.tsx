@@ -2,9 +2,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Wand2, Loader2, Copy, MessageSquarePlus } from 'lucide-react';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 
 // Add constants for file restrictions
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
@@ -31,6 +33,15 @@ interface ImageUploadCardProps {
   onClearImage: () => void;
   onError?: (error: string) => void;
   disabled?: boolean;
+  apiKey: string;
+  handleSelectChange: (name: string, value: string) => void;
+}
+
+interface ImageState {
+  isFlipped: boolean;
+  description: string | null;
+  isGeneratingDescription: boolean;
+  isPolling: boolean;
 }
 
 export function ImageUploadCard({
@@ -38,9 +49,68 @@ export function ImageUploadCard({
     selectedImage,
     onClearImage,
     onError,
-    disabled = false
+    disabled = false,
+    apiKey,
+    handleSelectChange
 }: ImageUploadCardProps) {
     const [isDragging, setIsDragging] = useState(false);
+    const [imageState, setImageState] = useState<ImageState>({
+      isFlipped: false,
+      description: null,
+      isGeneratingDescription: false,
+      isPolling: false
+    });
+
+    const isPollingRef = useRef(false);
+
+    useEffect(() => {
+      return () => {
+        isPollingRef.current = false;
+      };
+    }, []);
+
+    const pollForDescription = async (url: string) => {
+      if (!isPollingRef.current) return;
+
+      try {
+        const response = await fetch('/api/replicate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey
+          },
+          body: JSON.stringify({
+            getUrl: url,
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.status === 'succeeded') {
+          setImageState(prev => ({ 
+            ...prev, 
+            description: data.output.join(' '),
+            isGeneratingDescription: false,
+            isPolling: false
+          }));
+          isPollingRef.current = false;
+        } else if (data.status === 'failed') {
+          throw new Error(data.error || 'Failed to generate description');
+        } else {
+          // Keep polling if still processing
+          setTimeout(() => pollForDescription(url), 2000);
+        }
+      } catch (error) {
+        console.error('Error polling for description:', error);
+        onError?.('Failed to generate image description');
+        setImageState(prev => ({ 
+          ...prev, 
+          isGeneratingDescription: false,
+          isPolling: false 
+        }));
+        isPollingRef.current = false;
+      }
+    };
 
     const handleDrag = (e: React.DragEvent) => {
         if (disabled) return;
@@ -127,25 +197,68 @@ const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
 const processImageFile = (file: File, dimensions: { width: number; height: number }) => {
   const url = URL.createObjectURL(file);
+  // Reset image state when new image is uploaded
+  setImageState({
+    isFlipped: false,
+    description: null,
+    isGeneratingDescription: false,
+    isPolling: false
+  });
+  isPollingRef.current = false;
   onImageSelect({ url, file, dimensions });
 };
+
+// Clear image state when image is removed
+const handleClearImage = () => {
+  setImageState({
+    isFlipped: false,
+    description: null,
+    isGeneratingDescription: false,
+    isPolling: false
+  });
+  isPollingRef.current = false;
+  onClearImage();
+};
+
     return (
 <Card
   className={`flex flex-col w-full h-[45vh] xl:h-[40vh] relative rounded-lg shadow-md ${
     disabled ? 'opacity-50' : ''
   } bg-muted`}
 >
-  <Button
-    variant="destructive"
-    size="icon"
-    className={`absolute top-3 right-3 z-10 rounded-md shadow-sm ${
-      !selectedImage ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary hover:text-primary-foreground'
-    }`}
-    onClick={onClearImage}
-    disabled={disabled || !selectedImage}
-  >
-    <X className="w-4 h-4" />
-  </Button>
+  <div className="absolute top-3 right-3 z-10 flex gap-2">
+    <Button
+      variant="outline"
+      size="icon"
+      className={`rounded-md shadow-sm ${
+        !selectedImage ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary hover:text-primary-foreground'
+      }`}
+      onClick={() => setImageState(prev => ({ ...prev, isFlipped: !prev.isFlipped }))}
+      disabled={disabled || !selectedImage}
+      title="Flip Horizontally"
+    >
+      <svg 
+        className="w-4 h-4" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2"
+      >
+        <path d="M12 3v18M7 7l5-4 5 4M7 17l5 4 5-4" />
+      </svg>
+    </Button>
+    <Button
+      variant="destructive"
+      size="icon"
+      className={`rounded-md shadow-sm ${
+        !selectedImage ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary hover:text-primary-foreground'
+      }`}
+      onClick={handleClearImage}
+      disabled={disabled || !selectedImage}
+    >
+      <X className="w-4 h-4" />
+    </Button>
+  </div>
   <CardHeader className="py-5">
     <CardTitle
       className="flex items-center gap-2 text-sm font-semibold text-foreground tracking-wide"
@@ -199,15 +312,122 @@ const processImageFile = (file: File, dimensions: { width: number; height: numbe
         </label>
       </div>
     ) : (
-      <div className="relative h-full">
-        <div className="relative w-full h-full">
-          <Image
-            src={selectedImage.url}
-            alt="Selected image"
-            layout="fill"
-            objectFit="contain"
-            className="rounded-lg"
-          />
+      <div className="flex flex-col h-full gap-4">
+        {imageState.description && (
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1">
+              <ScrollArea className="h-[100px]">
+                <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                  <p className="text-muted-foreground whitespace-pre-wrap">{imageState.description}</p>
+                </div>
+              </ScrollArea>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  navigator.clipboard.writeText(imageState.description || '');
+                  toast.success('Description copied to clipboard');
+                }}
+                title="Copy to clipboard"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => handleSelectChange('prompt', imageState.description || '')}
+                title="Use as prompt"
+              >
+                <MessageSquarePlus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+        <div className="relative flex-1">
+          <div className="relative w-full h-full">
+            <Image
+              src={selectedImage.url}
+              alt="Selected image"
+              layout="fill"
+              objectFit="contain"
+              className={`rounded-lg transition-transform duration-300 ${imageState.isFlipped ? 'scale-x-[-1]' : ''}`}
+            />
+          </div>
+          <div className="absolute bottom-3 left-3 z-10">
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-background/80 backdrop-blur-sm"
+              onClick={async () => {
+                if (!selectedImage?.url) return;
+                
+                setImageState(prev => ({ 
+                  ...prev, 
+                  isGeneratingDescription: true,
+                  isPolling: true 
+                }));
+                isPollingRef.current = true;
+
+                try {
+                  // Convert blob URL to base64
+                  const response = await fetch(selectedImage.url);
+                  const blob = await response.blob();
+                  const base64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                  });
+
+                  // Send base64 data to API
+                  const initialResponse = await fetch('/api/replicate', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'X-API-Key': apiKey
+                    },
+                    body: JSON.stringify({
+                      body: {
+                        generateDescription: true,
+                        image: base64
+                      }
+                    })
+                  });
+
+                  if (!initialResponse.ok) throw new Error('Failed to generate description');
+                  
+                  const data = await initialResponse.json();
+                  // Start polling with the getUrl
+                  pollForDescription(data.urls.get);
+                } catch (error) {
+                  console.error('Error generating description:', error);
+                  onError?.('Failed to generate image description');
+                  setImageState(prev => ({ 
+                    ...prev, 
+                    isGeneratingDescription: false,
+                    isPolling: false 
+                  }));
+                  isPollingRef.current = false;
+                }
+              }}
+              disabled={disabled || imageState.isGeneratingDescription}
+            >
+              {imageState.isGeneratingDescription ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="w-4 h-4 mr-2" />
+                  Describe Image
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     )}

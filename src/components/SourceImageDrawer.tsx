@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { InpaintingPromptSection } from "./InpaintingPromptSection";
 
 interface SourceImageDrawerProps {
     onImageSelect: (imageData: { url: string; file: File | null }) => void;
@@ -26,6 +27,10 @@ interface SourceImageDrawerProps {
     onInpaintingChange: (enabled: boolean) => void;
     onMaskGenerated: (maskDataUrl: string) => void;
     currentMaskDataUrl?: string | null;
+    onInpaintingPromptChange?: (prefix: string) => void;
+    apiKey: string;
+    handleSelectChange: (name: string, value: string) => void;
+    inpaintingPromptValue?: string;
 }
 
 
@@ -39,9 +44,23 @@ export function SourceImageDrawer({
     isInpaintingEnabled,
     onInpaintingChange,
     onMaskGenerated,
-    currentMaskDataUrl = null
+    currentMaskDataUrl = null,
+    onInpaintingPromptChange,
+    apiKey,
+    handleSelectChange,
+    inpaintingPromptValue = ''
 }: SourceImageDrawerProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [inpaintingPrompt, setInpaintingPrompt] = useState(inpaintingPromptValue);
+
+    // Sync with parent's inpainting state and value
+    useEffect(() => {
+        if (!isInpaintingEnabled) {
+            setInpaintingPrompt('');
+        } else {
+            setInpaintingPrompt(inpaintingPromptValue);
+        }
+    }, [isInpaintingEnabled, inpaintingPromptValue]);
 
     useEffect(() => {
         if (!selectedImage) {
@@ -86,7 +105,7 @@ export function SourceImageDrawer({
                 </span>
             </Button>
         </SheetTrigger>
-        <SheetContent className="w-[400px] fixed left-0 h-[calc(100vh-8rem)] mt-[2rem] p-4 flex flex-col slide-in-from-left rounded-r-xl focus-visible:outline-none">
+        <SheetContent className="w-[500px] fixed left-0 h-[calc(100vh-8rem)] mt-[2rem] p-4 flex flex-col slide-in-from-left rounded-r-xl focus-visible:outline-none">
     <SheetHeader>
         <SheetTitle className="flex items-center gap-2">
             <ImageIcon className="h-5 w-5 text-rose-500 dark:text-rose-400" />
@@ -107,24 +126,39 @@ export function SourceImageDrawer({
                     onClearImage={onClearImage}
                     onError={onError}
                     disabled={disabled}
+                    apiKey={apiKey}
+                    handleSelectChange={handleSelectChange}
                 />
                 
                 {selectedImage && (
                     <>
-                        <div className="flex items-center space-x-2 py-2">
-                            <Switch
-                                id="inpainting-mode"
-                                checked={isInpaintingEnabled}
-                                onCheckedChange={onInpaintingChange}
-                            />
-                            <Label htmlFor="inpainting-mode">Enable Inpainting</Label>
+                        <div className="space-y-4">
+                            <div className="flex items-center space-x-2">
+                                <Switch
+                                    id="inpainting-mode"
+                                    checked={isInpaintingEnabled}
+                                    onCheckedChange={onInpaintingChange}
+                                />
+                                <Label htmlFor="inpainting-mode">Enable Inpainting</Label>
+                            </div>
+                            
+                            {isInpaintingEnabled && (
+                                <InpaintingPromptSection
+                                    onPromptPrefixChange={(prefix) => {
+                                        setInpaintingPrompt(prefix);
+                                        onInpaintingPromptChange?.(prefix);
+                                    }}
+                                    disabled={disabled}
+                                    value={inpaintingPrompt}
+                                />
+                            )}
                         </div>
                         
                         <DrawingCard
                             sourceImage={selectedImage}
                             onMaskGenerated={onMaskGenerated}
                             disabled={!selectedImage || disabled}
-                            width={370}
+                            width={470}
                             isInpaintingEnabled={isInpaintingEnabled}
                             currentMaskDataUrl={currentMaskDataUrl}
                         />

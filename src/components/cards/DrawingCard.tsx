@@ -64,7 +64,7 @@ export function DrawingCard({
 
     useEffect(() => {
         const updateCanvasSize = () => {
-            const size = Math.min(width - 32, 278);
+            const size = Math.min(width - 32, 348);
             setCanvasSize({ width: size, height: size });
         };
 

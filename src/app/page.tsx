@@ -92,6 +92,7 @@ export default function Component() {
 	} | null>(null);
 	const [maskDataUrl, setMaskDataUrl] = useState<string | null>(null);
 	const [isInpaintingEnabled, setIsInpaintingEnabled] = useState(false);
+	const [inpaintingPrompt, setInpaintingPrompt] = useState('');
 	const [extraLoraModels, setExtraLoraModels] = useState<string[]>([]);
 	const [selectedExtraLora, setSelectedExtraLora] = useState<string | null>(null);
 
@@ -232,6 +233,7 @@ export default function Component() {
 		if (!isInpaintingEnabled) {
 			//console.log('Inpainting disabled, clearing maskDataUrl');
 			setMaskDataUrl(null);
+			setInpaintingPrompt('');
 		}
 	}, [isInpaintingEnabled]);
 
@@ -436,6 +438,15 @@ export default function Component() {
 				const updatedFormData = {
 					...prev,
 					privateLoraName: value
+				};
+				localStorage.setItem('replicateFormData', JSON.stringify(updatedFormData));
+				return updatedFormData;
+			});
+		} else if (name === 'prompt') {
+			setFormData((prev) => {
+				const updatedFormData = {
+					...prev,
+					[name]: value
 				};
 				localStorage.setItem('replicateFormData', JSON.stringify(updatedFormData));
 				return updatedFormData;
@@ -1080,7 +1091,10 @@ export default function Component() {
 			...formData,
 			...overrideData,
 			...(selectedImage && { prompt_strength: formData.prompt_strength }),
-			...(selectedImage?.file && maskDataUrl && isInpaintingEnabled ? { maskDataUrl } : {})
+			...(selectedImage?.file && maskDataUrl && isInpaintingEnabled ? { 
+				maskDataUrl,
+				prompt: inpaintingPrompt ? `${inpaintingPrompt.trim()}, ${formData.prompt}` : formData.prompt
+			} : {})
 		};
 
 		const telemetryDataWithoutMask = {
@@ -1727,17 +1741,21 @@ export default function Component() {
 						previewImageUrl={previewImageUrl}
 					/>
 
-					<SourceImageDrawer
-						onImageSelect={handleImageSelect}
-						selectedImage={selectedImage}
-						onClearImage={handleClearImage}
-						onError={handleError}
-						disabled={formData.model === 'recraftv3'}
-						isInpaintingEnabled={isInpaintingEnabled}
-						onInpaintingChange={setIsInpaintingEnabled}
-						onMaskGenerated={handleMaskGenerated}
-						currentMaskDataUrl={maskDataUrl}
-					/>
+						<SourceImageDrawer
+							onImageSelect={handleImageSelect}
+							selectedImage={selectedImage}
+							onClearImage={handleClearImage}
+							onError={handleError}
+							disabled={formData.model === 'recraftv3'}
+							isInpaintingEnabled={isInpaintingEnabled}
+							onInpaintingChange={setIsInpaintingEnabled}
+							onMaskGenerated={handleMaskGenerated}
+							currentMaskDataUrl={maskDataUrl}
+							apiKey={apiKey}
+							handleSelectChange={handleSelectChange}
+							onInpaintingPromptChange={(prefix) => setInpaintingPrompt(prefix)}
+							inpaintingPromptValue={inpaintingPrompt}
+						/>
 
 					<FavoritePromptsDrawer
 						favoritePrompts={favoritePrompts}
@@ -1796,6 +1814,8 @@ export default function Component() {
 								setExtraLoraModels={setExtraLoraModels}
 								setValidatedLoraModels={setValidatedLoraModels}
 								setFavoritePrompts={setFavoritePrompts}
+								isInpaintingEnabled={isInpaintingEnabled}
+								inpaintingPrompt={inpaintingPrompt}
 							/>
 
 							<GenerationActions  // New component

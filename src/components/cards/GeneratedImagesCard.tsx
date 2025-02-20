@@ -432,31 +432,19 @@ export function GeneratedImagesCard({
 
                                                                     </div>
 
-                                                                    {/* Status Indicators */}
-                                                                    <div className="flex gap-4">
-                                                                        {image.go_fast !== undefined && (
-                                                                            <div className="flex items-center gap-1.5">
-                                                                                <div className={`w-2 h-2 rounded-full ${image.go_fast ? 'bg-green-500' : 'bg-gray-300'}`} />
-                                                                                <span className="text-sm">Go Fast</span>
-                                                                            </div>
-                                                                        )}
-                                                                        {((image.isImg2Img === true) || image.model?.includes('real-esrgan') || image.model?.includes('swinir')) && (
-                                                                            <div className="flex items-center gap-1.5">
-                                                                                <div className="w-2 h-2 rounded-full bg-blue-500" />
-                                                                                <span className="text-sm">
-                                                                                    {image.model?.includes('real-esrgan') || image.model?.includes('swinir')
-                                                                                        ? `Upscaled${image.isEdited ? ' (cropped)' : ''}`
-                                                                                        : `Image to Image${image.isEdited ? ' (cropped)' : ''}`
-                                                                                    }
-                                                                                </span>
-                                                                            </div>
-                                                                        )}
-                                                                        {image.isEdited && (
-                                                                            <div className="flex items-center gap-1.5">
-                                                                                <div className="w-2 h-2 rounded-full bg-purple-500" />
-                                                                                <span className="text-sm">Cropped</span>
-                                                                            </div>
-                                                                        )}
+                                                                    {/* Processing History */}
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                                                        <span className="text-sm">
+                                                                            {(() => {
+                                                                                const history = [];
+                                                                                if (image.isImg2Img) history.push('Image to Image');
+                                                                                if (image.model?.includes('real-esrgan') || image.model?.includes('swinir')) history.push('Upscaled');
+                                                                                if (image.isEdited) history.push('Cropped');
+                                                                                if (image.go_fast) history.push('Go Fast');
+                                                                                return history.length > 0 ? history.join(' → ') : 'Original';
+                                                                            })()}
+                                                                        </span>
                                                                     </div>
 
                                                                     {/* Version */}
@@ -611,7 +599,6 @@ export function GeneratedImagesCard({
                                                                             setOpenImageUrl(null);
                                                                             toast.success("Prompt copied to input");
                                                                         }}
-                                                                        disabled={isUpscaledImage}
                                                                     >
                                                                         Reuse Prompt
                                                                     </Button>
@@ -630,7 +617,7 @@ export function GeneratedImagesCard({
                                                                                     console.error('Failed to use image as input:', error);
                                                                                 }
                                                                             }}
-                                                                            disabled={isUpscaledImage || image.isEdited}
+                                                                            disabled={image.isEdited}
                                                                         >
                                                                             <Upload className="w-3 h-3 mr-1" />
                                                                             Use as Input
@@ -669,7 +656,7 @@ export function GeneratedImagesCard({
                                                                                 setOpenImageUrl(null);
                                                                                 toast.success("Regenerating with a lower seed value");
                                                                             }}
-                                                                            disabled={isUpscaledImage || image.isEdited}
+                                                                            disabled={image.isEdited}
                                                                         >
                                                                             <RefreshCw className="w-3 h-3 mr-1" />
                                                                             Regenerate
@@ -759,7 +746,7 @@ export function GeneratedImagesCard({
                                                                             size="sm"
                                                                             variant="outline"
                                                                             onClick={() => onDownloadWithConfig(image.url, image)}
-                                                                            disabled={isUpscaledImage || image.isEdited}
+                                                                            disabled={image.isEdited}
                                                                         >
                                                                             <Box className="w-3 h-3 mr-1" />
                                                                             Download IMG Pack
@@ -785,7 +772,6 @@ export function GeneratedImagesCard({
                                                                         size="sm"
                                                                         variant="outline"
                                                                         onClick={() => setShowUpscaleDialog(true)}
-                                                                        disabled={isUpscaledImage}
                                                                     >
                                                                         <ArrowUpToLine className="w-3 h-3 mr-1" />
                                                                         Upscale
