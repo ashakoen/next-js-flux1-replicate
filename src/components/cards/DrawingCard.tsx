@@ -247,7 +247,7 @@ export function DrawingCard({
     <CardHeader className="p-3">
         <CardTitle className="flex items-center gap-2 text-sm">
             <Brush className="w-5 h-5" />
-            Draw Mask
+            Highlight Area to Edit
         </CardTitle>
     </CardHeader>
     <CardContent className="flex-1 overflow-y-auto p-2 pr-6">

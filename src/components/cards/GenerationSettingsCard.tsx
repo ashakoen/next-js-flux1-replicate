@@ -260,7 +260,7 @@ export function GenerationSettingsCard({
 						<TabsContent value="basic" className="mt-4">
 							<div className="space-y-1">
 								<div className="flex items-center justify-between">
-									<Label>Prompt</Label>
+									<Label>Image Description</Label>
 									<div className="flex items-center gap-1">  {/* Added flex container for buttons */}
 										<Button
 											type="button"
@@ -314,10 +314,10 @@ export function GenerationSettingsCard({
 											onChange={handleInputChange}
 											placeholder="Enter your prompt here"
 											required
-											className={`min-h-[100px] transition-all duration-200 pr-6 ${
+											className={`min-h-[100px] transition-all duration-200 pr-4 ${
 												isInpaintingEnabled && inpaintingPrompt 
-													? 'pt-[3rem]'
-													: 'pt-3'
+													? 'pt-[3.5rem]'
+													: 'pt-3.5'
 											}`}
 										/>
 									</div>
@@ -372,14 +372,14 @@ export function GenerationSettingsCard({
 														</div>
 													</TooltipTrigger>
 													<TooltipContent side="bottom" className="mb-2">
-														<p>Controls how closely the image follows the prompt. Higher values produce images that match the prompt more closely.</p>
+														<p>Controls how closely the image follows the description. Higher values produce images that match the description more closely.</p>
 													</TooltipContent>
 												</Tooltip>
 											</TooltipProvider>
 										</div>
 
 										<div className="space-y-1 pt-2">
-											<Label htmlFor="num_inference_steps">Inference Steps: {formData.num_inference_steps}</Label>
+											<Label htmlFor="num_inference_steps">Quality Steps: {formData.num_inference_steps}</Label>
 											<TooltipProvider>
 												<Tooltip>
 													<TooltipTrigger asChild>
@@ -396,7 +396,7 @@ export function GenerationSettingsCard({
 														</div>
 													</TooltipTrigger>
 													<TooltipContent side="bottom" className="mb-2">
-														<p>Number of denoising steps. Higher values generally produce better quality but take longer to generate.</p>
+														<p>Number of quality steps. Higher values generally produce better quality but take longer to generate.</p>
 													</TooltipContent>
 												</Tooltip>
 											</TooltipProvider>
@@ -407,7 +407,7 @@ export function GenerationSettingsCard({
 								{!isRecraftv3 && (
 									<>
 										<div className="pt-4">
-											<Label htmlFor="seed">Seed</Label>
+											<Label htmlFor="seed">Creation Code</Label>
 											<TooltipProvider>
 												<Tooltip>
 													<TooltipTrigger asChild>
@@ -422,7 +422,7 @@ export function GenerationSettingsCard({
 														</div>
 													</TooltipTrigger>
 													<TooltipContent side="bottom" className="mb-2">
-														<p>Controls the random noise used to generate the image. Use the same seed to reproduce similar results.</p>
+														<p>Controls the random starting point for magic image generation. Use the same code to reproduce similar results.</p>
 													</TooltipContent>
 												</Tooltip>
 											</TooltipProvider>
@@ -454,7 +454,7 @@ export function GenerationSettingsCard({
 									</TooltipTrigger>
 									<TooltipContent side="top" className="max-w-[300px] text-sm">
 										<p>Upload a ZIP file containing images and a config file to quickly set up image generation settings.
-											Perfect for img2img and style transfer tasks.</p>
+											Perfect for reference image and style transfer tasks.</p>
 									</TooltipContent>
 								</Tooltip>
 							</TooltipProvider>
@@ -467,7 +467,7 @@ export function GenerationSettingsCard({
 
 
 								<div>
-									<Label htmlFor="model">Base Model</Label>
+									<Label htmlFor="model">Base AI Model</Label>
 									<Select name="model" value={formData.model} onValueChange={(value) => handleSelectChange('model', value)}>
 										<SelectTrigger>
 											<SelectValue placeholder="Select a model" />
@@ -509,7 +509,7 @@ export function GenerationSettingsCard({
 
 								{!isIdeogram && !isLuma && (
 									<div>
-										<Label htmlFor="output_format">Output Format</Label>
+										<Label htmlFor="output_format">Image Output File Type</Label>
 										<Select
 											name="output_format"
 											value={formData.output_format}
@@ -543,7 +543,7 @@ export function GenerationSettingsCard({
 									<>
 
 										<div>
-											<Label htmlFor="output_quality">Output Quality: {formData.output_quality}</Label>
+											<Label htmlFor="output_quality">Image Output Quality: {formData.output_quality}</Label>
 											<TooltipProvider>
 												<Tooltip>
 													<TooltipTrigger asChild>
@@ -575,7 +575,7 @@ export function GenerationSettingsCard({
 								{!isRecraftv3 && (
 									<>
 										<div>
-											<Label htmlFor="seed">Seed</Label>
+											<Label htmlFor="seed">Creation Code</Label>
 											<Input
 												id="seed"
 												name="seed"
@@ -585,7 +585,7 @@ export function GenerationSettingsCard({
 											/>
 										</div>
 										<div>
-											<Label htmlFor="aspect_ratio">Aspect Ratio</Label>
+											<Label htmlFor="aspect_ratio">Image Aspect Ratio</Label>
 											<Select name="aspect_ratio" value={formData.aspect_ratio} onValueChange={(value) => handleSelectChange('aspect_ratio', value)}>
 												<SelectTrigger>
 													<SelectValue placeholder="Select an aspect ratio" />
@@ -693,13 +693,13 @@ export function GenerationSettingsCard({
 								{!isRecraftv3 && !isIdeogram && !isLuma && (
 									<>
 										<div className="pt-4">
-											<h6 className="text-md font-medium">Fine-tuned Model Settings</h6>
+											<h6 className="text-md font-medium">Personal AI Model Settings</h6>
 										</div>
 										<div>
 											<TooltipProvider>
 												<Tooltip>
 													<TooltipTrigger asChild>
-														<Label htmlFor="privateLoraName">Private LoRA Model Name</Label>
+														<Label htmlFor="privateLoraName">Private AI Model Name</Label>
 													</TooltipTrigger>
 													<TooltipContent>
 														<p>Enter the name of your private LoRA model. This is optional and only required for custom models.</p>
@@ -740,7 +740,7 @@ export function GenerationSettingsCard({
 											) : null}
 										</div>
 										<div>
-											<Label htmlFor="lora_scale">Private LoRA Scale: {formData.lora_scale}</Label>
+											<Label htmlFor="lora_scale">Private AI Intensity: {formData.lora_scale}</Label>
 											<Slider
 												id="lora_scale"
 												min={-1}
@@ -752,10 +752,10 @@ export function GenerationSettingsCard({
 											/>
 										</div>
 										<div className="pt-4">
-											<h6 className="text-md font-medium">Extra LoRA Settings</h6>
+											<h6 className="text-md font-medium">Extra AI Settings</h6>
 										</div>
 										<div>
-											<Label htmlFor="extra_lora">Extra LoRA</Label>
+											<Label htmlFor="extra_lora">Extra AI Model</Label>
 											<div className="relative">
   <Input
     id="extra_lora"
@@ -780,7 +780,7 @@ export function GenerationSettingsCard({
 </div>
 										</div>
 										<div>
-											<Label htmlFor="extra_lora_scale">Extra LoRA Scale: {formData.extra_lora_scale}</Label>
+											<Label htmlFor="extra_lora_scale">Extra AI Intensity: {formData.extra_lora_scale}</Label>
 											<Slider
 												id="extra_lora_scale"
 												min={0}

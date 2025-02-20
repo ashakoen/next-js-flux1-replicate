@@ -23,7 +23,7 @@ export function InpaintingPromptSection({
   return (
     <div className={cn("space-y-2 px-1", className)}>
       <div className="flex items-center justify-between">
-        <Label className="text-sm font-medium">Inpainting Focus</Label>
+        <Label className="text-sm font-medium">Spot Editing Focus</Label>
         <HoverCard>
           <HoverCardTrigger asChild>
             <Button variant="ghost" size="sm">

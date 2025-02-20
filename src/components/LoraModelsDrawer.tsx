@@ -114,7 +114,7 @@ export function LoraModelsDrawer({
     };
 
     return (
-        <div className="fixed left-0 top-[20rem] z-30">
+        <div className="fixed left-0 top-[24.9rem] z-30">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
                 <Button
@@ -146,7 +146,7 @@ export function LoraModelsDrawer({
             text-transparent bg-clip-text"
         style={{ writingMode: 'vertical-rl' }}
     >
-        {isOpen ? 'Close' : 'Private LoRAs'}
+        {isOpen ? 'Close' : 'Personal AI Models'}
     </span>
 </Button>
                 </SheetTrigger>
@@ -158,14 +158,14 @@ export function LoraModelsDrawer({
             <span className="bg-gradient-to-r from-purple-500 to-pink-500 
                 dark:from-purple-400 dark:to-pink-400 
                 text-transparent bg-clip-text font-semibold">
-                Private LoRA Models ({validatedLoraModels.length})
+                Personal AI Models ({validatedLoraModels.length})
             </span>
         </SheetTitle>
     </SheetHeader>
 
                     <div className="mt-4 space-y-2">
 
-                        <Label htmlFor="newLoraModel">Add New LoRA Model</Label>
+                        <Label htmlFor="newLoraModel">Add New Personal AI</Label>
                         <div className="flex gap-2">
                             <Input
                                 id="newLoraModel"

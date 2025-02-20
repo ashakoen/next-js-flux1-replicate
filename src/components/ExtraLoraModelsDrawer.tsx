@@ -54,7 +54,7 @@ export function ExtraLoraModelsDrawer({
     };
 
     return (
-        <div className="fixed left-0 top-[32rem] z-30">
+        <div className="fixed left-0 top-[38.5rem] z-30">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
                     <Button
@@ -82,7 +82,7 @@ export function ExtraLoraModelsDrawer({
                                 text-transparent bg-clip-text"
                             style={{ writingMode: 'vertical-rl' }}
                         >
-                            {isOpen ? 'Close' : 'Extra LoRAs'}
+                            {isOpen ? 'Close' : 'Extra AI Models'}
                         </span>
                     </Button>
                 </SheetTrigger>
@@ -93,13 +93,13 @@ export function ExtraLoraModelsDrawer({
                             <span className="bg-gradient-to-r from-amber-500 to-orange-500 
                                 dark:from-amber-400 dark:to-orange-400 
                                 text-transparent bg-clip-text font-semibold">
-                                Extra LoRA Models ({extraLoraModels.length})
+                                Extra AI Models ({extraLoraModels.length})
                             </span>
                         </SheetTitle>
                     </SheetHeader>
 
                     <div className="mt-4 space-y-2">
-                        <Label htmlFor="newExtraLora">Add New Extra LoRA Model</Label>
+                        <Label htmlFor="newExtraLora">Add New Extra AI Model</Label>
                         <div className="flex gap-2">
                             <Input
                                 id="newExtraLora"

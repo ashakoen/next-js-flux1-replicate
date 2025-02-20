@@ -103,18 +103,18 @@ export function SourceImageDrawer({
                         text-transparent bg-clip-text"
                     style={{ writingMode: 'vertical-rl' }}
                 >
-                    {isOpen ? 'Close' : 'img2img'}
+                    {isOpen ? 'Close' : 'Reference Image'}
                 </span>
             </Button>
         </SheetTrigger>
-        <SheetContent className="w-[500px] fixed left-0 h-[calc(100vh-8rem)] mt-[2rem] p-4 flex flex-col slide-in-from-left rounded-r-xl focus-visible:outline-none">
+        <SheetContent className="w-[500px] fixed left-0 h-[calc(100vh-9rem)] mt-[2rem] p-4 flex flex-col slide-in-from-left rounded-r-xl focus-visible:outline-none">
     <SheetHeader>
         <SheetTitle className="flex items-center gap-2">
             <ImageIcon className="h-5 w-5 text-rose-500 dark:text-rose-400" />
             <span className="bg-gradient-to-r from-rose-500 to-sky-500 
                 dark:from-rose-400 dark:to-sky-400 
                 text-transparent bg-clip-text font-semibold">
-                img2img {selectedImage && '(Ready)'}
+                Reference Image {selectedImage && '(Ready)'}
             </span>
         </SheetTitle>
     </SheetHeader>
@@ -152,7 +152,7 @@ export function SourceImageDrawer({
                                     checked={isInpaintingEnabled}
                                     onCheckedChange={onInpaintingChange}
                                 />
-                                <Label htmlFor="inpainting-mode">Enable Inpainting</Label>
+                                <Label htmlFor="inpainting-mode">Enable Spot Editing</Label>
                             </div>
                             
                             {isInpaintingEnabled && (

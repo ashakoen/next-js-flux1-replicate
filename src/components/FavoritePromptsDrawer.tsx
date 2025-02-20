@@ -116,7 +116,7 @@ export function FavoritePromptsDrawer({
     }, [searchQuery, searchMode]);
 
     return (
-        <div className="fixed left-0 top-[11rem] z-30">
+        <div className="fixed left-0 top-[14.5rem] z-30">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
                     <Button
@@ -147,7 +147,7 @@ export function FavoritePromptsDrawer({
         bg-gradient-to-b from-amber-600 to-teal-600 dark:from-amber-500 dark:to-teal-500"
                             style={{ writingMode: 'vertical-rl' }}
                         >
-                            {isOpen ? 'Close' : 'Prompts'}
+                            {isOpen ? 'Close' : 'Descriptions'}
                         </span>
                     </Button>
                 </SheetTrigger>
@@ -160,7 +160,7 @@ export function FavoritePromptsDrawer({
                             <Star className="h-5 w-5 text-primary" />
                             <span className="font-semibold bg-gradient-to-r from-primary to-accent 
                             text-transparent bg-clip-text">
-                                Favorite Prompts ({favoritePrompts.length})
+                                Favorite Descriptions ({favoritePrompts.length})
                             </span>
                         </SheetTitle>
                     </SheetHeader>
@@ -170,7 +170,7 @@ export function FavoritePromptsDrawer({
                         <div className="flex flex-col gap-2">
                             <div className="relative flex-1">
                                 <Input
-                                    placeholder="Search your prompts..."
+                                    placeholder="Search your descriptions..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="pl-8 pr-8 w-full border border-muted-foreground rounded-lg focus:ring-2 focus:ring-primary"
@@ -198,7 +198,7 @@ export function FavoritePromptsDrawer({
                                                         className={searchMode === 'text' ? 'bg-primary text-primary-foreground' : ''}
                                                     >
                                                         <Star className="h-3 w-3 mr-1" />
-                                                        Favorites
+                                                        Local Favorites
                                                     </TabsTrigger>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="bottom">
@@ -216,7 +216,7 @@ export function FavoritePromptsDrawer({
                                                         className={searchMode === 'semantic' ? 'bg-primary text-primary-foreground' : ''}
                                                     >
                                                         <Search className="h-3 w-3 mr-1" />
-                                                        Past Prompts
+                                                        Search Themes
                                                     </TabsTrigger>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="bottom">
