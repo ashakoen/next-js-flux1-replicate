@@ -13,7 +13,7 @@ export const viewport = {
 }
 
 export const metadata = {
-  title: "Magix Box AI Image Generator",
+  title: "Magic Box AI Image Generator",
   description: 'Generate images using AI',
 };
 
