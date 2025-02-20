@@ -37,7 +37,7 @@ export function GenerationActions({
                             Generating...
                         </>
                     ) : (
-                        'Generate'
+                        'Show Me!'
                     )}
                 </Button>
                 {isGenerating && (

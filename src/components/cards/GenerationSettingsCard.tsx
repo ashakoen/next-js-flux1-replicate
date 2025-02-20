@@ -247,8 +247,8 @@ export function GenerationSettingsCard({
 				/>
 			</div>
 			<CardHeader className="flex-none">
-				<CardTitle className="text-[#9b59b6] dark:text-[#fa71cd]">Generation Settings</CardTitle>
-				<CardDescription>Generate images using AI</CardDescription>
+				<CardTitle className="text-[#9b59b6] dark:text-[#fa71cd]">Magic Box Settings</CardTitle>
+				<CardDescription>Generate images using Magic Box AI</CardDescription>
 			</CardHeader>
 			<CardContent className="flex-1 overflow-y-auto min-h-0">
 				<form onSubmit={handleSubmit}>
