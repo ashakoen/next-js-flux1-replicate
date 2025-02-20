@@ -28,6 +28,7 @@
     "@react-three/fiber": "^8.17.12",
     "@supabase/supabase-js": "^2.47.10",
     "@types/three": "^0.172.0",
+    "@vercel/speed-insights": "^1.2.0",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
