@@ -29,7 +29,8 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} min-h-screen`}>
         <ThemeProvider attribute="class">
-          <main className="main-layout w-full h-screen lg:overflow-hidden overflow-y-auto">
+          <main className="main-layout w-full md:overflow-y-auto xl:overflow-hidden">
+            
             {children}
           </main>
         </ThemeProvider>
