@@ -41,6 +41,8 @@ export type GeneratedImage = {
     negative_prompt?: string;
     model: string;
     seed: number;
+    blobData?: Blob;        // For storing the actual image data
+    displayUrl?: string;    // For temporary display URLs
     version?: string;
     privateLoraName?: string;
     lora_scale?: number;
