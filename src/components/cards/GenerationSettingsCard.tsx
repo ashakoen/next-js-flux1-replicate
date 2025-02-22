@@ -340,7 +340,7 @@ export function GenerationSettingsCard({
 								{hasSourceImage && (
 									<div className="space-y-2 pt-2">
 										<Label htmlFor="prompt_strength">
-											Prompt Strength: {formData.prompt_strength}
+											Reference Image Dilution: {formData.prompt_strength}
 										</Label>
 										<TooltipProvider>
 											<Tooltip>
