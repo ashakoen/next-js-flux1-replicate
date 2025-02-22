@@ -369,7 +369,7 @@ export function GenerationSettingsCard({
 								{!isRecraftv3 && !isIdeogram && !isLuma && (
 									<>
 										<div className="space-y-1 pt-2">
-											<Label htmlFor="guidance_scale">Guidance Scale: {formData.guidance_scale}</Label>
+											<Label htmlFor="guidance_scale">Description Adherence: {formData.guidance_scale}</Label>
 											<TooltipProvider>
 												<Tooltip>
 													<TooltipTrigger asChild>
