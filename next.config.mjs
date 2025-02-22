@@ -11,6 +11,7 @@ const nextConfig = {
         hostname: "*.replicate.delivery",
       }
     ],
+    unoptimized: true,
   },
 };
 
