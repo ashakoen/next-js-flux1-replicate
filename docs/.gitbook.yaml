@@ -1,0 +1,24 @@
+root: ./
+
+structure:
+  readme: README.md
+  summary: SUMMARY.md
+
+redirects:
+  models/overview: advanced/models.md
+  prompts/guide: advanced/prompts.md
+  settings/quality: interface/quality-settings.md
+  settings/output: interface/output-settings.md
+  features/text-to-image: features/text-to-image.md
+  features/image-to-image: features/image-to-image.md
+  features/inpainting: features/inpainting.md
+  features/lora: features/lora-models.md
+  features/packs: features/image-packs.md
+  help/issues: help/common-issues.md
+  help/errors: help/error-messages.md
+  help/best-practices: help/best-practices.md
+  interface/gallery: interface/image-gallery.md
+  interface/bucket: interface/image-bucket.md
+  interface/source: interface/source-image-tools.md
+  getting-started/setup: getting-started/api-setup.md
+  getting-started/guide: getting-started/quick-start.md
