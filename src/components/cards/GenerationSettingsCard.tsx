@@ -463,11 +463,6 @@ export function GenerationSettingsCard({
 						<TabsContent value="advanced" className="mt-4 overflow-y-auto scrollbar-hide overscroll-none touch-pan-y">
 							<div className="space-y-4 pb-12 px-2">
 
-
-							<div className="pt-4">
-											<h6 className="text-md font-medium">Base AI Model Settings</h6>
-										</div>
-
 								<div>
 									<Label htmlFor="model">Base AI Model</Label>
 									<Select name="model" value={formData.model} onValueChange={(value) => handleSelectChange('model', value)}>
@@ -541,38 +536,7 @@ export function GenerationSettingsCard({
 
 
 
-								{!isRecraftv3 && !isIdeogram && !isLuma && (
-									<>
 
-										<div>
-											<Label htmlFor="output_quality">Image Output Quality: {formData.output_quality}</Label>
-											<TooltipProvider>
-												<Tooltip>
-													<TooltipTrigger asChild>
-														<div>
-															<Slider
-																id="output_quality"
-																min={0}
-																max={100}
-																step={1}
-																value={[formData.output_quality]}
-																onValueChange={(value) => handleSliderChange('output_quality', value)}
-																className="custom-slider"
-																disabled={formData.output_format !== 'jpg'}
-															/>
-														</div>
-													</TooltipTrigger>
-													{formData.output_format !== 'jpg' && (
-														<TooltipContent>
-															<p>Output quality is only adjustable for JPG format.</p>
-														</TooltipContent>
-													)}
-												</Tooltip>
-											</TooltipProvider>
-										</div>
-
-									</>
-								)}
 
 								{!isRecraftv3 && (
 									<>

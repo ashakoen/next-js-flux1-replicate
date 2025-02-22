@@ -42,7 +42,7 @@ const initialFormData: FormData = {
 	aspect_ratio: '1:1',
 	output_format: 'png',
 	guidance_scale: 3.5,
-	output_quality: 80,
+	output_quality: 100,
 	extra_lora_scale: 0.8,
 	num_inference_steps: 28,
 	disable_safety_checker: false,
@@ -598,18 +598,30 @@ export default function Component() {
 			...prev,
 			seed: newSeed,
 			num_outputs: 1,
-			...(modelType && { model: modelType }) // modelType is now properly typed
-		}));
-
-		// Submit with override data
-		handleSubmit(
+			...(modelType && { 
+			  model: modelType,
+			  // If switching to schnell model and steps > 4, set to 4
+			  ...(modelType === 'schnell' && prev.num_inference_steps > 4 && {
+				num_inference_steps: 4
+			  })
+			})
+		  }));
+		
+		  // Submit with override data
+		  handleSubmit(
 			{ preventDefault: () => { } } as React.FormEvent,
 			{
-				seed: newSeed,
-				num_outputs: 1,
-				...(modelType && { model: modelType })
+			  seed: newSeed,
+			  num_outputs: 1,
+			  ...(modelType && { 
+				model: modelType,
+				// Also enforce in the submission data
+				...(modelType === 'schnell' && formData.num_inference_steps > 4 && {
+				  num_inference_steps: 4
+				})
+			  })
 			}
-		);
+		  );
 	};
 
 	const handleUpscaleImage = async (params: any) => {
@@ -1300,8 +1312,14 @@ export default function Component() {
 			});
 
 			if (!initialResponse.ok) {
-				throw new Error(`HTTP error! status: ${initialResponse.status}`);
-			}
+				const errorData = await initialResponse.json();
+				throw { 
+				  response: { 
+					data: errorData,
+					status: initialResponse.status 
+				  } 
+				};
+			  }
 
 			const initialData = await initialResponse.json();
 			const endTime = Date.now()
@@ -1316,13 +1334,54 @@ export default function Component() {
 
 			pollForResult(getUrl, newTelemetryData)
 
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error('There was a problem with the request:', error);
-			setShowApiKeyAlert(true);
+			
+			if (error && typeof error === 'object' && 'response' in error && 
+				error.response && typeof error.response === 'object' && 
+				'data' in error.response) {
+			  const errorResponse = error.response as { 
+				data: { 
+				  detail?: string; 
+				  title?: string;
+				  invalid_fields?: Array<{
+					description: string;
+					field?: string;
+				  }>;
+				} 
+			  };
+			
+			  // Create a more user-friendly error message based on the field
+			  const field = errorResponse.data.invalid_fields?.[0]?.field;
+			  let errorMessage = '';
+			
+			  if (field === 'input.num_inference_steps') {
+				errorMessage = 'Quality Steps must be 4 or less when using the FLUX.1 Schnell model';
+			  } else {
+				// Fallback to original error message for other cases
+				errorMessage = errorResponse.data.invalid_fields?.[0]?.description || 
+							  errorResponse.data.detail?.replace(/^-\s*[^:]+:\s*/, '') || 
+							  errorResponse.data.title ||
+							  'An error occurred';
+			  }
+			
+			  toast.error('Generation failed', {
+				description: errorMessage,
+				duration: 4500
+			  });
+			} else if (!apiKey) {
+			  setShowApiKeyAlert(true);
+			} else {
+			  toast.error('Generation failed', {
+				description: error instanceof Error ? error.message : 'An unknown error occurred',
+				duration: 4500
+			  });
+			}
+			
 			stopStatuses();
-			newTelemetryData.errors.push(error instanceof Error ? error.message : 'Unknown error occurred')
-			finalizeTelemetryData(newTelemetryData)
-		}
+			newTelemetryData.errors.push(error instanceof Error ? error.message : 'Unknown error occurred');
+			finalizeTelemetryData(newTelemetryData);
+		  }
 
 	};
 
