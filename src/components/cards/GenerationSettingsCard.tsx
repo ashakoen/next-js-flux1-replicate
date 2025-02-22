@@ -247,8 +247,8 @@ export function GenerationSettingsCard({
 				/>
 			</div>
 			<CardHeader className="flex-none">
-				<CardTitle className="text-[#9b59b6] dark:text-[#fa71cd]">Magic Box Settings</CardTitle>
-				<CardDescription>Generate images using Magic Box AI</CardDescription>
+				<CardTitle className="text-[#9b59b6] dark:text-[#fa71cd]">MagicBox Settings</CardTitle>
+				<CardDescription>Generate images using MagicBox AI</CardDescription>
 			</CardHeader>
 			<CardContent className="flex-1 overflow-y-auto min-h-0">
 				<form onSubmit={handleSubmit}>
@@ -406,7 +406,7 @@ export function GenerationSettingsCard({
 								)}
 								{!isRecraftv3 && (
 									<>
-										<div className="pt-4">
+										<div className="pt-5">
 											<Label htmlFor="seed">Creation Code</Label>
 											<TooltipProvider>
 												<Tooltip>
@@ -464,7 +464,9 @@ export function GenerationSettingsCard({
 							<div className="space-y-4 pb-12 px-2">
 
 
-
+							<div className="pt-4">
+											<h6 className="text-md font-medium">Base AI Model Settings</h6>
+										</div>
 
 								<div>
 									<Label htmlFor="model">Base AI Model</Label>
@@ -791,7 +793,7 @@ export function GenerationSettingsCard({
 												className="custom-slider"
 											/>
 										</div>
-										<div className="flex items-center space-x-2">
+										<div className="flex items-center space-x-2 pt-3">
 											<Switch
 												id="disable_safety_checker"
 												checked={formData.disable_safety_checker}

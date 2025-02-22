@@ -209,7 +209,7 @@ export function GeneratedImagesCard({
             </TooltipProvider>
           </div>
           <CardDescription>
-            Your Magix Box creations will show up here. Have fun!
+            Your MagicBox creations will show up here. Have fun!
           </CardDescription>
         </CardHeader>
         <CardContent className="flex-1 min-h-0 overflow-y-auto">
@@ -1226,7 +1226,7 @@ export function GeneratedImagesCard({
                   <div className="text-center space-y-4">
                     <div className="space-y-2">
                       <p className="text-sm text-muted-foreground">
-                        Your Magic Box canvas is empty for now
+                        Your MagicBox canvas is empty for now
                       </p>
                       <p className="text-xs text-primary/70">
                         Ready to create something amazing?!?
