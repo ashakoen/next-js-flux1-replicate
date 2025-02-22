@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sun, Moon, Star, AlertCircle, Loader2, Box, Github, RefreshCw } from 'lucide-react';
+import { Sun, Moon, Star, AlertCircle, Loader2, Box, Github, RefreshCw, BookOpen } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FormData, Recraftv3Size, Recraftv3Style, IdeogramStyleType, IdeogramMagicPromptOption, ImagePackConfig, LumaPhotonAspectRatio } from '@/types/types';
 import { ApiSettingsModal } from "@/components/modals/ApiSettingsModal";
@@ -227,6 +227,21 @@ export function GenerationSettingsCard({
 				<Button
 					variant="ghost"
 					size="icon"
+					asChild
+					className="h-9 w-9 flex items-center justify-center"
+				>
+					<a
+						href="https://magicbox-ai.gitbook.io/magicbox-ai"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<BookOpen className="h-[1.2rem] w-[1.2rem]" />
+						<span className="sr-only">Documentation</span>
+					</a>
+				</Button>
+				<Button
+					variant="ghost"
+					size="icon"
 					onClick={() => setTheme(theme === "light" ? "dark" : "light")}
 					className="h-9 w-9 flex items-center justify-center"
 				>
@@ -314,11 +329,10 @@ export function GenerationSettingsCard({
 											onChange={handleInputChange}
 											placeholder="Enter your prompt here"
 											required
-											className={`min-h-[100px] transition-all duration-200 pr-4 ${
-												isInpaintingEnabled && inpaintingPrompt 
+											className={`min-h-[100px] transition-all duration-200 pr-4 ${isInpaintingEnabled && inpaintingPrompt
 													? 'pt-[3.5rem]'
 													: 'pt-3.5'
-											}`}
+												}`}
 										/>
 									</div>
 								</div>
@@ -723,27 +737,27 @@ export function GenerationSettingsCard({
 										<div>
 											<Label htmlFor="extra_lora">Extra AI Model</Label>
 											<div className="relative">
-  <Input
-    id="extra_lora"
-    name="extra_lora"
-    value={formData.extra_lora}
-    onChange={handleInputChange}
-    placeholder="e.g., fofr/flux-pixar-cars"
-    className="pr-10"
-  />
-  {formData.extra_lora && (
-    <button
-      type="button"
-      onClick={() => {
-        const e = { target: { name: 'extra_lora', value: '' } } as React.ChangeEvent<HTMLInputElement>;
-        handleInputChange(e);
-      }}
-      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-    >
-      &times;
-    </button>
-  )}
-</div>
+												<Input
+													id="extra_lora"
+													name="extra_lora"
+													value={formData.extra_lora}
+													onChange={handleInputChange}
+													placeholder="e.g., fofr/flux-pixar-cars"
+													className="pr-10"
+												/>
+												{formData.extra_lora && (
+													<button
+														type="button"
+														onClick={() => {
+															const e = { target: { name: 'extra_lora', value: '' } } as React.ChangeEvent<HTMLInputElement>;
+															handleInputChange(e);
+														}}
+														className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+													>
+														&times;
+													</button>
+												)}
+											</div>
 										</div>
 										<div>
 											<Label htmlFor="extra_lora_scale">Extra AI Intensity: {formData.extra_lora_scale}</Label>
