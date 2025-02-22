@@ -123,7 +123,12 @@ Contributions are welcome! Please:
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). This means:
+
+- You can use, modify, and distribute this software
+- If you modify this software and make it available over a network (e.g., as a web service), you MUST make your modified source code available to users of that service
+- All derivative works must also be licensed under AGPL-3.0
+- Full license text is available in the [LICENSE](LICENSE) file
 
 ## 📬 Contact
 
