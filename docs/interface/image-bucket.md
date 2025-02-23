@@ -5,10 +5,10 @@ The Image Bucket is a specialized storage area for organizing and managing your 
 ## Understanding the Image Bucket
 
 ### Purpose
-- Long-term storage
-- Collection organization
-- Batch management
-- Export preparation
+- Permanent storage for your important generated images
+- Save images from the temporary gallery
+- Collection organization with generation prompts
+- Flexible export options including ZIP with prompt text files
 
 ### Key Features
 - Persistent storage
@@ -87,10 +87,10 @@ The Image Bucket is a specialized storage area for organizing and managing your 
 ### Batch Operations
 
 1. **Download**
-   - All images
-   - Selected set
-   - With captions
-   - As archive
+   - All images in a ZIP file
+   - Selected set of images
+   - Include generation prompts in text file
+   - Download individual images
 
 2. **Export**
    - Image pack

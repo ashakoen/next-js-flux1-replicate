@@ -48,8 +48,8 @@ MagicBox AI is a powerful image generation interface that makes it easy to creat
 - **Multiple Models**: Choose from different AI models optimized for various use cases
 - **Advanced Controls**: Fine-tune your results with precise parameter control
 - **Image Editing**: Transform and edit images with powerful tools
-- **Organization**: Keep your work organized with the Image Bucket
-- **Workflow Support**: Save and share your settings with Image Packs
+- **Smart Storage**: Preview images in the temporary gallery (1-hour expiration), then save important ones to the permanent Image Bucket
+- **Export Options**: Download individual images or entire collections with generation prompts included
 
 ## 💡 Getting Started
 

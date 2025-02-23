@@ -9,8 +9,10 @@ The Image Gallery is your central hub for viewing, managing, and working with ge
 - Grid layout of images
 - Chronological order (newest first)
 - Responsive design
+- Images automatically expire after one hour
 
 ### Key Features
+- Temporary preview workspace
 - Image preview
 - Generation details
 - Action buttons
@@ -125,10 +127,10 @@ The Image Gallery is your central hub for viewing, managing, and working with ge
 ### Storage Management
 
 1. **Space Usage**
-   - Monitor storage
-   - Clear old images
-   - Download important
-   - Optimize space
+   - Images automatically expire after one hour
+   - Download important images to your computer
+   - Move valuable images to Image Bucket for permanent storage
+   - No manual cleanup needed
 
 2. **Backup**
    - Export images
@@ -248,5 +250,5 @@ Esc      : Close preview
 4. Optimize display
 
 {% hint style="tip" %}
-Regular maintenance of your gallery helps keep the interface responsive and makes it easier to find and work with your images.
+Remember: Images in the gallery are automatically removed after one hour. Save important images by downloading them or adding them to the Image Bucket for permanent storage.
 {% endhint %}
