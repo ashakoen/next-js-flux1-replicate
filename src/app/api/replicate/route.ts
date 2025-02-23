@@ -11,7 +11,35 @@ export async function POST(req: Request): Promise<Response> {
 
 		const model = body?.model;
 
-		if (body?.generateDescription) {
+		if (body?.enhancePrompt) {
+			if (!body.prompt) {
+				return new Response(JSON.stringify({ error: 'Prompt is required' }), { status: 400 });
+			}
+
+			const prediction = await fetch("https://api.replicate.com/v1/models/meta/meta-llama-3.1-405b-instruct/predictions", {
+				method: "POST",
+				headers: {
+					"Authorization": `Bearer ${apiKey}`,
+					"Content-Type": "application/json",
+					"Prefer": "wait"
+				},
+				body: JSON.stringify({
+					input: {
+						top_k: 50,
+						top_p: 0.9,
+						prompt: `prompt: ${body.prompt}`,
+						max_tokens: 4096,
+						min_tokens: 0,
+						temperature: 0.7,
+						system_prompt: "You are a helpful assistant who knows how to properly write detailed image generation prompts for image diffusion models, using the following generic template as a guide:\n\n[Subject], [Environment], [Style], [Quality], [Additional Details]\n\nThe user will provide a sub-optimal image generation prompt, or one they would like enhanced, and you will use your knowledge of image generation systems to output a better, more verbose and more detailed version of the user-supplied prompt. You will use your semantic knowledge to interpret the user's intention with regards to the prompt and will add details to the user-supplied prompt in order to enhance the image output.\n\nIf your semantic interpretation of the user-supplied prompt leads you to belive the user is trying to generate an image of a person, you will include extra details in the prompt in order to properly render human anatomy.\n\nIf your sementic interpretation of the user-supplied prompt leads you to belive the user is trying to generate a certain image style, or photographic technique, you will include extra details in the prompt in order to properly render the image style or photographic technique.\n\nOnly output the updated prompt. No additional comments or commentary to the user.",
+						presence_penalty: 0,
+						frequency_penalty: 0
+					}
+				})
+			});
+
+			return new Response(JSON.stringify(await prediction.json()));
+		} else if (body?.generateDescription) {
 			const imageBase64 = body.image;
 
 			if (!imageBase64) {

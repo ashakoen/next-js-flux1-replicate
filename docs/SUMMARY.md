@@ -2,6 +2,7 @@
 
 ## Getting Started 🚀
 * [Welcome to MagicBox AI](README.md)
+* [What's New](whats-new.md)
 * [Quick Start Guide](getting-started/quick-start.md)
 * [Setting Up Your API Key](getting-started/api-setup.md)
 

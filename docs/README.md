@@ -4,6 +4,10 @@
 
 MagicBox AI is a powerful image generation interface that makes it easy to create, edit, and manage AI-generated images. Whether you're an artist, designer, or just getting started with AI image generation, this guide will help you make the most of MagicBox AI's features.
 
+## ✨ Latest Updates
+- **New**: AI-powered prompt enhancement for better image generation
+- [See all updates](whats-new.md)
+
 ## 🚀 Quick Start
 
 - [Quick Start Guide](getting-started/quick-start.md) - Get up and running in minutes

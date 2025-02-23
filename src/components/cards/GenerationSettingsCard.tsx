@@ -9,11 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sun, Moon, Star, AlertCircle, Loader2, Box, Github, RefreshCw, BookOpen } from 'lucide-react';
+import { Sun, Moon, Star, AlertCircle, Loader2, Box, Github, Wand2, BookOpen } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FormData, Recraftv3Size, Recraftv3Style, IdeogramStyleType, IdeogramMagicPromptOption, ImagePackConfig, LumaPhotonAspectRatio } from '@/types/types';
 import { ApiSettingsModal } from "@/components/modals/ApiSettingsModal";
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { useDropzone } from 'react-dropzone';
@@ -84,6 +84,7 @@ export function GenerationSettingsCard({
 	inpaintingPrompt,
 }: GenerationSettingsCardProps) {
 
+	const [isEnhancing, setIsEnhancing] = useState(false);
 	const isPromptInFavorites = favoritePrompts.includes(formData.prompt);
 
 	const isRecraftModel = (model: string) => {
@@ -282,12 +283,69 @@ export function GenerationSettingsCard({
 											variant="ghost"
 											size="icon"
 											className="h-6 w-6"
-											onClick={() => {
-												// Add recycle functionality here
+											onClick={async () => {
+												if (!formData.prompt.trim()) {
+													toast.error("Please enter a prompt first");
+													return;
+												}
+
+												try {
+													setIsEnhancing(true);
+													toast.info("Please wait while your new description is being created...");
+
+													const timeoutPromise = new Promise((_, reject) => {
+														setTimeout(() => reject(new Error('Request timed out')), 15000);
+													});
+
+													const fetchPromise = fetch('/api/replicate', {
+														method: 'POST',
+														headers: {
+															'Content-Type': 'application/json',
+															'X-API-Key': apiKey
+														},
+														body: JSON.stringify({
+															body: {
+																enhancePrompt: true,
+																prompt: formData.prompt
+															}
+														})
+													});
+
+													const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
+
+													if (!response.ok) {
+														throw new Error('Failed to enhance prompt');
+													}
+
+													const data = await response.json();
+													const enhancedPrompt = data.output.join('');
+													
+													const e = {
+														target: { 
+															name: 'prompt',
+															value: enhancedPrompt
+														}
+													} as React.ChangeEvent<HTMLTextAreaElement>;
+													handleInputChange(e);
+													
+													toast.success('Prompt enhanced successfully!');
+												} catch (error: any) {
+													console.error('Error enhancing prompt:', error);
+													toast.error(error?.message === 'Request timed out' 
+														? 'Request timed out. Please try again.' 
+														: 'Failed to enhance prompt');
+												} finally {
+													setIsEnhancing(false);
+												}
 											}}
-											title="Regenerate prompt"
+											disabled={isEnhancing}
+											title="Enhance with AI!"
 										>
-											<RefreshCw className="h-4 w-4" />  {/* Using RefreshCw icon from lucide-react */}
+											{isEnhancing ? (
+												<Loader2 className="h-4 w-4 animate-spin" />
+											) : (
+												<Wand2 className="h-4 w-4" />
+											)}
 										</Button>
 										<Button
 											type="button"
@@ -329,6 +387,7 @@ export function GenerationSettingsCard({
 											onChange={handleInputChange}
 											placeholder="Enter your prompt here"
 											required
+											disabled={isEnhancing}
 											className={`min-h-[100px] transition-all duration-200 pr-4 ${isInpaintingEnabled && inpaintingPrompt
 													? 'pt-[3.5rem]'
 													: 'pt-3.5'
