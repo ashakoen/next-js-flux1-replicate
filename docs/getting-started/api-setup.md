@@ -2,6 +2,21 @@
 
 MagicBox AI uses Replicate's API to power its image generation capabilities. This guide will help you get and set up your API key.
 
+## How MagicBox AI Uses Replicate
+
+MagicBox AI acts as an interface to Replicate's services, using your personal API key to:
+- Generate images through various AI models
+- Process image-to-image transformations
+- Handle inpainting operations
+- Perform AI language model interactions
+
+Important notes about data handling:
+- All image generation and AI interactions are processed directly through the Replicate API
+- MagicBox AI does not control or monitor any user-supplied content
+- Your prompts, images, and other inputs are sent directly to Replicate
+- Usage of the Replicate API is subject to Replicate's terms and conditions
+- Review [Replicate's Terms of Service](https://replicate.com/terms) for detailed information
+
 ## Getting Your Replicate API Key
 
 1. **Create a Replicate Account**
