@@ -1814,6 +1814,7 @@ export default function Component() {
 							handleSelectChange={handleSelectChange}
 							onInpaintingPromptChange={(prefix) => setInpaintingPrompt(prefix)}
 							inpaintingPromptValue={inpaintingPrompt}
+							hasPersonalAiModel={!!formData.privateLoraName}
 						/>
 
 					<FavoritePromptsDrawer

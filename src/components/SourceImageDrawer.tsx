@@ -32,6 +32,7 @@ interface SourceImageDrawerProps {
     apiKey: string;
     handleSelectChange: (name: string, value: string) => void;
     inpaintingPromptValue?: string;
+    hasPersonalAiModel: boolean;
 }
 
 
@@ -49,7 +50,8 @@ export function SourceImageDrawer({
     onInpaintingPromptChange,
     apiKey,
     handleSelectChange,
-    inpaintingPromptValue = ''
+    inpaintingPromptValue = '',
+    hasPersonalAiModel
 }: SourceImageDrawerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [inpaintingPrompt, setInpaintingPrompt] = useState(inpaintingPromptValue);
@@ -145,34 +147,40 @@ export function SourceImageDrawer({
                 
                 {selectedImage && (
                     <>
-                        <div className="space-y-4">
-                            <div className="flex items-center space-x-2">
-                                <Switch
-                                    id="inpainting-mode"
-                                    checked={isInpaintingEnabled}
-                                    onCheckedChange={onInpaintingChange}
-                                />
-                                <Label htmlFor="inpainting-mode">Enable Spot Editing</Label>
+                        {hasPersonalAiModel ? (
+                            <div className="space-y-4">
+                                <div className="flex items-center space-x-2">
+                                    <Switch
+                                        id="inpainting-mode"
+                                        checked={isInpaintingEnabled}
+                                        onCheckedChange={onInpaintingChange}
+                                    />
+                                    <Label htmlFor="inpainting-mode">Enable Spot Editing</Label>
+                                </div>
+                                
+                                {isInpaintingEnabled && (
+                                    <InpaintingPromptSection
+                                        onPromptPrefixChange={(prefix) => {
+                                            setInpaintingPrompt(prefix);
+                                            onInpaintingPromptChange?.(prefix);
+                                        }}
+                                        disabled={disabled}
+                                        value={inpaintingPrompt}
+                                    />
+                                )}
                             </div>
-                            
-                            {isInpaintingEnabled && (
-                                <InpaintingPromptSection
-                                    onPromptPrefixChange={(prefix) => {
-                                        setInpaintingPrompt(prefix);
-                                        onInpaintingPromptChange?.(prefix);
-                                    }}
-                                    disabled={disabled}
-                                    value={inpaintingPrompt}
-                                />
-                            )}
-                        </div>
+                        ) : (
+                            <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-lg">
+                                Spot editing is only available when using a Personal AI model
+                            </div>
+                        )}
                         
                         <DrawingCard
                             sourceImage={selectedImage}
                             onMaskGenerated={onMaskGenerated}
-                            disabled={!selectedImage || disabled}
+                            disabled={!selectedImage || disabled || !hasPersonalAiModel}
                             width={470}
-                            isInpaintingEnabled={isInpaintingEnabled}
+                            isInpaintingEnabled={isInpaintingEnabled && hasPersonalAiModel}
                             currentMaskDataUrl={currentMaskDataUrl}
                         />
                     </>
