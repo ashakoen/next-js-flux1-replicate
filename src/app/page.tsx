@@ -1834,14 +1834,16 @@ export default function Component() {
 						setShowApiKeyAlert={setShowApiKeyAlert}
 					/>
 
-					<ExtraLoraModelsDrawer
-						extraLoraModels={extraLoraModels}
-						setExtraLoraModels={setExtraLoraModels}
-						selectedExtraLora={selectedExtraLora}
-						clearExtraModels={clearExtraModels}
-						setSelectedExtraLora={setSelectedExtraLora}
-						setFormData={setFormData}
-					/>
+					{formData.privateLoraName && (
+						<ExtraLoraModelsDrawer
+							extraLoraModels={extraLoraModels}
+							setExtraLoraModels={setExtraLoraModels}
+							selectedExtraLora={selectedExtraLora}
+							clearExtraModels={clearExtraModels}
+							setSelectedExtraLora={setSelectedExtraLora}
+							setFormData={setFormData}
+						/>
+					)}
 
 					<div className="middle-column order-2 xl:order-1 xl:w-1/5 h-[calc(100vh-8rem)]">
 						<div className="flex flex-col h-full justify-between">

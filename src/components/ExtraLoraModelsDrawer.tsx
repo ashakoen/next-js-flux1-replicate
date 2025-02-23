@@ -13,12 +13,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger
-} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 
 interface ExtraLoraModelsDrawerProps {
@@ -121,68 +115,61 @@ export function ExtraLoraModelsDrawer({
                         <div className="space-y-3 pr-4">
                             {extraLoraModels.length > 0 ? (
                                 extraLoraModels.map((model, index) => (
-                                    <TooltipProvider key={index}>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <div className={`group relative p-3 rounded-lg border border-gray-200 
-                                                    dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800
-                                                    ${model === selectedExtraLora ? 'border-amber-500 dark:border-amber-400 bg-amber-50/50 dark:bg-amber-900/20' : ''}`}
-                                                >
-                                                    <div className="flex items-start gap-2">
-                                                        {model === selectedExtraLora && (
-                                                            <div className="flex-shrink-0 w-2 h-2 mt-1.5 bg-amber-500 dark:bg-amber-400 rounded-full animate-pulse" />
-                                                        )}
-                                                        <p className="text-sm break-all line-clamp-2 pr-20 mb-8">
-                                                            {model}
-                                                        </p>
-                                                    </div>
-                                                    <div className="absolute right-2 bottom-2 flex gap-1">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                setSelectedExtraLora(model);
-                                                                setFormData((prev) => ({
-                                                                    ...prev,
-                                                                    extra_lora: model
-                                                                }));
-                                                                toast.success("Extra LoRA model selected!");
-                                                            }}
-                                                            className="h-7 px-2 text-xs bg-amber-50 hover:bg-amber-100 
-                                                                dark:bg-amber-900/20 dark:hover:bg-amber-900/30 
-                                                                text-amber-600 dark:text-amber-400"
-                                                        >
-                                                            Select
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                setExtraLoraModels(prev => {
-                                                                    const newModels = prev.filter(p => p !== model);
-                                                                    localStorage.setItem('extraLoraModels', JSON.stringify(newModels));
-                                                                    return newModels;
-                                                                });
-                                                                if (selectedExtraLora === model) {
-                                                                    setSelectedExtraLora(null);
-                                                                    setFormData(prev => ({ ...prev, extra_lora: '' }));
-                                                                }
-                                                                toast.success("Extra LoRA model removed!");
-                                                            }}
-                                                            className="h-7 px-2 text-xs bg-red-50 hover:bg-red-100 
-                                                                dark:bg-red-900/20 dark:hover:bg-red-900/30 
-                                                                text-red-600 dark:text-red-400"
-                                                        >
-                                                            Delete
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </TooltipTrigger>
-                                            <TooltipContent side="left" align="center" className="max-w-[300px] p-3">
-                                                <p className="text-xs break-all whitespace-pre-wrap">{model}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
+                                    <div
+                                        key={index}
+                                        className={`group relative p-3 rounded-lg border border-gray-200 
+                                            dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800
+                                            ${model === selectedExtraLora ? 'border-amber-500 dark:border-amber-400 bg-amber-50/50 dark:bg-amber-900/20' : ''}`}
+                                    >
+                                        <div className="flex items-start gap-2">
+                                            {model === selectedExtraLora && (
+                                                <div className="flex-shrink-0 w-2 h-2 mt-1.5 bg-amber-500 dark:bg-amber-400 rounded-full animate-pulse" />
+                                            )}
+                                            <p className="text-sm break-all line-clamp-2 pr-20 mb-8">
+                                                {model}
+                                            </p>
+                                        </div>
+                                        <div className="absolute right-2 bottom-2 flex gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setSelectedExtraLora(model);
+                                                    setFormData((prev) => ({
+                                                        ...prev,
+                                                        extra_lora: model
+                                                    }));
+                                                    toast.success("Extra LoRA model selected!");
+                                                }}
+                                                className="h-7 px-2 text-xs bg-amber-50 hover:bg-amber-100 
+                                                    dark:bg-amber-900/20 dark:hover:bg-amber-900/30 
+                                                    text-amber-600 dark:text-amber-400"
+                                            >
+                                                Select
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setExtraLoraModels(prev => {
+                                                        const newModels = prev.filter(p => p !== model);
+                                                        localStorage.setItem('extraLoraModels', JSON.stringify(newModels));
+                                                        return newModels;
+                                                    });
+                                                    if (selectedExtraLora === model) {
+                                                        setSelectedExtraLora(null);
+                                                        setFormData(prev => ({ ...prev, extra_lora: '' }));
+                                                    }
+                                                    toast.success("Extra LoRA model removed!");
+                                                }}
+                                                className="h-7 px-2 text-xs bg-red-50 hover:bg-red-100 
+                                                    dark:bg-red-900/20 dark:hover:bg-red-900/30 
+                                                    text-red-600 dark:text-red-400"
+                                            >
+                                                Delete
+                                            </Button>
+                                        </div>
+                                    </div>
                                 ))
                             ) : (
                                 <div className="text-center text-gray-500 dark:text-gray-400 py-8">
