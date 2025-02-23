@@ -1,6 +1,6 @@
-# MagicBox Studio
+# MagicBox AI Studio
 
-MagicBox Studio is a powerful AI image generation interface that makes it easy to create, edit, and iterate AI-generated image creations. Built with Next.js, it provides an intuitive workspace for working with multiple AI models, including FLUX.1 (Dev, Pro, Pro-Ultra, and Schnell versions) and ReCraft v3, all powered by Replicate's API.
+MagicBox AI Studio is a powerful AI image generation interface that makes it easy to create, edit, and iterate AI-generated image creations. Built with Next.js, it provides an intuitive workspace for working with multiple AI models, including FLUX.1 (Dev, Pro, Pro-Ultra, and Schnell versions) and ReCraft v3, all powered by Replicate's API.
 
 ![flux-image-creator](public/flux-image-creator.png)
 

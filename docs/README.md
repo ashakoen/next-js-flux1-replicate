@@ -2,7 +2,7 @@
 
 ![MagicBox Studio Interface](../public/flux-image-creator.png)
 
-MagicBox AI is a powerful image generation interface that makes it easy to create, edit, and manage AI-generated images. Whether you're an artist, designer, or just getting started with AI image generation, this guide will help you make the most of MagicBox AI's features.
+MagicBox AI Studio is a powerful image generation interface that makes it easy to create, edit, and manage AI-generated images. Whether you're an artist, designer, or just getting started with AI image generation, this guide will help you make the most of MagicBox AI Studio's features.
 
 ## ✨ Latest Updates
 - **New**: AI-powered prompt enhancement for better image generation
