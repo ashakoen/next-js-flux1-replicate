@@ -7,12 +7,15 @@ import { cn } from "@/lib/utils"
 
 const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
->(({ className, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> & {
+    disabled?: boolean;
+  }
+>(({ className, disabled, ...props }, ref) => (
   <SliderPrimitive.Root
     ref={ref}
     className={cn(
       "relative flex w-full touch-none select-none items-center",
+      disabled && "opacity-50 cursor-not-allowed pointer-events-none",
       className
     )}
     {...props}

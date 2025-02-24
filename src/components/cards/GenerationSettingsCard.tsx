@@ -275,8 +275,8 @@ export function GenerationSettingsCard({
 				<form onSubmit={handleSubmit} className="relative">
 					<Tabs defaultValue="basic" className="w-full">
 						<TabsList className="grid w-full grid-cols-2">
-							<TabsTrigger value="basic" disabled={isGenerating}>Basic</TabsTrigger>
-							<TabsTrigger value="advanced" disabled={isGenerating}>Advanced</TabsTrigger>
+							<TabsTrigger value="basic">Basic</TabsTrigger>
+							<TabsTrigger value="advanced">Advanced</TabsTrigger>
 						</TabsList>
 						<TabsContent value="basic" className="mt-4">
 							<div className="space-y-1">
@@ -360,7 +360,7 @@ export function GenerationSettingsCard({
 											Reference Image Dilution: {formData.prompt_strength}
 										</Label>
 										<TooltipProvider>
-											<Tooltip>
+											<Tooltip open={isGenerating ? false : undefined}>
 												<TooltipTrigger asChild>
 													<div>
 														<Slider
@@ -389,7 +389,7 @@ export function GenerationSettingsCard({
 										<div className="space-y-1 pt-2">
 											<Label htmlFor="guidance_scale">Description Adherence: {formData.guidance_scale}</Label>
 											<TooltipProvider>
-												<Tooltip>
+												<Tooltip open={isGenerating ? false : undefined}>
 													<TooltipTrigger asChild>
 														<div>
 															<Slider
@@ -414,7 +414,7 @@ export function GenerationSettingsCard({
 										<div className="space-y-1 pt-2">
 											<Label htmlFor="num_inference_steps">Quality Steps: {formData.num_inference_steps}</Label>
 											<TooltipProvider>
-												<Tooltip>
+												<Tooltip open={isGenerating ? false : undefined}>
 													<TooltipTrigger asChild>
 														<div>
 															<Slider
@@ -761,16 +761,27 @@ export function GenerationSettingsCard({
 										</div>
 										<div>
 											<Label htmlFor="lora_scale">Private AI Intensity: {formData.lora_scale}</Label>
+											<TooltipProvider>
+												<Tooltip open={isGenerating ? false : undefined}>
+													<TooltipTrigger asChild>
+														<div>
 															<Slider
-																id="guidance_scale"
-																min={0}
-																max={10}
-																step={0.1}
-																value={[formData.guidance_scale]}
-																onValueChange={(value) => handleSliderChange('guidance_scale', value)}
+																id="lora_scale"
+																min={-1}
+																max={2}
+																step={0.01}
+																value={[formData.lora_scale]}
+																onValueChange={(value) => handleSliderChange('lora_scale', value)}
 																className="custom-slider"
 																disabled={isGenerating}
 															/>
+														</div>
+													</TooltipTrigger>
+													<TooltipContent side="bottom" className="mb-2">
+														<p>Controls the strength of the private AI model&apos;s influence. Negative values invert the effect.</p>
+													</TooltipContent>
+												</Tooltip>
+											</TooltipProvider>
 										</div>
 										{formData.privateLoraName && (
 											<>
@@ -806,16 +817,27 @@ export function GenerationSettingsCard({
 												</div>
 												<div>
 													<Label htmlFor="extra_lora_scale">Extra AI Intensity: {formData.extra_lora_scale}</Label>
-															<Slider
-																id="num_inference_steps"
-																min={1}
-																max={formData.model === 'schnell' && !formData.privateLoraName ? 4 : 50}
-																step={1}
-																value={[formData.num_inference_steps]}
-																onValueChange={(value) => handleSliderChange('num_inference_steps', value)}
-																className="custom-slider"
-																disabled={isGenerating}
-															/>
+													<TooltipProvider>
+														<Tooltip open={isGenerating ? false : undefined}>
+															<TooltipTrigger asChild>
+																<div>
+																	<Slider
+																		id="extra_lora_scale"
+																		min={0}
+																		max={1}
+																		step={0.01}
+																		value={[formData.extra_lora_scale]}
+																		onValueChange={(value) => handleSliderChange('extra_lora_scale', value)}
+																		className="custom-slider"
+																		disabled={isGenerating}
+																	/>
+																</div>
+															</TooltipTrigger>
+															<TooltipContent side="bottom" className="mb-2">
+																<p>Controls the strength of the extra AI model&apos;s influence on the final image.</p>
+															</TooltipContent>
+														</Tooltip>
+													</TooltipProvider>
 												</div>
 											</>
 										)}
@@ -854,16 +876,27 @@ export function GenerationSettingsCard({
 												<Label htmlFor="image_reference_weight">
 													Reference Weight: {formData.image_reference_weight}
 												</Label>
-												<Slider
-													id="image_reference_weight"
-													min={0}
-													max={1}
-													step={0.01}
-													value={[formData.image_reference_weight]}
-													onValueChange={(value) => handleSliderChange('image_reference_weight', value)}
-													className="custom-slider"
-													disabled={isGenerating}
-												/>
+												<TooltipProvider>
+													<Tooltip open={isGenerating ? false : undefined}>
+														<TooltipTrigger asChild>
+															<div>
+																<Slider
+																	id="image_reference_weight"
+																	min={0}
+																	max={1}
+																	step={0.01}
+																	value={[formData.image_reference_weight]}
+																	onValueChange={(value) => handleSliderChange('image_reference_weight', value)}
+																	className="custom-slider"
+																	disabled={isGenerating}
+																/>
+															</div>
+														</TooltipTrigger>
+														<TooltipContent side="bottom" className="mb-2">
+															<p>Controls how strongly the reference image influences the final result.</p>
+														</TooltipContent>
+													</Tooltip>
+												</TooltipProvider>
 											</div>
 										)}
 
@@ -884,16 +917,27 @@ export function GenerationSettingsCard({
 												<Label htmlFor="style_reference_weight">
 													Style Weight: {formData.style_reference_weight}
 												</Label>
-												<Slider
-													id="style_reference_weight"
-													min={0}
-													max={1}
-													step={0.01}
-													value={[formData.style_reference_weight]}
-													onValueChange={(value) => handleSliderChange('style_reference_weight', value)}
-													className="custom-slider"
-													disabled={isGenerating}
-												/>
+												<TooltipProvider>
+													<Tooltip open={isGenerating ? false : undefined}>
+														<TooltipTrigger asChild>
+															<div>
+																<Slider
+																	id="style_reference_weight"
+																	min={0}
+																	max={1}
+																	step={0.01}
+																	value={[formData.style_reference_weight]}
+																	onValueChange={(value) => handleSliderChange('style_reference_weight', value)}
+																	className="custom-slider"
+																	disabled={isGenerating}
+																/>
+															</div>
+														</TooltipTrigger>
+														<TooltipContent side="bottom" className="mb-2">
+															<p>Controls how strongly the style reference influences the final result.</p>
+														</TooltipContent>
+													</Tooltip>
+												</TooltipProvider>
 											</div>
 										)}
 
