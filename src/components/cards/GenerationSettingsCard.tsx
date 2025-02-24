@@ -87,6 +87,8 @@ export function GenerationSettingsCard({
 
 	const [isEnhancing, setIsEnhancing] = useState(false);
 	const [enhanceModalOpen, setEnhanceModalOpen] = useState(false);
+	const [showSuccess, setShowSuccess] = useState(false);
+	const [enhancedPrompt, setEnhancedPrompt] = useState('');
 	const isPromptInFavorites = favoritePrompts.includes(formData.prompt);
 
 	const isRecraftModel = (model: string) => {
@@ -882,15 +884,24 @@ export function GenerationSettingsCard({
 				</form>
 				<EnhancePromptModal
 					isOpen={enhanceModalOpen}
-					onClose={() => setEnhanceModalOpen(false)}
+					onClose={() => {
+						setEnhanceModalOpen(false);
+						setShowSuccess(false);
+						setEnhancedPrompt('');
+					}}
 					prompt={formData.prompt}
 					isEnhancing={isEnhancing}
+					showSuccess={showSuccess}
+					enhancedPrompt={enhancedPrompt}
+					onGenerate={() => {
+						handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+					}}
 					onConfirm={async (enhancement) => {
 						try {
 							setIsEnhancing(true);
 
 							const timeoutPromise = new Promise((_, reject) => {
-								setTimeout(() => reject(new Error('Request timed out')), 20000);
+								setTimeout(() => reject(new Error('Request timed out')), 60000);
 							});
 
 							const fetchPromise = fetch('/api/replicate', {
@@ -915,18 +926,18 @@ export function GenerationSettingsCard({
 							}
 
 							const data = await response.json();
-							const enhancedPrompt = data.output.join('');
+							const newPrompt = data.output.join('');
 							
 							const e = {
 								target: { 
 									name: 'prompt',
-									value: enhancedPrompt
+									value: newPrompt
 								}
 							} as React.ChangeEvent<HTMLTextAreaElement>;
 							handleInputChange(e);
 							
-							setEnhanceModalOpen(false);
-							toast.success('Prompt enhanced successfully!');
+							setEnhancedPrompt(newPrompt);
+							setShowSuccess(true);
 						} catch (error: any) {
 							console.error('Error enhancing prompt:', error);
 							setEnhanceModalOpen(false);

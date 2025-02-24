@@ -16,6 +16,12 @@ export async function POST(req: Request): Promise<Response> {
 				return new Response(JSON.stringify({ error: 'Prompt is required' }), { status: 400 });
 			}
 
+			console.log('Enhancing prompt:', {
+				originalPrompt: body.prompt,
+				enhancement: body.enhancement || 'none',
+				system_prompt: "You are a helpful assistant who knows how to properly write detailed image generation prompts for image diffusion models, using the following generic template as a guide:\n\n[Subject], [Environment], [Style], [Quality], [Additional Details]\n\nThe user will provide a sub-optimal image generation prompt indicated by [prompt] that they would like enhanced along with an enhancement word or phrase indicated by [enhancement], and you will use your knowledge of image generation systems to output a better, more verbose and more detailed version of the user-supplied prompt that aligns with the enhancement request provided by the user, taking into account both the original prompt and the user-supplied enhancement word or phrase, substituting elements of the prompt as deemed necessary. You will use your semantic knowledge to interpret the user's intention with regards to the original prompt, combining this with your interpretation of the user's intention with regard to the user-supplied enhancement word or phrase in order to generate a new and enhanced version of the original prompt.\n\nIf your semantic interpretation of the user-supplied prompt leads you to beleive the user is trying to generate an image of a person, you will include extra details in the prompt in order to properly render human anatomy.\n\nIf your sementic interpretation of the user-supplied prompt leads you to believe the user is trying to generate a certain image style, or photographic technique, you will include extra details in the prompt in order to properly render the image style or photographic technique.\n\nIf your sementic interpretation of the user-supplied prompt leads you to believe the user is trying to generate an image with a specific theme or emotion, you will include extra details in the prompt in order to properly render the image subject to express the theme or emotion.\n\nOnly output the updated prompt. No additional comments or commentary to the user.",
+			});
+
 			const prediction = await fetch("https://api.replicate.com/v1/models/meta/meta-llama-3.1-405b-instruct/predictions", {
 				method: "POST",
 				headers: {
@@ -38,7 +44,32 @@ export async function POST(req: Request): Promise<Response> {
 				})
 			});
 
-			return new Response(JSON.stringify(await prediction.json()));
+			try {
+				console.log('Meta-LLaMA API Response:', {
+					status: prediction.status,
+					statusText: prediction.statusText,
+					headers: Object.fromEntries(prediction.headers)
+				});
+
+				const data = await prediction.json();
+				console.log('Enhanced Prompt Result:', {
+					output: data.output,
+					metrics: {
+						startTime: data.created_at,
+						completedTime: data.completed_at,
+						totalTokens: data.metrics?.total_tokens
+					}
+				});
+
+				return new Response(JSON.stringify(data));
+			} catch (error: any) {
+				console.error('Error in enhance prompt flow:', {
+					error: error?.message || 'Unknown error',
+					originalPrompt: body.prompt,
+					enhancement: body.enhancement
+				});
+				throw error; // Let the outer try-catch handle the response
+			}
 		} else if (body?.generateDescription) {
 			const imageBase64 = body.image;
 
