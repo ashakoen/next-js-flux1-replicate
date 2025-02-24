@@ -91,7 +91,19 @@ export async function POST(req: Request): Promise<Response> {
 					version: "80537f9eead1a5bfa72d5ac6ea6414379be41d4d4f6679fd776e9535d1eb58bb",
 					input: {
 						image: imageBase64,
-						prompt: "Describe this image in single-paragraph format, with as much creative and visual detail as possible, describing both the subject and the surroundings. Focus on the subject. Be descriptive and verbose using a minimum of 300 words when possible. If the subject is human, use extreme detail.",
+						prompt: `Analyze and describe this image in a detailed, creative manner following this structure:
+
+1. Subject Focus: Begin with the main subject, describing their appearance, pose, and expression in vivid detail. For humans, include details about clothing, accessories, and distinguishing features.
+
+2. Immediate Environment: Describe the immediate surroundings and how the subject interacts with them.
+
+3. Atmosphere & Lighting: Detail the lighting conditions, color palette, and overall mood.
+
+4. Technical Elements: Note any distinct photographic or artistic techniques visible in the image.
+
+5. Background Elements: Describe the broader setting and any notable background details.
+
+Keep descriptions clear and well-organized while maintaining creative language. Aim for 300-400 words. Focus on visual elements that would be relevant for image generation.`,
 						max_tokens: 2048,
 						temperature: 0.7,
 						top_p: 1

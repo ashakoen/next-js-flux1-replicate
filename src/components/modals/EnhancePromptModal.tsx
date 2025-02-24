@@ -232,7 +232,7 @@ export function EnhancePromptModal({
                                     <div className="bg-black/5 dark:bg-white/5 rounded-lg p-6">
                                         <div className="text-center space-y-3">
                                             <div className="text-4xl animate-pulse">{randomQuote.emoji}</div>
-                                            <p className="text-sm italic text-muted-foreground leading-relaxed">"{randomQuote.quote}"</p>
+                                            <p className="text-sm italic text-muted-foreground leading-relaxed">&quot;{randomQuote.quote}&quot;</p>
                                             <p className="text-xs font-medium text-[#9b59b6] dark:text-[#fa71cd]">— {randomQuote.author}</p>
                                         </div>
                                     </div>
