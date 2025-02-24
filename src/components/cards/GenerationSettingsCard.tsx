@@ -13,6 +13,7 @@ import { Sun, Moon, Star, AlertCircle, Loader2, Box, Github, Wand2, BookOpen } f
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FormData, Recraftv3Size, Recraftv3Style, IdeogramStyleType, IdeogramMagicPromptOption, ImagePackConfig, LumaPhotonAspectRatio } from '@/types/types';
 import { ApiSettingsModal } from "@/components/modals/ApiSettingsModal";
+import { EnhancePromptModal } from "@/components/modals/EnhancePromptModal";
 import { useCallback, useState } from 'react';
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
@@ -85,6 +86,7 @@ export function GenerationSettingsCard({
 }: GenerationSettingsCardProps) {
 
 	const [isEnhancing, setIsEnhancing] = useState(false);
+	const [enhanceModalOpen, setEnhanceModalOpen] = useState(false);
 	const isPromptInFavorites = favoritePrompts.includes(formData.prompt);
 
 	const isRecraftModel = (model: string) => {
@@ -267,7 +269,7 @@ export function GenerationSettingsCard({
 				<CardDescription>Generate images using MagicBox AI</CardDescription>
 			</CardHeader>
 			<CardContent className="flex-1 overflow-y-auto min-h-0">
-				<form onSubmit={handleSubmit}>
+				<form onSubmit={handleSubmit} className="relative">
 					<Tabs defaultValue="basic" className="w-full">
 						<TabsList className="grid w-full grid-cols-2">
 							<TabsTrigger value="basic">Basic</TabsTrigger>
@@ -283,62 +285,14 @@ export function GenerationSettingsCard({
 											variant="ghost"
 											size="icon"
 											className="h-6 w-6"
-											onClick={async () => {
+											onClick={() => {
 												if (!formData.prompt.trim()) {
 													toast.error("Please enter a prompt first");
 													return;
 												}
-
-												try {
-													setIsEnhancing(true);
-													toast.info("Please wait while your new description is being created...");
-
-													const timeoutPromise = new Promise((_, reject) => {
-														setTimeout(() => reject(new Error('Request timed out')), 15000);
-													});
-
-													const fetchPromise = fetch('/api/replicate', {
-														method: 'POST',
-														headers: {
-															'Content-Type': 'application/json',
-															'X-API-Key': apiKey
-														},
-														body: JSON.stringify({
-															body: {
-																enhancePrompt: true,
-																prompt: formData.prompt
-															}
-														})
-													});
-
-													const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
-
-													if (!response.ok) {
-														throw new Error('Failed to enhance prompt');
-													}
-
-													const data = await response.json();
-													const enhancedPrompt = data.output.join('');
-													
-													const e = {
-														target: { 
-															name: 'prompt',
-															value: enhancedPrompt
-														}
-													} as React.ChangeEvent<HTMLTextAreaElement>;
-													handleInputChange(e);
-													
-													toast.success('Prompt enhanced successfully!');
-												} catch (error: any) {
-													console.error('Error enhancing prompt:', error);
-													toast.error(error?.message === 'Request timed out' 
-														? 'Request timed out. Please try again.' 
-														: 'Failed to enhance prompt');
-												} finally {
-													setIsEnhancing(false);
-												}
+												setEnhanceModalOpen(true);
 											}}
-											disabled={isEnhancing}
+											disabled={isEnhancing || isGenerating}
 											title="Enhance with AI!"
 										>
 											{isEnhancing ? (
@@ -387,11 +341,12 @@ export function GenerationSettingsCard({
 											onChange={handleInputChange}
 											placeholder="Enter your prompt here"
 											required
-											disabled={isEnhancing}
-											className={`min-h-[100px] transition-all duration-200 pr-4 ${isInpaintingEnabled && inpaintingPrompt
+											disabled={isEnhancing || isGenerating}
+											className={`min-h-[100px] transition-all duration-200 pr-4 ${
+												isInpaintingEnabled && inpaintingPrompt
 													? 'pt-[3.5rem]'
 													: 'pt-3.5'
-												}`}
+											} ${isEnhancing ? 'opacity-50' : ''}`}
 										/>
 									</div>
 								</div>
@@ -925,6 +880,64 @@ export function GenerationSettingsCard({
 					</Tabs>
 
 				</form>
+				<EnhancePromptModal
+					isOpen={enhanceModalOpen}
+					onClose={() => setEnhanceModalOpen(false)}
+					prompt={formData.prompt}
+					isEnhancing={isEnhancing}
+					onConfirm={async (enhancement) => {
+						try {
+							setIsEnhancing(true);
+
+							const timeoutPromise = new Promise((_, reject) => {
+								setTimeout(() => reject(new Error('Request timed out')), 20000);
+							});
+
+							const fetchPromise = fetch('/api/replicate', {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+									'X-API-Key': apiKey
+								},
+								body: JSON.stringify({
+									body: {
+										enhancePrompt: true,
+										prompt: formData.prompt,
+										enhancement: enhancement
+									}
+								})
+							});
+
+							const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
+
+							if (!response.ok) {
+								throw new Error('Failed to enhance prompt');
+							}
+
+							const data = await response.json();
+							const enhancedPrompt = data.output.join('');
+							
+							const e = {
+								target: { 
+									name: 'prompt',
+									value: enhancedPrompt
+								}
+							} as React.ChangeEvent<HTMLTextAreaElement>;
+							handleInputChange(e);
+							
+							setEnhanceModalOpen(false);
+							toast.success('Prompt enhanced successfully!');
+						} catch (error: any) {
+							console.error('Error enhancing prompt:', error);
+							setEnhanceModalOpen(false);
+							toast.error(error?.message === 'Request timed out' 
+								? 'Request timed out. Please try again.' 
+								: 'Failed to enhance prompt');
+						} finally {
+							setIsEnhancing(false);
+						}
+					}}
+				/>
 			</CardContent>
 		</Card>
 	);
