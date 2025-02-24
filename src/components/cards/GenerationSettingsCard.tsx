@@ -171,7 +171,8 @@ export function GenerationSettingsCard({
 	const { getRootProps, getInputProps, isDragActive } = useDropzone({
 		onDrop,
 		accept: { 'application/zip': ['.zip'] },
-		multiple: false
+		multiple: false,
+		disabled: isGenerating
 	});
 
 
@@ -274,8 +275,8 @@ export function GenerationSettingsCard({
 				<form onSubmit={handleSubmit} className="relative">
 					<Tabs defaultValue="basic" className="w-full">
 						<TabsList className="grid w-full grid-cols-2">
-							<TabsTrigger value="basic">Basic</TabsTrigger>
-							<TabsTrigger value="advanced">Advanced</TabsTrigger>
+							<TabsTrigger value="basic" disabled={isGenerating}>Basic</TabsTrigger>
+							<TabsTrigger value="advanced" disabled={isGenerating}>Advanced</TabsTrigger>
 						</TabsList>
 						<TabsContent value="basic" className="mt-4">
 							<div className="space-y-1">
@@ -370,6 +371,7 @@ export function GenerationSettingsCard({
 															value={[formData.prompt_strength || 0.8]}
 															onValueChange={(value) => handleSliderChange('prompt_strength', value)}
 															className="custom-slider"
+															disabled={isGenerating}
 														/>
 													</div>
 												</TooltipTrigger>
@@ -398,6 +400,7 @@ export function GenerationSettingsCard({
 																value={[formData.guidance_scale]}
 																onValueChange={(value) => handleSliderChange('guidance_scale', value)}
 																className="custom-slider"
+																disabled={isGenerating}
 															/>
 														</div>
 													</TooltipTrigger>
@@ -422,6 +425,7 @@ export function GenerationSettingsCard({
 																value={[formData.num_inference_steps]}
 																onValueChange={(value) => handleSliderChange('num_inference_steps', value)}
 																className="custom-slider"
+																disabled={isGenerating}
 															/>
 														</div>
 													</TooltipTrigger>
@@ -448,6 +452,7 @@ export function GenerationSettingsCard({
 																type="number"
 																value={formData.seed}
 																onChange={handleInputChange}
+																disabled={isGenerating}
 															/>
 														</div>
 													</TooltipTrigger>
@@ -495,7 +500,12 @@ export function GenerationSettingsCard({
 
 								<div>
 									<Label htmlFor="model">Base AI Model</Label>
-									<Select name="model" value={formData.model} onValueChange={(value) => handleSelectChange('model', value)}>
+									<Select 
+										name="model" 
+										value={formData.model} 
+										onValueChange={(value) => handleSelectChange('model', value)}
+										disabled={isGenerating}
+									>
 										<SelectTrigger>
 											<SelectValue placeholder="Select a model" />
 										</SelectTrigger>
@@ -517,6 +527,7 @@ export function GenerationSettingsCard({
 											id="go_fast"
 											checked={formData.go_fast}
 											onCheckedChange={(checked) => handleSwitchChange('go_fast', checked)}
+											disabled={isGenerating}
 										/>
 										<Label htmlFor="go_fast">Go Fast</Label>
 										<TooltipProvider>
@@ -541,6 +552,7 @@ export function GenerationSettingsCard({
 											name="output_format"
 											value={formData.output_format}
 											onValueChange={(value) => handleSelectChange('output_format', value)}
+											disabled={isGenerating}
 										>
 											<SelectTrigger>
 												<SelectValue placeholder="Select output format" />
@@ -578,11 +590,17 @@ export function GenerationSettingsCard({
 												type="number"
 												value={formData.seed}
 												onChange={handleInputChange}
+												disabled={isGenerating}
 											/>
 										</div>
 										<div>
 											<Label htmlFor="aspect_ratio">Image Aspect Ratio</Label>
-											<Select name="aspect_ratio" value={formData.aspect_ratio} onValueChange={(value) => handleSelectChange('aspect_ratio', value)}>
+											<Select 
+												name="aspect_ratio" 
+												value={formData.aspect_ratio} 
+												onValueChange={(value) => handleSelectChange('aspect_ratio', value)}
+												disabled={isGenerating}
+											>
 												<SelectTrigger>
 													<SelectValue placeholder="Select an aspect ratio" />
 												</SelectTrigger>
@@ -603,29 +621,31 @@ export function GenerationSettingsCard({
 											<div className="grid grid-cols-2 gap-4">
 												<div>
 													<Label htmlFor="width">Width</Label>
-													<Input
-														id="width"
-														name="width"
-														type="number"
-														value={formData.width}
-														onChange={handleInputChange}
-														min={256}
-														max={1440}
-														step={16}
-													/>
+														<Input
+															id="width"
+															name="width"
+															type="number"
+															value={formData.width}
+															onChange={handleInputChange}
+															min={256}
+															max={1440}
+															step={16}
+															disabled={isGenerating}
+														/>
 												</div>
 												<div>
 													<Label htmlFor="height">Height</Label>
-													<Input
-														id="height"
-														name="height"
-														type="number"
-														value={formData.height}
-														onChange={handleInputChange}
-														min={256}
-														max={1440}
-														step={16}
-													/>
+														<Input
+															id="height"
+															name="height"
+															type="number"
+															value={formData.height}
+															onChange={handleInputChange}
+															min={256}
+															max={1440}
+															step={16}
+															disabled={isGenerating}
+														/>
 												</div>
 											</div>
 										)}
@@ -646,6 +666,7 @@ export function GenerationSettingsCard({
 													handleSelectChange('width', width.toString());
 													handleSelectChange('height', height.toString());
 												}}
+												disabled={isGenerating}
 											>
 												<SelectTrigger>
 													<SelectValue placeholder="Select size" />
@@ -663,6 +684,7 @@ export function GenerationSettingsCard({
 												name="style"
 												value={formData.style || 'any'}
 												onValueChange={(value) => handleSelectChange('style', value)}
+												disabled={isGenerating}
 											>
 												<SelectTrigger>
 													<SelectValue placeholder="Select style" />
@@ -712,6 +734,7 @@ export function GenerationSettingsCard({
 													placeholder="Enter private LoRA model name (optional)"
 													list="loraModels"
 													className="pr-10"
+													disabled={isGenerating}
 												/>
 												{formData.privateLoraName && (
 													<button
@@ -721,6 +744,7 @@ export function GenerationSettingsCard({
 															handleInputChange(e);
 														}}
 														className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+														disabled={isGenerating}
 													>
 														&times;
 													</button>
@@ -737,15 +761,16 @@ export function GenerationSettingsCard({
 										</div>
 										<div>
 											<Label htmlFor="lora_scale">Private AI Intensity: {formData.lora_scale}</Label>
-											<Slider
-												id="lora_scale"
-												min={-1}
-												max={2}
-												step={0.01}
-												value={[formData.lora_scale]}
-												onValueChange={(value) => handleSliderChange('lora_scale', value)}
-												className="custom-slider"
-											/>
+															<Slider
+																id="guidance_scale"
+																min={0}
+																max={10}
+																step={0.1}
+																value={[formData.guidance_scale]}
+																onValueChange={(value) => handleSliderChange('guidance_scale', value)}
+																className="custom-slider"
+																disabled={isGenerating}
+															/>
 										</div>
 										{formData.privateLoraName && (
 											<>
@@ -762,15 +787,17 @@ export function GenerationSettingsCard({
 															onChange={handleInputChange}
 															placeholder="e.g., fofr/flux-pixar-cars"
 															className="pr-10"
+															disabled={isGenerating}
 														/>
 														{formData.extra_lora && (
 															<button
 																type="button"
-																onClick={() => {
-																	const e = { target: { name: 'extra_lora', value: '' } } as React.ChangeEvent<HTMLInputElement>;
-																	handleInputChange(e);
-																}}
-																className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+														onClick={() => {
+															const e = { target: { name: 'extra_lora', value: '' } } as React.ChangeEvent<HTMLInputElement>;
+															handleInputChange(e);
+														}}
+														className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+														disabled={isGenerating}
 															>
 																&times;
 															</button>
@@ -779,24 +806,26 @@ export function GenerationSettingsCard({
 												</div>
 												<div>
 													<Label htmlFor="extra_lora_scale">Extra AI Intensity: {formData.extra_lora_scale}</Label>
-													<Slider
-														id="extra_lora_scale"
-														min={0}
-														max={1}
-														step={0.01}
-														value={[formData.extra_lora_scale]}
-														onValueChange={(value) => handleSliderChange('extra_lora_scale', value)}
-														className="custom-slider"
-													/>
+															<Slider
+																id="num_inference_steps"
+																min={1}
+																max={formData.model === 'schnell' && !formData.privateLoraName ? 4 : 50}
+																step={1}
+																value={[formData.num_inference_steps]}
+																onValueChange={(value) => handleSliderChange('num_inference_steps', value)}
+																className="custom-slider"
+																disabled={isGenerating}
+															/>
 												</div>
 											</>
 										)}
 										<div className="flex items-center space-x-2 pt-3">
-											<Switch
-												id="disable_safety_checker"
-												checked={formData.disable_safety_checker}
-												onCheckedChange={(checked) => handleSwitchChange('disable_safety_checker', checked)}
-											/>
+												<Switch
+													id="disable_safety_checker"
+													checked={formData.disable_safety_checker}
+													onCheckedChange={(checked) => handleSwitchChange('disable_safety_checker', checked)}
+													disabled={isGenerating}
+												/>
 											<Label htmlFor="disable_safety_checker">Disable Safety Checker</Label>
 										</div>
 									</>
@@ -816,6 +845,7 @@ export function GenerationSettingsCard({
 												value={formData.image_reference_url}
 												onChange={handleInputChange}
 												placeholder="Enter reference image URL"
+												disabled={isGenerating}
 											/>
 										</div>
 
@@ -832,6 +862,7 @@ export function GenerationSettingsCard({
 													value={[formData.image_reference_weight]}
 													onValueChange={(value) => handleSliderChange('image_reference_weight', value)}
 													className="custom-slider"
+													disabled={isGenerating}
 												/>
 											</div>
 										)}
@@ -844,6 +875,7 @@ export function GenerationSettingsCard({
 												value={formData.style_reference_url}
 												onChange={handleInputChange}
 												placeholder="Enter style reference URL"
+												disabled={isGenerating}
 											/>
 										</div>
 
@@ -860,6 +892,7 @@ export function GenerationSettingsCard({
 													value={[formData.style_reference_weight]}
 													onValueChange={(value) => handleSliderChange('style_reference_weight', value)}
 													className="custom-slider"
+													disabled={isGenerating}
 												/>
 											</div>
 										)}
@@ -872,6 +905,7 @@ export function GenerationSettingsCard({
 												value={formData.character_reference_url}
 												onChange={handleInputChange}
 												placeholder="Enter character reference URL"
+												disabled={isGenerating}
 											/>
 										</div>
 									</div>
