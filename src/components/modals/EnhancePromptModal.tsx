@@ -11,8 +11,52 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
+
+const ENHANCEMENT_WORDS = [
+    { word: "Sprinkling magic dust", emoji: "✨" },
+    { word: "Adding artistic flair", emoji: "🎨" },
+    { word: "Unleashing creativity", emoji: "🌈" },
+    { word: "Brewing inspiration", emoji: "☕️" },
+    { word: "Channeling imagination", emoji: "🌟" },
+    { word: "Weaving dreams", emoji: "🕊️" },
+    { word: "Crafting beauty", emoji: "🎭" },
+    { word: "Stirring emotions", emoji: "💫" }
+] as const;
+
+const CREATIVE_QUOTES = [
+    {
+        quote: "Every artist was first an amateur",
+        author: "Ralph Waldo Emerson",
+        emoji: "🎨"
+    },
+    {
+        quote: "Art enables us to find ourselves and lose ourselves at the same time",
+        author: "Thomas Merton",
+        emoji: "✨"
+    },
+    {
+        quote: "Creativity takes courage",
+        author: "Henri Matisse",
+        emoji: "💪"
+    },
+    {
+        quote: "Art is not what you see, but what you make others see",
+        author: "Edgar Degas",
+        emoji: "👀"
+    },
+    {
+        quote: "Everything you can imagine is real",
+        author: "Pablo Picasso",
+        emoji: "🌈"
+    },
+    {
+        quote: "The painter has the Universe in their mind and hands",
+        author: "Leonardo da Vinci",
+        emoji: "🌟"
+    }
+] as const;
 
 const QUICK_ENHANCEMENTS = [
     { label: "More Realism", value: "more realistic" },
@@ -48,6 +92,22 @@ export function EnhancePromptModal({
 }: EnhancePromptModalProps) {
     const [enhancement, setEnhancement] = useState('');
     const [activeEnhancements, setActiveEnhancements] = useState<Set<string>>(new Set());
+    const [showIndex, setShowIndex] = useState(0);
+
+    // Animation for loading state
+    useEffect(() => {
+        if (isEnhancing) {
+            const interval = setInterval(() => {
+                setShowIndex(i => (i + 1) % ENHANCEMENT_WORDS.length);
+            }, 2000);
+            return () => clearInterval(interval);
+        }
+    }, [isEnhancing]);
+
+    const randomQuote = useMemo(() => 
+        CREATIVE_QUOTES[Math.floor(Math.random() * CREATIVE_QUOTES.length)],
+        []
+    );
 
     // Reset enhancement input and active enhancements when modal closes
     useEffect(() => {
@@ -98,8 +158,10 @@ export function EnhancePromptModal({
                                         <span className="text-sm font-medium">New description created!</span>
                                     </div>
                                 </div>
-                                <div className="mt-6 bg-muted/50 rounded-lg p-4">
-                                    <p className="text-sm text-muted-foreground break-words">{enhancedPrompt}</p>
+                                <div className="mt-6">
+                                    <div className="bg-muted/50 rounded-lg p-4">
+                                        <p className="text-sm text-muted-foreground break-words">{enhancedPrompt}</p>
+                                    </div>
                                 </div>
                             </>
                         ) : (
@@ -114,7 +176,7 @@ export function EnhancePromptModal({
                                     </DialogDescription>
                                 </DialogHeader>
 
-                                <div className="mt-6 space-y-4">
+                                <div className="relative mt-6 space-y-4">
                                     <div className="bg-muted/50 rounded-lg p-4">
                                         <p className="text-sm text-muted-foreground break-words">{prompt}</p>
                                     </div>
@@ -130,6 +192,34 @@ export function EnhancePromptModal({
                                             className="focus-visible:ring-[#9b59b6] dark:focus-visible:ring-[#fa71cd]"
                                         />
                                     </div>
+
+                                    {isEnhancing && (
+                                        <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex items-center justify-center rounded-lg">
+                                            <div className="text-center space-y-4">
+                                                <div className="relative h-12">
+                                                    {ENHANCEMENT_WORDS.map((item, i) => (
+                                                        <div
+                                                            key={item.word}
+                                                            className={cn(
+                                                                "absolute inset-x-0 transition-all duration-500",
+                                                                showIndex === i 
+                                                                    ? "opacity-100 transform-none" 
+                                                                    : "opacity-0 translate-y-2"
+                                                            )}
+                                                        >
+                                                            <div className="text-2xl mb-2 animate-bounce">{item.emoji}</div>
+                                                            <p className="text-sm text-[#9b59b6] dark:text-[#fa71cd] font-medium">
+                                                                {item.word}
+                                                            </p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground animate-pulse">
+                                                    Enhancing your description...
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </>
                         )}
@@ -137,21 +227,32 @@ export function EnhancePromptModal({
 
                     <div className="w-[340px] border-l p-6 bg-white dark:bg-gray-800 flex flex-col">
                         {showSuccess ? (
-                            <div className="mt-auto pt-4 flex flex-col gap-2">
-                                <Button variant="outline" size="sm" onClick={handleClose}>
-                                    Not Now
-                                </Button>
-                                <Button 
-                                    size="sm"
-                                    className="bg-[#9b59b6] hover:bg-[#8e44ad] dark:bg-[#fa71cd] dark:hover:bg-[#e85bb7] text-white"
-                                    onClick={() => {
-                                        handleClose();
-                                        onGenerate?.();
-                                    }}
-                                >
-                                    Show Me!
-                                </Button>
-                            </div>
+                            <>
+                                <div className="flex-1 flex flex-col justify-center">
+                                    <div className="bg-black/5 dark:bg-white/5 rounded-lg p-6">
+                                        <div className="text-center space-y-3">
+                                            <div className="text-4xl animate-pulse">{randomQuote.emoji}</div>
+                                            <p className="text-sm italic text-muted-foreground leading-relaxed">"{randomQuote.quote}"</p>
+                                            <p className="text-xs font-medium text-[#9b59b6] dark:text-[#fa71cd]">— {randomQuote.author}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="pt-4 flex flex-col gap-2">
+                                    <Button variant="outline" size="sm" onClick={handleClose}>
+                                        Not Now
+                                    </Button>
+                                    <Button 
+                                        size="sm"
+                                        className="bg-[#9b59b6] hover:bg-[#8e44ad] dark:bg-[#fa71cd] dark:hover:bg-[#e85bb7] text-white"
+                                        onClick={() => {
+                                            handleClose();
+                                            onGenerate?.();
+                                        }}
+                                    >
+                                        Show Me!
+                                    </Button>
+                                </div>
+                            </>
                         ) : (
                             <>
                                 <div className="mb-4">
