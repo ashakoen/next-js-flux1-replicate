@@ -1037,6 +1037,16 @@ export default function Component() {
 		}
 	};
 
+	// Helper function for blob to base64 conversion
+	const blobToBase64 = (blob: Blob): Promise<string> => {
+		return new Promise<string>((resolve, reject) => {
+			const reader = new FileReader();
+			reader.onloadend = () => resolve(reader.result as string);
+			reader.onerror = reject;
+			reader.readAsDataURL(blob);
+		});
+	};
+
 	const saveToImagePack = async (image: GeneratedImage) => {
 		try {
 			toast.info('Saving to Image Packs...', {id: 'saving-image-pack'});
@@ -1055,31 +1065,51 @@ export default function Component() {
 			const fileExt = image.output_format || (image.model === 'recraftv3' ? 'webp' : 'png');
 			zip.file(`${baseFilename}.${fileExt}`, imageBlob);
 			
-			// Create a data URL for the preview image
+			// Create persistent storage data (base64)
+			const previewImageData = await blobToBase64(imageBlob);
+			
+			// Also create a temporary URL for the current session
 			const previewUrl = URL.createObjectURL(imageBlob);
 			
 			// Process source image if applicable
 			let sourceImageUrl: string | undefined;
+			let sourceImageData: string | undefined;
 			if (image.isImg2Img && image.sourceImageUrl) {
 				try {
-					// For base64 data URI stored in IndexedDB
-					const base64Data = image.sourceImageUrl.split(',')[1];
-					const mimeType = image.sourceImageUrl.split(';')[0].split(':')[1];
-					
-					// Convert base64 to binary
-					const binaryStr = atob(base64Data);
-					const bytes = new Uint8Array(binaryStr.length);
-					for (let i = 0; i < binaryStr.length; i++) {
-						bytes[i] = binaryStr.charCodeAt(i);
+					// If it's already a base64 data URI from IndexedDB
+					if (image.sourceImageUrl.startsWith('data:')) {
+						// Use it directly for both data and URL
+						sourceImageData = image.sourceImageUrl;
+						sourceImageUrl = image.sourceImageUrl;
+						
+						// Also extract and add to zip
+						const base64Data = image.sourceImageUrl.split(',')[1];
+						const mimeType = image.sourceImageUrl.split(';')[0].split(':')[1];
+						
+						// Convert base64 to binary
+						const binaryStr = atob(base64Data);
+						const bytes = new Uint8Array(binaryStr.length);
+						for (let i = 0; i < binaryStr.length; i++) {
+							bytes[i] = binaryStr.charCodeAt(i);
+						}
+						
+						// Create blob with original mime type
+						const sourceImageBlob = new Blob([bytes], { type: mimeType });
+						const extension = mimeType.split('/')[1];
+						
+						// Add to zip
+						zip.file(`${baseFilename}-source.${extension}`, sourceImageBlob);
+					} else {
+						// Fetch from URL and convert to base64
+						const response = await fetch(image.sourceImageUrl);
+						const blob = await response.blob();
+						sourceImageData = await blobToBase64(blob);
+						sourceImageUrl = URL.createObjectURL(blob);
+						
+						// Add to zip
+						const extension = blob.type.split('/')[1];
+						zip.file(`${baseFilename}-source.${extension}`, blob);
 					}
-					
-					// Create blob with original mime type
-					const sourceImageBlob = new Blob([bytes], { type: mimeType });
-					const extension = mimeType.split('/')[1];
-					
-					// Add to zip
-					zip.file(`${baseFilename}-source.${extension}`, sourceImageBlob);
-					sourceImageUrl = image.sourceImageUrl;
 				} catch (error) {
 					console.error('Failed to process source image:', error);
 				}
@@ -1089,10 +1119,13 @@ export default function Component() {
 			let maskDataUrl: string | undefined;
 			if (image.maskDataUrl) {
 				try {
+					// Mask is already a data URL format
+					maskDataUrl = image.maskDataUrl;
+					
+					// Also add to zip
 					const base64Data = image.maskDataUrl.split(',')[1];
 					const maskBlob = await fetch(`data:image/png;base64,${base64Data}`).then(r => r.blob());
 					zip.file(`${baseFilename}-mask.png`, maskBlob);
-					maskDataUrl = image.maskDataUrl;
 				} catch (error) {
 					console.warn('Failed to process mask:', error);
 				}
@@ -1139,6 +1172,9 @@ export default function Component() {
 			// Generate zip file as blob
 			const zipBlob = await zip.generateAsync({ type: 'blob' });
 			
+			// Convert zip blob to base64 for persistent storage
+			const zipFileData = await blobToBase64(zipBlob);
+			
 			// Create virtual File for the ImagePack
 			const virtualZipFile = new File(
 				[zipBlob],
@@ -1146,7 +1182,7 @@ export default function Component() {
 				{ type: 'application/zip' }
 			);
 			
-			// Create a URL for the zip file
+			// Create a URL for the zip file (temporary for current session)
 			const zipUrl = URL.createObjectURL(zipBlob);
 			
 			// Get or create a session ID for the image pack
@@ -1160,8 +1196,10 @@ export default function Component() {
 			const packEntry: ImagePackEntry = {
 				id: `pack-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
 				timestamp: new Date().toISOString(),
-				previewImageUrl: previewUrl,
-				zipFileUrl: zipUrl,
+				previewImageUrl: previewUrl,       // Temporary URL for current session
+				previewImageData: previewImageData, // Persistent base64 data
+				zipFileUrl: zipUrl,                // Temporary URL for current session
+				zipFileData: zipFileData,           // Persistent base64 data
 				config: {
 					...config,
 					zipFile: virtualZipFile,
@@ -1173,12 +1211,23 @@ export default function Component() {
 					isImg2Img: !!config.isImg2Img,
 					output_format: config.output_format || 'png'
 				},
-				sourceImageUrl,
+				sourceImageUrl,      // Temporary URL for current session
+				sourceImageData,     // Persistent base64 data
 				maskDataUrl,
 				originalFilename: `${baseFilename}.zip`,
 				sessionId,
 				isFavorite: false
 			};
+			
+			// Log what we're saving for debugging
+			console.log('Saving ImagePack with persistent data:', {
+				hasPreviewImageData: !!packEntry.previewImageData,
+				previewImageDataLength: packEntry.previewImageData?.length,
+				hasZipFileData: !!packEntry.zipFileData,
+				zipFileDataLength: packEntry.zipFileData?.length,
+				hasSourceImageData: !!packEntry.sourceImageData,
+				sourceImageDataLength: packEntry.sourceImageData?.length,
+			});
 			
 			// Save to IndexedDB
 			await db.saveImagePack(packEntry);

@@ -289,11 +289,14 @@ export interface ReactSketchCanvasProps {
 export interface ImagePackEntry {
     id: string;                     // Unique identifier
     timestamp: string;              // When the pack was uploaded
-    previewImageUrl: string;        // Thumbnail for the UI
-    zipFileUrl?: string;            // Direct URL to the stored zip blob
+    previewImageUrl: string;        // Thumbnail for the UI (temporary URL)
+    previewImageData?: string;      // Base64-encoded preview image data for persistence
+    zipFileUrl?: string;            // Direct URL to the stored zip blob (temporary URL)
+    zipFileData?: string;           // Base64-encoded zip file data for persistence
     config: ImagePackConfig;        // Configuration data
-    sourceImageUrl?: string;        // Source image if present
-    maskDataUrl?: string;           // Mask if present
+    sourceImageUrl?: string;        // Source image if present (temporary URL)
+    sourceImageData?: string;       // Base64-encoded source image data for persistence
+    maskDataUrl?: string;           // Mask if present (already base64)
     originalFilename: string;       // Original zip name
     sessionId: string;              // Current session ID
     isFavorite: boolean;            // Whether to keep between sessions

@@ -182,6 +182,35 @@ export function ImagePackDrawer({
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [sortOption, setSortOption] = useState<string>('newest');
     const [showFavoritesOnly, setShowFavoritesOnly] = useState<boolean>(false);
+    
+    // Helper functions for base64 conversion
+    const blobToBase64 = (blob: Blob): Promise<string> => {
+        return new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    };
+
+    const base64ToBlob = (base64: string): Blob => {
+        try {
+            const parts = base64.split(';base64,');
+            const contentType = parts[0].split(':')[1];
+            const raw = window.atob(parts[1]);
+            const rawLength = raw.length;
+            const uInt8Array = new Uint8Array(rawLength);
+            
+            for (let i = 0; i < rawLength; ++i) {
+                uInt8Array[i] = raw.charCodeAt(i);
+            }
+            
+            return new Blob([uInt8Array], { type: contentType });
+        } catch (error) {
+            console.error('Error converting base64 to blob:', error);
+            return new Blob([], { type: 'application/octet-stream' });
+        }
+    };
 
     // Initialize session ID
     useEffect(() => {
@@ -200,22 +229,89 @@ export function ImagePackDrawer({
         }
     }, []);
 
+
+    // Check if a URL is valid (not revoked or expired)
+    const isValidUrl = (url: string): boolean => {
+        if (!url) return false;
+        
+        try {
+            // For blob URLs, we can only really check if the URL is syntactically valid
+            // since blob URLs are revoked after page refresh
+            if (url.startsWith('blob:')) {
+                try {
+                    new URL(url);
+                    // After a page refresh, all previous blob URLs become invalid
+                    // We'll assume they're invalid if we're in a new session
+                    return document.location.href.includes(url.split('/').pop() || '');
+                } catch (e) {
+                    return false;
+                }
+            }
+            
+            // Non-blob URLs are considered valid
+            return true;
+        } catch (e) {
+            console.error('Error validating URL:', e);
+            return false;
+        }
+    };
+
     // Load saved image packs when drawer opens
     useEffect(() => {
         if (isOpen) {
-            loadImagePacks();
+          loadImagePacks();
         }
-    }, [isOpen]);
+      }, [isOpen]);
 
-    const loadImagePacks = async () => {
+      const loadImagePacks = useCallback(async () => {
         try {
             const packs = await db.getImagePacks();
-            setImagePacks(packs || []);
+            
+            // Detect if this is a fresh browser session where we need to recreate all blob URLs
+            const isNewSession = localStorage.getItem('lastSession') !== sessionId;
+            if (isNewSession) {
+                localStorage.setItem('lastSession', sessionId);
+            }
+            
+            // Process packs to recreate temporary URLs from persistent data
+            const processedPacks = packs.map(pack => {
+                // Create new temporary URLs for this session
+                let updatedPack = { ...pack };
+                
+                // Always recreate URLs in a new session, or if they're invalid or missing
+                const needsNewPreviewUrl = isNewSession || !pack.previewImageUrl || !isValidUrl(pack.previewImageUrl);
+                const needsNewZipUrl = isNewSession || !pack.zipFileUrl || !isValidUrl(pack.zipFileUrl);
+                const needsNewSourceUrl = isNewSession || !pack.sourceImageUrl || !isValidUrl(pack.sourceImageUrl);
+                
+                // Recreate preview image URL from base64 data
+                if (pack.previewImageData && needsNewPreviewUrl) {
+                    const previewBlob = base64ToBlob(pack.previewImageData);
+                    updatedPack.previewImageUrl = URL.createObjectURL(previewBlob);
+                }
+                
+                // Recreate zip file URL from base64 data
+                if (pack.zipFileData && needsNewZipUrl) {
+                    const zipBlob = base64ToBlob(pack.zipFileData);
+                    updatedPack.zipFileUrl = URL.createObjectURL(zipBlob);
+                }
+                
+                // Recreate source image URL from base64 data
+                if (pack.sourceImageData && needsNewSourceUrl) {
+                    const sourceBlob = base64ToBlob(pack.sourceImageData);
+                    updatedPack.sourceImageUrl = URL.createObjectURL(sourceBlob);
+                }
+                
+                return updatedPack;
+            });
+            
+            setImagePacks(processedPacks || []);
+            console.log(`Loaded ${processedPacks.length} image packs with regenerated URLs`);
         } catch (error) {
             console.error('Error loading image packs:', error);
             toast.error('Failed to load image packs');
         }
-    };
+    }, [sessionId, base64ToBlob, isValidUrl]);
+    
 
     const handleFileProcessing = useCallback(async (file: File) => {
         setIsUploading(true);
@@ -224,10 +320,10 @@ export function ImagePackDrawer({
             
             // Convert the file to an ArrayBuffer for secure storage
             const fileArrayBuffer = await file.arrayBuffer();
-            const zipFileData = new Uint8Array(fileArrayBuffer);
+            const zipRawData = new Uint8Array(fileArrayBuffer);
             
             // Create a copy of the file for processing
-            const fileClone = new File([zipFileData], file.name, { type: file.type });
+            const fileClone = new File([zipRawData], file.name, { type: file.type });
             
             const JSZip = (await import('jszip')).default;
             const zip = await JSZip.loadAsync(fileClone);
@@ -260,12 +356,16 @@ export function ImagePackDrawer({
                 return false;
             }
 
-            // Process image for preview
+            // Process image for preview - convert to base64 for persistent storage
             const imageBlob = await imageFile.async('blob');
-            const imageUrl = URL.createObjectURL(imageBlob);
+            const previewImageData = await blobToBase64(imageBlob);
+            
+            // Create a temporary URL for current session display
+            const previewImageUrl = URL.createObjectURL(imageBlob);
             
             // Find source image if it exists
             let sourceImageUrl: string | undefined;
+            let sourceImageData: string | undefined;
             const sourceFile = Object.values(zip.files).find(file => 
                 file.name.includes('source') && 
                 /\.(png|jpg|jpeg|webp)$/i.test(file.name)
@@ -273,10 +373,11 @@ export function ImagePackDrawer({
             
             if (sourceFile) {
                 const sourceBlob = await sourceFile.async('blob');
+                sourceImageData = await blobToBase64(sourceBlob);
                 sourceImageUrl = URL.createObjectURL(sourceBlob);
             }
             
-            // Find mask if it exists
+            // Find mask if it exists - already stored as data URL
             let maskDataUrl: string | undefined;
             const maskFile = Object.values(zip.files).find(file => 
                 file.name.includes('mask') && 
@@ -285,30 +386,29 @@ export function ImagePackDrawer({
             
             if (maskFile) {
                 const maskBlob = await maskFile.async('blob');
-                const reader = new FileReader();
-                maskDataUrl = await new Promise<string>((resolve) => {
-                    reader.onloadend = () => resolve(reader.result as string);
-                    reader.readAsDataURL(maskBlob);
-                });
+                maskDataUrl = await blobToBase64(maskBlob);
             }
             
-            // Store the file data as a blob (safer than storing a File object)
-            const zipBlob = new Blob([zipFileData], { type: 'application/zip' });
+            // Convert zip data to base64 for persistent storage
+            const zipFileData = await blobToBase64(new Blob([zipRawData], { type: 'application/zip' }));
             
-            // Create a URL for the zipFile
-            const zipUrl = URL.createObjectURL(zipBlob);
+            // Create a temporary URL for the current session
+            const zipFileUrl = URL.createObjectURL(new Blob([zipRawData], { type: 'application/zip' }));
             
             // Create pack entry
             const packEntry: ImagePackEntry = {
                 id: `pack-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 timestamp: new Date().toISOString(),
-                previewImageUrl: imageUrl,
-                zipFileUrl: zipUrl,  // Add this for direct access to the zip data
+                previewImageUrl,
+                previewImageData,
+                zipFileUrl,
+                zipFileData,
                 config: {
                     ...config,
                     zipFile: file  // This is mainly for interface compatibility
                 },
                 sourceImageUrl,
+                sourceImageData,
                 maskDataUrl,
                 originalFilename: file.name,
                 sessionId,
@@ -327,6 +427,8 @@ export function ImagePackDrawer({
             console.error(`Error processing ${file.name}:`, error);
             toast.error(`Failed to process ${file.name}`);
             return false;
+        } finally {
+            setIsUploading(false);
         }
     }, [sessionId]);
 
@@ -366,36 +468,94 @@ export function ImagePackDrawer({
         try {
             console.log('Selected pack:', pack);
             
-            let zipBlob: Blob;
+            let zipBlob: Blob | null = null;
+            let errorMessage = '';
             
-            // First try to use the zipFileUrl if available
-            if (pack.zipFileUrl) {
-                console.log('Using zipFileUrl for pack retrieval');
-                const response = await fetch(pack.zipFileUrl);
-                zipBlob = await response.blob();
-            } else {
-                // Fall back to the download API
+            // First try to use the zipFileUrl if available and valid
+            if (pack.zipFileUrl && isValidUrl(pack.zipFileUrl)) {
+                console.log('Attempting to use zipFileUrl for pack retrieval');
+                try {
+                    const response = await fetch(pack.zipFileUrl);
+                    if (!response.ok) {
+                        errorMessage = 'Invalid temporary URL';
+                        console.warn(errorMessage);
+                    } else {
+                        zipBlob = await response.blob();
+                        console.log('Successfully retrieved blob from zipFileUrl');
+                    }
+                } catch (error) {
+                    errorMessage = 'Failed to retrieve from temporary URL';
+                    console.warn(errorMessage, error);
+                }
+            }
+            
+            // Then try to use the persistent zipFileData if available
+            if (!zipBlob && pack.zipFileData) {
+                console.log('Using persistent zipFileData for pack retrieval');
+                try {
+                    zipBlob = base64ToBlob(pack.zipFileData);
+                    console.log('Successfully created blob from zipFileData');
+                } catch (error) {
+                    errorMessage = 'Failed to convert base64 data to blob';
+                    console.warn(errorMessage, error);
+                }
+            }
+            
+            // Fall back to API as a last resort - but don't use invalid blob URLs
+            if (!zipBlob) {
                 console.log('Using download API for pack retrieval');
+                
+                // Don't use blob URLs for the API call - they're likely invalid after a refresh
+                // Instead, use the previewImageUrl which should be regenerated properly
+                const downloadBody: any = { 
+                    // If we have a base64 image, use it directly
+                    ...(pack.previewImageData ? { 
+                        imageData: pack.previewImageData.split(',')[1],
+                        contentType: pack.previewImageData.split(';')[0].split(':')[1]
+                    } : {
+                        // Otherwise use the URL (which should be regenerated from base64 data already)
+                        imageUrl: pack.previewImageUrl
+                    })
+                };
+                
+                console.log('Download API request for:', pack.originalFilename);
+                
                 const response = await fetch(`/api/download?filename=${encodeURIComponent(pack.originalFilename || 'image-pack.zip')}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ 
-                        imageUrl: pack.config.zipFile instanceof File 
-                            ? URL.createObjectURL(pack.config.zipFile)
-                            : pack.previewImageUrl
-                    })
+                    body: JSON.stringify(downloadBody)
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Failed to retrieve image pack data');
+                    const errorText = await response.text();
+                    console.error('Download API failed:', errorText);
+                    throw new Error(`Failed to retrieve image pack data: ${response.status} ${errorText}`);
                 }
                 
                 zipBlob = await response.blob();
+                console.log('Successfully retrieved blob from download API');
+                
+                // Store this for future use since we had to download it
+                if (zipBlob && zipBlob.size > 0) {
+                    const zipData = await blobToBase64(zipBlob);
+                    // Update the pack with the retrieved data
+                    pack.zipFileData = zipData;
+                    // Save the updated pack to database
+                    await db.saveImagePack({
+                        ...pack,
+                        zipFileData: zipData
+                    });
+                    console.log('Updated pack with downloaded zip data');
+                }
             }
             
-            // Create a File object from the blob
+            // Create a File object from the blob if we successfully retrieved it
+            if (!zipBlob) {
+                throw new Error('Failed to retrieve image pack data from any source');
+            }
+            
             const virtualZipFile = new File(
                 [zipBlob],
                 pack.originalFilename || 'image-pack.zip',
@@ -418,7 +578,26 @@ export function ImagePackDrawer({
 
     const handleDeletePack = async (id: string) => {
         try {
+            // Get the pack to revoke URLs before deleting
+            const packToDelete = imagePacks.find(pack => pack.id === id);
+            
+            // Revoke any blob URLs to prevent memory leaks
+            if (packToDelete) {
+                if (packToDelete.previewImageUrl && packToDelete.previewImageUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(packToDelete.previewImageUrl);
+                }
+                if (packToDelete.zipFileUrl && packToDelete.zipFileUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(packToDelete.zipFileUrl);
+                }
+                if (packToDelete.sourceImageUrl && packToDelete.sourceImageUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(packToDelete.sourceImageUrl);
+                }
+            }
+            
+            // Delete from database
             await db.deleteImagePack(id);
+            
+            // Update state
             setImagePacks(prev => prev.filter(pack => pack.id !== id));
             toast.success('Image pack deleted');
         } catch (error) {
@@ -442,6 +621,19 @@ export function ImagePackDrawer({
 
     const handleClearAll = async () => {
         try {
+            // Revoke all blob URLs before clearing
+            imagePacks.forEach(pack => {
+                if (pack.previewImageUrl && pack.previewImageUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(pack.previewImageUrl);
+                }
+                if (pack.zipFileUrl && pack.zipFileUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(pack.zipFileUrl);
+                }
+                if (pack.sourceImageUrl && pack.sourceImageUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(pack.sourceImageUrl);
+                }
+            });
+            
             await db.clearImagePacks();
             setImagePacks([]);
             toast.success('All image packs cleared');
