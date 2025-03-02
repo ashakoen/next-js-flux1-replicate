@@ -77,24 +77,26 @@ const ImagePackCard: React.FC<ImagePackCardProps> = ({
             <div className="flex gap-3">
                 <HoverCard>
                     <HoverCardTrigger asChild>
-                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden cursor-zoom-in">
+                        <div className="relative w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden cursor-zoom-in">
                             <Image 
                                 src={pack.previewImageUrl} 
                                 alt="Preview"
                                 fill
                                 className="object-cover"
                                 sizes="64px"
+                                style={{ objectFit: "cover" }}
                             />
                         </div>
                     </HoverCardTrigger>
                     <HoverCardContent className="w-80 p-2">
-                        <div className="w-full aspect-square rounded overflow-hidden">
+                        <div className="relative w-full aspect-square rounded overflow-hidden">
                             <Image 
                                 src={pack.previewImageUrl} 
                                 alt="Preview"
                                 fill
                                 className="object-contain"
                                 sizes="320px"
+                                style={{ objectFit: "contain" }}
                             />
                         </div>
                         <div className="pt-2">
