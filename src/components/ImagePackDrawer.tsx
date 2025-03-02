@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Archive, Search, Star, StarOff, SortAsc, Filter } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import Image from "next/image";
 import {
     Sheet,
     SheetContent,
@@ -77,19 +78,23 @@ const ImagePackCard: React.FC<ImagePackCardProps> = ({
                 <HoverCard>
                     <HoverCardTrigger asChild>
                         <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden cursor-zoom-in">
-                            <img 
+                            <Image 
                                 src={pack.previewImageUrl} 
-                                alt="Preview" 
-                                className="w-full h-full object-cover"
+                                alt="Preview"
+                                fill
+                                className="object-cover"
+                                sizes="64px"
                             />
                         </div>
                     </HoverCardTrigger>
                     <HoverCardContent className="w-80 p-2">
                         <div className="w-full aspect-square rounded overflow-hidden">
-                            <img 
+                            <Image 
                                 src={pack.previewImageUrl} 
-                                alt="Preview" 
-                                className="w-full h-full object-contain"
+                                alt="Preview"
+                                fill
+                                className="object-contain"
+                                sizes="320px"
                             />
                         </div>
                         <div className="pt-2">
