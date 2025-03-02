@@ -193,7 +193,7 @@ export function ImagePackDrawer({
         });
     };
 
-    const base64ToBlob = (base64: string): Blob => {
+    const base64ToBlob = useCallback((base64: string): Blob => {
         try {
             const parts = base64.split(';base64,');
             const contentType = parts[0].split(':')[1];
@@ -210,7 +210,7 @@ export function ImagePackDrawer({
             console.error('Error converting base64 to blob:', error);
             return new Blob([], { type: 'application/octet-stream' });
         }
-    };
+    }, []);
 
     // Initialize session ID
     useEffect(() => {
@@ -231,7 +231,7 @@ export function ImagePackDrawer({
 
 
     // Check if a URL is valid (not revoked or expired)
-    const isValidUrl = (url: string): boolean => {
+    const isValidUrl = useCallback((url: string): boolean => {
         if (!url) return false;
         
         try {
@@ -254,16 +254,10 @@ export function ImagePackDrawer({
             console.error('Error validating URL:', e);
             return false;
         }
-    };
+    }, []);
 
-    // Load saved image packs when drawer opens
-    useEffect(() => {
-        if (isOpen) {
-          loadImagePacks();
-        }
-      }, [isOpen]);
-
-      const loadImagePacks = useCallback(async () => {
+    // Define loadImagePacks before using it
+    const loadImagePacks = useCallback(async () => {
         try {
             const packs = await db.getImagePacks();
             
@@ -311,6 +305,13 @@ export function ImagePackDrawer({
             toast.error('Failed to load image packs');
         }
     }, [sessionId, base64ToBlob, isValidUrl]);
+    
+    // Load saved image packs when drawer opens
+    useEffect(() => {
+        if (isOpen) {
+          loadImagePacks();
+        }
+    }, [isOpen, loadImagePacks]);
     
 
     const handleFileProcessing = useCallback(async (file: File) => {

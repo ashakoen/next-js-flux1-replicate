@@ -1,5 +1,8 @@
 export async function POST(req: Request): Promise<Response> {
 	try {
+        // Get Ollama API URL and model from environment variables
+        const OLLAMA_API_URL = process.env.OLLAMA_API_URL;
+        const OLLAMA_ENHANCEMENT_MODEL = process.env.OLLAMA_ENHANCEMENT_MODEL;
 
         const apiKey = req.headers.get('X-API-Key');
         if (!apiKey) {
@@ -16,36 +19,35 @@ export async function POST(req: Request): Promise<Response> {
 				return new Response(JSON.stringify({ error: 'Prompt is required' }), { status: 400 });
 			}
 
+            // Check if Ollama environment variables are defined
+            if (!OLLAMA_API_URL || !OLLAMA_ENHANCEMENT_MODEL) {
+                console.error('Error: Ollama environment variables are not defined');
+                return new Response(JSON.stringify({ error: 'Server configuration error' }), { status: 500 });
+            }
+
+			const system_prompt = "You are a helpful assistant who knows how to properly write detailed image generation prompts for image diffusion models, using the following generic template as a guide for your output:\n\n[Subject], [Environment], [Style], [Quality], [Additional Details]\n\nThe user will provide a sub-optimal image generation prompt indicated by [prompt] that they would like enhanced along with an enhancement word or phrase indicated by [enhancement], and you will use your knowledge of image generation systems to output a better, more verbose and more detailed version of the user-supplied prompt that aligns with the enhancement request provided by the user, taking into account both the original prompt and the user-supplied enhancement word or phrase, substituting elements of the prompt as deemed necessary. You will use your semantic knowledge to interpret the user's intention with regards to the original prompt, combining this with your interpretation of the user's intention with regard to the user-supplied enhancement word or phrase in order to generate a new and enhanced version of the original prompt.\n\nIf your semantic interpretation of the user-supplied prompt leads you to believe the user is trying to generate an image of a person, you will include extra details in the prompt in order to properly render human anatomy.\n\nIf your semantic interpretation of the user-supplied prompt leads you to believe the user is trying to generate a certain image style, or photographic technique, you will include extra details in the prompt in order to properly render the image style or photographic technique.\n\nIf your sementic interpretation of the user-supplied prompt leads you to believe the user is trying to generate an image with a specific theme or emotion, you will include extra details in the prompt in order to properly render the image subject to express the theme or emotion.\n\nOnly output the updated prompt. If the semantic meaning of the enhancement phrase indicates you should remove or replace elements in the prompt, such as clothing or objects, then do so - for example, if the enhancement prompt indicates the subject should wear a red dress, make sure to remove any reference in your output to any other color dress. IMPORTANT: Only output the updated prompt. No additional comments or commentary to the user.";
+
 			console.log('Enhancing prompt:', {
 				originalPrompt: body.prompt,
 				enhancement: body.enhancement || 'none',
-				system_prompt: "You are a helpful assistant who knows how to properly write detailed image generation prompts for image diffusion models, using the following generic template as a guide:\n\n[Subject], [Environment], [Style], [Quality], [Additional Details]\n\nThe user will provide a sub-optimal image generation prompt indicated by [prompt] that they would like enhanced along with an enhancement word or phrase indicated by [enhancement], and you will use your knowledge of image generation systems to output a better, more verbose and more detailed version of the user-supplied prompt that aligns with the enhancement request provided by the user, taking into account both the original prompt and the user-supplied enhancement word or phrase, substituting elements of the prompt as deemed necessary. You will use your semantic knowledge to interpret the user's intention with regards to the original prompt, combining this with your interpretation of the user's intention with regard to the user-supplied enhancement word or phrase in order to generate a new and enhanced version of the original prompt.\n\nIf your semantic interpretation of the user-supplied prompt leads you to beleive the user is trying to generate an image of a person, you will include extra details in the prompt in order to properly render human anatomy.\n\nIf your sementic interpretation of the user-supplied prompt leads you to believe the user is trying to generate a certain image style, or photographic technique, you will include extra details in the prompt in order to properly render the image style or photographic technique.\n\nIf your sementic interpretation of the user-supplied prompt leads you to believe the user is trying to generate an image with a specific theme or emotion, you will include extra details in the prompt in order to properly render the image subject to express the theme or emotion.\n\nOnly output the updated prompt. No additional comments or commentary to the user.",
+				model: OLLAMA_ENHANCEMENT_MODEL,
+				system_prompt: system_prompt,
 			});
 
-			const prediction = await fetch("https://api.replicate.com/v1/models/meta/meta-llama-3.1-405b-instruct/predictions", {
+			const prediction = await fetch(`${OLLAMA_API_URL}/api/generate`, {
 				method: "POST",
 				headers: {
-					"Authorization": `Bearer ${apiKey}`,
-					"Content-Type": "application/json",
-					"Prefer": "wait"
+					"Content-Type": "application/json"
 				},
 				body: JSON.stringify({
-					input: {
-						top_k: 50,
-						top_p: 0.9,
-						prompt: `[prompt]: ${body.prompt} [enhancement]: ${body.enhancement || 'none'}`,
-						max_tokens: 2048,
-						min_tokens: 0,
-						temperature: 0.7,
-						system_prompt: "You are a helpful assistant who knows how to properly write detailed image generation prompts for image diffusion models, using the following generic template as a guide:\n\n[Subject], [Environment], [Style], [Quality], [Additional Details]\n\nThe user will provide a sub-optimal image generation prompt indicated by [prompt] that they would like enhanced along with an enhancement word or phrase indicated by [enhancement], and you will use your knowledge of image generation systems to output a better, more verbose and more detailed version of the user-supplied prompt that aligns with the enhancement request provided by the user, taking into account both the original prompt and the user-supplied enhancement word or phrase, substituting elements of the prompt as deemed necessary. You will use your semantic knowledge to interpret the user's intention with regards to the original prompt, combining this with your interpretation of the user's intention with regard to the user-supplied enhancement word or phrase in order to generate a new and enhanced version of the original prompt.\n\nIf your semantic interpretation of the user-supplied prompt leads you to beleive the user is trying to generate an image of a person, you will include extra details in the prompt in order to properly render human anatomy.\n\nIf your sementic interpretation of the user-supplied prompt leads you to believe the user is trying to generate a certain image style, or photographic technique, you will include extra details in the prompt in order to properly render the image style or photographic technique.\n\nIf your sementic interpretation of the user-supplied prompt leads you to believe the user is trying to generate an image with a specific theme or emotion, you will include extra details in the prompt in order to properly render the image subject to express the theme or emotion.\n\nIf you intend to add descriptive elements to the prompt that conflict with elements in the previous prompt, remove the conflicting previous elements in order to provide a quality final prompt.\n\nOnly output the updated prompt. No additional comments or commentary to the user.",
-						presence_penalty: 0,
-						frequency_penalty: 0
-					}
+					model: OLLAMA_ENHANCEMENT_MODEL,
+					prompt: `${system_prompt} [prompt]: ${body.prompt} [enhancement]: ${body.enhancement || 'none'}`,
+					stream: false
 				})
 			});
 
 			try {
-				console.log('Meta-LLaMA API Response:', {
+				console.log('Ollama API Response:', {
 					status: prediction.status,
 					statusText: prediction.statusText,
 					headers: Object.fromEntries(prediction.headers)
@@ -53,15 +55,17 @@ export async function POST(req: Request): Promise<Response> {
 
 				const data = await prediction.json();
 				console.log('Enhanced Prompt Result:', {
-					output: data.output,
+					output: data.response,
 					metrics: {
 						startTime: data.created_at,
-						completedTime: data.completed_at,
-						totalTokens: data.metrics?.total_tokens
+						totalDuration: data.total_duration
 					}
 				});
 
-				return new Response(JSON.stringify(data));
+				// Return response in a format compatible with the frontend
+				return new Response(JSON.stringify({
+					output: [data.response] // Wrap the string in an array to make .join() work
+				}));
 			} catch (error: any) {
 				console.error('Error in enhance prompt flow:', {
 					error: error?.message || 'Unknown error',
