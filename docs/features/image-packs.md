@@ -2,6 +2,46 @@
 
 Image Packs are a powerful way to save, share, and reproduce your image generations. They capture everything needed to recreate an image, including settings, prompts, source images, and masks.
 
+## Image Pack Drawer
+
+The Image Pack Drawer provides a dedicated interface for managing your Image Packs. Located on the left sidebar, it gives you quick access to all your saved packs.
+
+### Accessing the Drawer
+
+- Look for the teal "Image Packs" button on the left sidebar
+- Click to open the drawer interface
+- The number of saved packs is indicated by a pulsing dot when packs are available
+
+### Features
+
+- **Pack Gallery**: Visual grid of all your saved Image Packs
+- **Search**: Filter packs by prompt or model
+- **Sorting**: Arrange by newest, oldest, or model type
+- **Favorites**: Mark important packs with a star for easy access
+- **Favorites Filter**: Toggle to show only favorite packs
+- **Import**: Drag and drop zip files or click to browse
+
+### Managing Image Packs
+
+1. **Viewing Pack Details**
+   - Hover over a pack to see a larger preview
+   - Each card shows model type, prompt snippet, and creation date
+
+2. **Using a Pack**
+   - Click "Use" on any pack to load its settings
+   - All parameters, including source images and masks, will be restored
+   - Review settings before generating to make adjustments
+
+3. **Favorites**
+   - Click the star icon to mark a pack as favorite
+   - Toggle the "Favorites Only" filter to focus on important packs
+   - Favorites persist even when clearing regular packs
+
+4. **Deleting Packs**
+   - Remove individual packs with the "Delete" button
+   - Use "Clear All Packs" to remove all non-favorite packs
+   - Automatic cleanup of older, non-favorited packs
+
 ## What's in an Image Pack?
 
 An Image Pack includes:
@@ -14,6 +54,18 @@ An Image Pack includes:
 - Metadata and timestamps
 
 ## Using Image Packs
+
+### Creating Image Packs
+
+1. **From Gallery**
+   - Click the "⋮" menu on any image
+   - Select "Download with Config" to save as a zip file
+   - Or select "Save to Image Packs" to store directly in the drawer
+
+2. **From Image Bucket**
+   - Select images to include
+   - Click "Download All"
+   - Enable "Include Config Files"
 
 ### Downloading Image Packs
 
@@ -29,12 +81,19 @@ An Image Pack includes:
 
 ### Loading Image Packs
 
-1. **Drag and Drop**
-   - Drag .zip file onto interface
+1. **Using the Image Pack Drawer**
+   - Open the Image Pack drawer from the left sidebar
+   - Browse, search, or filter your saved packs
+   - Click "Use" on any pack to load settings
+   - Click Generate to recreate the image
+
+2. **Drag and Drop**
+   - Drag .zip file onto the Image Pack drawer drop zone
+   - Or drag onto the main interface
    - Review settings in preview
    - Click Generate to recreate
 
-2. **Upload Button**
+3. **Upload Button**
    - Click "Upload" in settings
    - Select .zip file
    - Confirm settings
