@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import Image from "next/image";
-import { ArrowUpToLine, Info, Download, Loader2, RefreshCw, Box, Upload, Star, Crop } from "lucide-react";
+import { ArrowUpToLine, Info, Download, Loader2, RefreshCw, Box, Upload, Star, Crop, Archive } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { GeneratedImage, UpscaleParams } from "@/types/types";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,6 +37,7 @@ interface GeneratedImagesCardProps {
   onUpscaleImage: (params: UpscaleParams) => void;
   onDownloadWithConfig: (imageUrl: string, image: GeneratedImage) => void;
   onAddToBucket: (image: GeneratedImage) => void;
+  onSaveToImagePack?: (image: GeneratedImage) => Promise<void>;
   bucketImages: GeneratedImage[];
   isLoadingImages: boolean;
 }
@@ -57,6 +58,7 @@ export function GeneratedImagesCard({
   onUpscaleImage,
   onDownloadWithConfig,
   onAddToBucket,
+  onSaveToImagePack,
   bucketImages,
 }: GeneratedImagesCardProps & { onReusePrompt: (prompt: string) => void }) {
   // Track temporary blob URLs
@@ -889,6 +891,28 @@ export function GeneratedImagesCard({
                                       >
                                         <Box className="w-3 h-3 mr-1" />
                                         Download IMG Pack
+                                      </Button>
+                                    )}
+
+                                    {!image.isEdited && onSaveToImagePack && (
+                                      <Button
+                                        className="flex-1"
+                                        size="sm"
+                                        variant="outline" 
+                                        onClick={async () => {
+                                          try {
+                                            await onSaveToImagePack(image);
+                                            setOpenImageUrl(null);
+                                            // Toast is handled in the saveToImagePack function
+                                          } catch (error) {
+                                            console.error("Failed to save to Image Packs:", error);
+                                            toast.error("Failed to save to Image Packs");
+                                          }
+                                        }}
+                                        disabled={image.isEdited}
+                                      >
+                                        <Archive className="w-3 h-3 mr-1" />
+                                        Save to Image Packs
                                       </Button>
                                     )}
 

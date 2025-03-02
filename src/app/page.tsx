@@ -13,13 +13,15 @@ import {
 	GeneratedImage,
 	LogEntry,
 	TelemetryData,
-	ImagePackConfig
+	ImagePackConfig,
+	ImagePackEntry
 } from '@/types/types';
 import { GeneratedImagesCard } from "@/components/cards/GeneratedImagesCard";
 import { SourceImageDrawer } from "@/components/SourceImageDrawer";
 import { FavoritePromptsDrawer } from "@/components/FavoritePromptsDrawer";
 import { LoraModelsDrawer } from '@/components/LoraModelsDrawer';
 import { ExtraLoraModelsDrawer } from "@/components/ExtraLoraModelsDrawer";
+import { ImagePackDrawer } from "@/components/ImagePackDrawer";
 import { GenerateConfirmModal } from "@/components/modals/GenerateConfirmModal";
 import ImageBucketWrapper from "@/components/ImageBucketWrapper";
 import { STORAGE } from '@/constants/storage';
@@ -712,13 +714,25 @@ export default function Component() {
 	};
 
 
-	const handleImagePackUpload = async (config: ImagePackConfig) => {
+	const handleImagePackUpload = async (config: ImagePackConfig, skipConfirmation: boolean = false) => {
 		try {
-			//console.log('Processing image pack config:', config);
-
+			// Show info toast only if not called from saveToImagePack (which has its own toast)
+			if (!skipConfirmation) {
+				toast.info('Processing image pack...', {id: 'image-pack-upload'});
+			}
 
 			const JSZip = (await import('jszip')).default;
 			const zip = await JSZip.loadAsync(config.zipFile);
+			
+			// Generate a unique ID for this image pack
+			const packId = `pack-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+			
+			// Get or create a session ID
+			const sessionId = localStorage.getItem('imagePackSessionId') || 
+				`session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+			
+			// Store the session ID for future use
+			localStorage.setItem('imagePackSessionId', sessionId);
 
 			const imageFile = Object.values(zip.files).find(file =>
 				!file.name.includes('source') &&
@@ -738,21 +752,28 @@ export default function Component() {
 				const blob = await imageFile.async('blob');
 				const previewUrl = URL.createObjectURL(blob);
 
-				// Get dimensions from the actual image
-				const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
-					const img = new Image();
-					img.onload = () => {
-						resolve({
-							width: img.width,
-							height: img.height
-						});
-					};
-					img.src = previewUrl;
-				});
+			// Get dimensions from the actual image
+			const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
+				const img = new Image();
+				img.onload = () => {
+					resolve({
+						width: img.width,
+						height: img.height
+					});
+				};
+				img.src = previewUrl;
+			});
 
-				width = dimensions.width;
-				height = dimensions.height;
-				setPreviewImageUrl(previewUrl);
+			width = dimensions.width;
+			height = dimensions.height;
+			setPreviewImageUrl(previewUrl);
+
+			// Create an entry for the image pack to store in IndexedDB
+			const sessionId = localStorage.getItem('imagePackSessionId') || 
+				`session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+			
+			// Store the session ID for future use
+			localStorage.setItem('imagePackSessionId', sessionId);
 			}
 
 
@@ -875,7 +896,11 @@ export default function Component() {
 
 			}
 
-			setShowGenerateConfirm(true);
+			// Only show the generation confirmation dialog if not skipping confirmation
+			if (!skipConfirmation) {
+				setShowGenerateConfirm(true);
+			}
+			// Note: Success toast is now handled in the calling function when skipConfirmation is true
 
 		} catch (error) {
 			console.error('Error processing image pack:', error);
@@ -1009,6 +1034,165 @@ export default function Component() {
 		} catch (error) {
 			console.error('Failed to create image pack:', error);
 			toast.error(error instanceof Error ? error.message : 'Failed to create image pack');
+		}
+	};
+
+	const saveToImagePack = async (image: GeneratedImage) => {
+		try {
+			toast.info('Saving to Image Packs...', {id: 'saving-image-pack'});
+			const JSZip = (await import('jszip')).default;
+			const zip = new JSZip();
+			
+			// Fetch the generated image
+			const imageResponse = await fetch(image.url);
+			if (!imageResponse.ok) throw new Error('Failed to fetch generated image');
+			const imageBlob = await imageResponse.blob();
+			
+			const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+			const baseFilename = `generation-${timestamp}`;
+			
+			// Add generated image to zip
+			const fileExt = image.output_format || (image.model === 'recraftv3' ? 'webp' : 'png');
+			zip.file(`${baseFilename}.${fileExt}`, imageBlob);
+			
+			// Create a data URL for the preview image
+			const previewUrl = URL.createObjectURL(imageBlob);
+			
+			// Process source image if applicable
+			let sourceImageUrl: string | undefined;
+			if (image.isImg2Img && image.sourceImageUrl) {
+				try {
+					// For base64 data URI stored in IndexedDB
+					const base64Data = image.sourceImageUrl.split(',')[1];
+					const mimeType = image.sourceImageUrl.split(';')[0].split(':')[1];
+					
+					// Convert base64 to binary
+					const binaryStr = atob(base64Data);
+					const bytes = new Uint8Array(binaryStr.length);
+					for (let i = 0; i < binaryStr.length; i++) {
+						bytes[i] = binaryStr.charCodeAt(i);
+					}
+					
+					// Create blob with original mime type
+					const sourceImageBlob = new Blob([bytes], { type: mimeType });
+					const extension = mimeType.split('/')[1];
+					
+					// Add to zip
+					zip.file(`${baseFilename}-source.${extension}`, sourceImageBlob);
+					sourceImageUrl = image.sourceImageUrl;
+				} catch (error) {
+					console.error('Failed to process source image:', error);
+				}
+			}
+			
+			// Process mask if applicable
+			let maskDataUrl: string | undefined;
+			if (image.maskDataUrl) {
+				try {
+					const base64Data = image.maskDataUrl.split(',')[1];
+					const maskBlob = await fetch(`data:image/png;base64,${base64Data}`).then(r => r.blob());
+					zip.file(`${baseFilename}-mask.png`, maskBlob);
+					maskDataUrl = image.maskDataUrl;
+				} catch (error) {
+					console.warn('Failed to process mask:', error);
+				}
+			}
+			
+			// Clean up prompt text
+			const cleanPrompt = image.prompt.replace(/[\n\r]+/g, ' ').trim();
+			const cleanNegativePrompt = image.negative_prompt?.replace(/[\n\r]+/g, ' ').trim();
+			
+			// Add config
+			const config = {
+				prompt: cleanPrompt,
+				negative_prompt: cleanNegativePrompt,
+				model: image.model,
+				seed: image.seed,
+				version: image.version,
+				privateLoraName: image.privateLoraName,
+				lora_scale: image.lora_scale,
+				extra_lora: image.extra_lora,
+				extra_lora_scale: image.extra_lora_scale,
+				guidance_scale: image.guidance_scale,
+				num_inference_steps: image.num_inference_steps,
+				go_fast: image.go_fast,
+				output_format: image.output_format,
+				output_quality: image.output_quality,
+				disable_safety_checker: image.disable_safety_checker,
+				style: image.style,
+				isImg2Img: image.isImg2Img,
+				prompt_strength: image.prompt_strength,
+				generationType: image.isImg2Img ?
+					(image.maskDataUrl ? 'inpainting' : 'img2img') :
+					'txt2img',
+				image_reference_url: image.image_reference_url,
+				image_reference_weight: image.image_reference_weight,
+				style_reference_url: image.style_reference_url,
+				style_reference_weight: image.style_reference_weight,
+				character_reference_url: image.character_reference_url,
+				aspect_ratio: image.aspect_ratio,
+				timestamp: image.timestamp
+			};
+			
+			zip.file(`${baseFilename}.json`, JSON.stringify(config, null, 2));
+			
+			// Generate zip file as blob
+			const zipBlob = await zip.generateAsync({ type: 'blob' });
+			
+			// Create virtual File for the ImagePack
+			const virtualZipFile = new File(
+				[zipBlob],
+				`${baseFilename}.zip`,
+				{ type: 'application/zip' }
+			);
+			
+			// Create a URL for the zip file
+			const zipUrl = URL.createObjectURL(zipBlob);
+			
+			// Get or create a session ID for the image pack
+			const sessionId = localStorage.getItem('imagePackSessionId') || 
+				`session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+			
+			// Store the session ID for future use
+			localStorage.setItem('imagePackSessionId', sessionId);
+			
+			// Create an ImagePackEntry to save to IndexedDB
+			const packEntry: ImagePackEntry = {
+				id: `pack-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+				timestamp: new Date().toISOString(),
+				previewImageUrl: previewUrl,
+				zipFileUrl: zipUrl,
+				config: {
+					...config,
+					zipFile: virtualZipFile,
+					prompt: config.prompt || '',
+					model: config.model || 'dev',
+					seed: config.seed || 0,
+					guidance_scale: config.guidance_scale || 3.5,
+					num_inference_steps: config.num_inference_steps || 28,
+					isImg2Img: !!config.isImg2Img,
+					output_format: config.output_format || 'png'
+				},
+				sourceImageUrl,
+				maskDataUrl,
+				originalFilename: `${baseFilename}.zip`,
+				sessionId,
+				isFavorite: false
+			};
+			
+			// Save to IndexedDB
+			await db.saveImagePack(packEntry);
+			
+			// Also call handleImagePackUpload to prepare the form data
+			// Pass true for skipConfirmation to prevent the generation dialog from showing
+			await handleImagePackUpload(packEntry.config, true);
+			
+			// Update the info toast to success instead of showing a new one
+			toast.success('Saved to Image Packs', {id: 'saving-image-pack'});
+		} catch (error) {
+			console.error('Failed to save image pack:', error);
+			toast.error(error instanceof Error ? error.message : 'Failed to save image pack', {id: 'saving-image-pack'});
+			throw error; // Rethrow so the UI can handle it
 		}
 	};
 
@@ -1846,6 +2030,10 @@ export default function Component() {
 						/>
 					)}
 
+					<ImagePackDrawer
+						onImagePackUpload={handleImagePackUpload}
+					/>
+
 					<div className="middle-column order-2 xl:order-1 xl:w-1/5 h-[calc(100vh-8rem)]">
 						<div className="flex flex-col h-full justify-between">
 							<GenerationSettingsCard
@@ -1910,6 +2098,7 @@ export default function Component() {
 							onDownloadWithConfig={downloadImageWithConfig}
 							isLoadingImages={isLoadingImages}
 							onAddToBucket={handleAddToBucket}
+							onSaveToImagePack={saveToImagePack}
 							bucketImages={bucketImages}
 						/>
 

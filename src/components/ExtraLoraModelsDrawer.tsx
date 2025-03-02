@@ -48,7 +48,7 @@ export function ExtraLoraModelsDrawer({
     };
 
     return (
-        <div className="fixed left-0 top-[38.5rem] z-30">
+        <div className="fixed left-0 top-[49rem] z-30">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
                     <Button

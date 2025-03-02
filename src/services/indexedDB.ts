@@ -1,14 +1,15 @@
 import { STORAGE } from '../constants/storage';
-import { GeneratedImage } from '@/types/types';
+import { GeneratedImage, ImagePackEntry } from '@/types/types';
 
 const DB_NAME = 'fluxImages';
 const STORES = {
     IMAGES: 'generatedImages',
     FORM_DATA: 'formData',
     SETTINGS: 'settings',
-    BUCKET: 'imageBucket'
+    BUCKET: 'imageBucket',
+    IMAGE_PACKS: 'imagePacks'
 };
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 export const db = {
 
@@ -50,6 +51,9 @@ export const db = {
                 }
                 if (!db.objectStoreNames.contains(STORES.BUCKET)) {
                     db.createObjectStore(STORES.BUCKET, { keyPath: 'timestamp' });
+                }
+                if (!db.objectStoreNames.contains(STORES.IMAGE_PACKS)) {
+                    db.createObjectStore(STORES.IMAGE_PACKS, { keyPath: 'id' });
                 }
             };
         });
@@ -275,6 +279,187 @@ export const db = {
             console.error('Error removing from bucket:', error);
             return false;
         }
-    }
+    },
 
+    // Image Pack methods
+    async saveImagePack(pack: ImagePackEntry): Promise<void> {
+        try {
+            const db = await this.init();
+            const tx = db.transaction(STORES.IMAGE_PACKS, 'readwrite');
+            const store = tx.objectStore(STORES.IMAGE_PACKS);
+
+            return new Promise((resolve, reject) => {
+                const request = store.put(pack);
+                request.onsuccess = () => resolve();
+                request.onerror = () => {
+                    console.error('Error saving image pack:', request.error);
+                    reject(request.error);
+                };
+            });
+        } catch (error) {
+            console.error('Error saving image pack:', error);
+            throw error;
+        }
+    },
+
+    async getImagePacks(): Promise<ImagePackEntry[]> {
+        try {
+            const db = await this.init();
+            const tx = db.transaction(STORES.IMAGE_PACKS, 'readonly');
+            const store = tx.objectStore(STORES.IMAGE_PACKS);
+
+            return new Promise((resolve, reject) => {
+                const request = store.getAll();
+                request.onsuccess = () => {
+                    // Sort by timestamp, newest first
+                    const packs = request.result.sort((a, b) =>
+                        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+                    );
+                    resolve(packs);
+                };
+                request.onerror = () => {
+                    console.error('Error getting image packs:', request.error);
+                    reject(request.error);
+                };
+            });
+        } catch (error) {
+            console.error('Error getting image packs:', error);
+            return [];
+        }
+    },
+
+    async getImagePackById(id: string): Promise<ImagePackEntry | undefined> {
+        try {
+            const db = await this.init();
+            const tx = db.transaction(STORES.IMAGE_PACKS, 'readonly');
+            const store = tx.objectStore(STORES.IMAGE_PACKS);
+
+            return new Promise((resolve, reject) => {
+                const request = store.get(id);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => {
+                    console.error('Error getting image pack by ID:', request.error);
+                    reject(request.error);
+                };
+            });
+        } catch (error) {
+            console.error('Error getting image pack by ID:', error);
+            return undefined;
+        }
+    },
+
+    async deleteImagePack(id: string): Promise<void> {
+        try {
+            const db = await this.init();
+            const tx = db.transaction(STORES.IMAGE_PACKS, 'readwrite');
+            const store = tx.objectStore(STORES.IMAGE_PACKS);
+
+            return new Promise((resolve, reject) => {
+                const request = store.delete(id);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => {
+                    console.error('Error deleting image pack:', tx.error);
+                    reject(tx.error);
+                };
+            });
+        } catch (error) {
+            console.error('Error deleting image pack:', error);
+            throw error;
+        }
+    },
+
+    async clearImagePacks(): Promise<void> {
+        try {
+            const db = await this.init();
+            const tx = db.transaction(STORES.IMAGE_PACKS, 'readwrite');
+            const store = tx.objectStore(STORES.IMAGE_PACKS);
+
+            return new Promise((resolve, reject) => {
+                const request = store.clear();
+                request.onsuccess = () => resolve();
+                request.onerror = () => {
+                    console.error('Error clearing image packs:', request.error);
+                    reject(request.error);
+                };
+            });
+        } catch (error) {
+            console.error('Error clearing image packs:', error);
+            throw error;
+        }
+    },
+
+    async markPackAsFavorite(id: string, isFavorite: boolean): Promise<void> {
+        try {
+            const db = await this.init();
+            const tx = db.transaction(STORES.IMAGE_PACKS, 'readwrite');
+            const store = tx.objectStore(STORES.IMAGE_PACKS);
+
+            return new Promise(async (resolve, reject) => {
+                const getRequest = store.get(id);
+                
+                getRequest.onsuccess = () => {
+                    const pack = getRequest.result;
+                    if (pack) {
+                        pack.isFavorite = isFavorite;
+                        const updateRequest = store.put(pack);
+                        updateRequest.onsuccess = () => resolve();
+                        updateRequest.onerror = () => {
+                            console.error('Error updating pack favorite status:', updateRequest.error);
+                            reject(updateRequest.error);
+                        };
+                    } else {
+                        reject(new Error(`Image pack with ID ${id} not found`));
+                    }
+                };
+                
+                getRequest.onerror = () => {
+                    console.error('Error getting image pack for favorite update:', getRequest.error);
+                    reject(getRequest.error);
+                };
+            });
+        } catch (error) {
+            console.error('Error marking pack as favorite:', error);
+            throw error;
+        }
+    },
+
+    async clearNonFavoriteSessionPacks(exceptSessionId: string): Promise<void> {
+        try {
+            const db = await this.init();
+            const tx = db.transaction(STORES.IMAGE_PACKS, 'readwrite');
+            const store = tx.objectStore(STORES.IMAGE_PACKS);
+
+            return new Promise(async (resolve, reject) => {
+                const getAllRequest = store.getAll();
+                
+                getAllRequest.onsuccess = () => {
+                    const packs = getAllRequest.result;
+                    const deletePromises = packs
+                        .filter(pack => !pack.isFavorite && pack.sessionId !== exceptSessionId)
+                        .map(pack => 
+                            new Promise<void>((innerResolve, innerReject) => {
+                                const deleteRequest = store.delete(pack.id);
+                                deleteRequest.onsuccess = () => innerResolve();
+                                deleteRequest.onerror = () => {
+                                    console.error('Error deleting non-favorite pack:', deleteRequest.error);
+                                    innerReject(deleteRequest.error);
+                                };
+                            })
+                        );
+                    
+                    Promise.all(deletePromises)
+                        .then(() => resolve())
+                        .catch(error => reject(error));
+                };
+                
+                getAllRequest.onerror = () => {
+                    console.error('Error getting image packs for cleanup:', getAllRequest.error);
+                    reject(getAllRequest.error);
+                };
+            });
+        } catch (error) {
+            console.error('Error clearing non-favorite packs:', error);
+            throw error;
+        }
+    }
 };

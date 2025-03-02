@@ -285,3 +285,16 @@ export interface ReactSketchCanvasProps {
     preserveBackgroundImageAspectRatio?: string;
     className?: string;
 }
+
+export interface ImagePackEntry {
+    id: string;                     // Unique identifier
+    timestamp: string;              // When the pack was uploaded
+    previewImageUrl: string;        // Thumbnail for the UI
+    zipFileUrl?: string;            // Direct URL to the stored zip blob
+    config: ImagePackConfig;        // Configuration data
+    sourceImageUrl?: string;        // Source image if present
+    maskDataUrl?: string;           // Mask if present
+    originalFilename: string;       // Original zip name
+    sessionId: string;              // Current session ID
+    isFavorite: boolean;            // Whether to keep between sessions
+}
